@@ -1,0 +1,12 @@
+Hello,
+
+Your payment for {{ event_title }} did not complete successfully, so no votes were added.
+
+Nominee: {{ nominee_name }}
+Attempted votes: {{ vote_quantity }}
+Reference: {{ payment_reference }}
+
+You can review the payment status here:
+{{ payment_status_url }}
+
+VoteCentral

@@ -1,0 +1,11 @@
+Hello,
+
+Your event "{{ event_title }}" has been published and is now live.
+
+Public page:
+{{ event_public_url }}
+
+Organizer dashboard:
+{{ event_dashboard_url }}
+
+VoteCentral

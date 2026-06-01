@@ -1,0 +1,199 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Profile Settings | VoteCentral{% endblock %}
+
+{% block dashboard_header_text %}
+<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight dark:text-white">Account Settings</h1>
+<p class="mt-1 text-sm text-vc-dark-400 font-medium dark:text-slate-400">Manage your profile, login credentials, and notification settings.</p>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="vc-animate-in" x-data="{ currentTab: '{{ active_tab }}' }">
+    <!-- Settings Tabs -->
+    <div class="mb-8 border-b border-gray-100 dark:border-vc-dark-600">
+        <nav class="flex space-x-8" aria-label="Tabs">
+            <button @click="currentTab = 'profile'" 
+                    :class="currentTab === 'profile' ? 'border-vc-blue text-vc-blue dark:border-vc-blue dark:text-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Profile Settings
+            </button>
+            <button @click="currentTab = 'security'" 
+                    :class="currentTab === 'security' ? 'border-vc-blue text-vc-blue dark:border-vc-blue dark:text-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Security &amp; Password
+            </button>
+            <button @click="currentTab = 'notifications'" 
+                    :class="currentTab === 'notifications' ? 'border-vc-blue text-vc-blue dark:border-vc-blue dark:text-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Notifications
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="grid gap-6">
+        <!-- Tab 1: Profile Settings -->
+        <div x-show="currentTab === 'profile'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="vc-card p-8 dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="profile">
+                
+                <h2 class="text-xl font-bold text-vc-dark dark:text-white mb-6">Personal Details</h2>
+                
+                <!-- Avatar Upload Section -->
+                <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 dark:border-vc-dark-600">
+                    <div class="relative group">
+                        <div class="h-24 w-24 rounded-full overflow-hidden bg-vc-blue text-white flex items-center justify-center text-3xl font-extrabold shadow-md border-2 border-white dark:border-vc-dark-600">
+                            {% if request.user.avatar %}
+                                <img id="avatar-preview-img" src="{{ request.user.avatar.url }}" alt="Profile Avatar" class="h-full w-full object-cover">
+                            {% else %}
+                                <span id="avatar-initial">{{ request.user.email|first|upper }}</span>
+                                <img id="avatar-preview-img" src="" alt="Profile Avatar" class="h-full w-full object-cover hidden">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex-1 text-center sm:text-left">
+                        <label for="id_avatar" class="text-sm font-bold text-vc-dark dark:text-white">Upload Avatar Profile Picture</label>
+                        <div class="mt-2">
+                            {{ profile_form.avatar }}
+                        </div>
+                        <p class="mt-1 text-xs text-vc-dark-400 dark:text-slate-400">JPG, PNG or WEBP. Max size 2MB.</p>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">First Name</label>
+                        {{ profile_form.first_name }}
+                        {% if profile_form.first_name.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ profile_form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">Last Name</label>
+                        {{ profile_form.last_name }}
+                        {% if profile_form.last_name.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ profile_form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_phone_number" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">Phone Number</label>
+                        {{ profile_form.phone_number }}
+                        {% if profile_form.phone_number.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ profile_form.phone_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_organizer_type" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">Organizer Type</label>
+                        {{ profile_form.organizer_type }}
+                        {% if profile_form.organizer_type.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ profile_form.organizer_type.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="id_referral_source" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">Referral Source</label>
+                        {{ profile_form.referral_source }}
+                        {% if profile_form.referral_source.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ profile_form.referral_source.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end">
+                    <button type="submit" class="vc-btn vc-btn-primary px-8">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tab 2: Security & Password -->
+        <div x-show="currentTab === 'security'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="vc-card p-8 dark:bg-vc-surface-raised dark:border-vc-dark-600" style="display: none;">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="password">
+                
+                <h2 class="text-xl font-bold text-vc-dark dark:text-white mb-2">Change Password</h2>
+                <p class="text-xs text-vc-dark-400 dark:text-slate-400 mb-6">Ensure your account uses a complex password to protect your earnings.</p>
+
+                <div class="space-y-4 max-w-xl">
+                    {% for field in password_form %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">{{ field.label }}</label>
+                            <input type="password" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required
+                                   class="w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white">
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs font-semibold text-vc-danger">{{ field.errors.0 }}</p>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <p class="mt-1 text-[10px] text-vc-dark-400 dark:text-slate-400 leading-normal">{{ field.help_text|safe }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="pt-4 flex justify-end">
+                    <button type="submit" class="vc-btn vc-btn-primary px-8">Update Password</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tab 3: Notifications Settings -->
+        <div x-show="currentTab === 'notifications'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="vc-card p-8 dark:bg-vc-surface-raised dark:border-vc-dark-600" style="display: none;">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="notifications">
+                
+                <h2 class="text-xl font-bold text-vc-dark dark:text-white mb-2">Notification Settings</h2>
+                <p class="text-xs text-vc-dark-400 dark:text-slate-400 mb-6">Choose how you wish to receive updates from your events.</p>
+
+                <div class="space-y-6 max-w-xl">
+                    <div>
+                        <label for="id_notif_phone_number" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">Notification Phone Number</label>
+                        <input type="text" name="phone_number" id="id_notif_phone_number" value="{{ request.user.phone_number }}" placeholder="+233241234567"
+                               class="w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white">
+                        {% if notification_form.phone_number.errors %}
+                            <p class="mt-1 text-xs font-semibold text-vc-danger">{{ notification_form.phone_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-100 dark:border-vc-dark-600 p-5 space-y-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-vc-dark dark:text-white">SMS Notifications</p>
+                                <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-0.5">Receive immediate SMS updates for withdrawals and high-priority event closings.</p>
+                            </div>
+                            <div class="flex items-center h-5 shrink-0">
+                                <input type="checkbox" name="sms_opt_in" id="id_sms_opt_in" {% if request.user.sms_opt_in %}checked{% endif %}
+                                       class="h-4 w-4 rounded border-vc-dark-200 text-vc-blue focus:ring-vc-blue cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end">
+                    <button type="submit" class="vc-btn vc-btn-primary px-8">Save Channels</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById('id_avatar');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const previewImg = document.getElementById('avatar-preview-img');
+                const initialSpan = document.getElementById('avatar-initial');
+                const [file] = fileInput.files;
+                if (file) {
+                    previewImg.src = URL.createObjectURL(file);
+                    previewImg.classList.remove('hidden');
+                    if (initialSpan) {
+                        initialSpan.classList.add('hidden');
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

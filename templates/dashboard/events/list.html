@@ -1,0 +1,216 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}{{ title }} | VoteCentral{% endblock %}
+{% block nav_competitions %}{% if list_type == 'competitions' %}active{% endif %}{% endblock %}
+{% block nav_elections %}{% if list_type == 'elections' %}active{% endif %}{% endblock %}
+
+{% block dashboard_header_text %}
+<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight dark:text-white">{{ title }}</h1>
+<p class="mt-1 text-sm text-vc-dark-400 font-medium dark:text-slate-400">{{ subtitle }}</p>
+{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in">
+    <!-- Header Control Bar -->
+    <div class="flex justify-between items-center bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-3xl p-6 shadow-sm border border-gray-100/50">
+        <span class="text-sm font-semibold text-vc-dark dark:text-white">
+            Your {% if list_type == 'competitions' %}competitions{% else %}elections{% endif %} ({{ paginator.count }} total)
+        </span>
+        <div class="flex flex-wrap gap-2">
+            {% if list_type == 'competitions' %}
+                <a href="{% url 'dashboard:event_create' %}" class="vc-btn vc-btn-accent vc-btn-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Competition
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard:election_create' %}" class="vc-btn vc-btn-accent vc-btn-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Election
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Unified Cards Grid -->
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {% for event in events %}
+            {% if event.kind == 'secure_election' %}
+                <!-- Secure Election Card -->
+                <div class="flex flex-col bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] border border-gray-100/50 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    
+                    <!-- Card header graphic / flyer -->
+                    <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center border-b border-gray-100 dark:border-vc-dark-600 shrink-0">
+                        {% if event.flyer %}
+                            <img src="{{ event.flyer.url }}" alt="{{ event.title }} Flyer" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105">
+                        {% elif event.banner %}
+                            <img src="{{ event.banner.url }}" alt="{{ event.title }} Banner" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105">
+                        {% else %}
+                            <!-- Fallback gradient for election -->
+                            <div class="h-full w-full bg-gradient-to-br from-vc-blue-500/10 to-vc-orange-500/10 dark:from-vc-blue-500/20 dark:to-vc-orange-500/20 flex flex-col items-center justify-center p-4">
+                                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-vc-blue-50 dark:bg-slate-800 text-vc-blue mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                </span>
+                                <span class="text-xs font-bold text-vc-dark-300 tracking-wider uppercase">Secure Election</span>
+                            </div>
+                        {% endif %}
+
+                        <!-- Status badge -->
+                        <div class="absolute top-4 left-4">
+                            <span class="vc-badge {% if event.status == 'open' %}vc-badge-success{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-blue{% endif %} uppercase tracking-wider text-[9px] shadow-sm">
+                                {{ event.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Content -->
+                    <div class="flex flex-col flex-1 p-6 justify-between space-y-4">
+                        <div class="space-y-2">
+                            <h3 class="text-base font-extrabold text-vc-dark dark:text-white leading-snug line-clamp-1">
+                                {{ event.title }}
+                            </h3>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400 line-clamp-2 min-h-[2rem]">
+                                {{ event.description|default:"No description added yet." }}
+                            </p>
+                        </div>
+
+                        <!-- Meta details grid -->
+                        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50 dark:border-vc-dark-600 text-xs">
+                            <div>
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Eligible Voters</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_voters.count }} voter{{ event.election_voters.count|pluralize }}</span>
+                            </div>
+                            <div>
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Structure</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_positions.count }} position{{ event.election_positions.count|pluralize }}</span>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Timeline</span>
+                                <span class="font-medium text-vc-dark-400 dark:text-slate-400 text-[10px]">
+                                    {{ event.start_at|date:"M d" }} - {{ event.end_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="pt-4 flex gap-2">
+                            <a href="{% url 'dashboard:election_detail' event.slug %}" class="flex-1 vc-btn vc-btn-outline vc-btn-sm text-center justify-center font-bold dark:border-vc-dark-600 dark:text-slate-200">
+                                Manage Election
+                            </a>
+                            <a href="{% url 'dashboard:election_edit' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Paid Competition Card -->
+                <div class="flex flex-col bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] border border-gray-100/50 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    
+                    <!-- Event Flyer Image -->
+                    <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center border-b border-gray-100 dark:border-vc-dark-600 shrink-0">
+                        {% if event.flyer %}
+                            <img src="{{ event.flyer.url }}" alt="{{ event.title }} Flyer" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105">
+                        {% elif event.banner %}
+                            <img src="{{ event.banner.url }}" alt="{{ event.title }} Banner" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105">
+                        {% else %}
+                            <!-- Fallback Dynamic Gradient with Icon -->
+                            <div class="h-full w-full bg-gradient-to-br from-vc-blue-500/10 to-vc-orange-500/10 dark:from-vc-blue-500/20 dark:to-vc-orange-500/20 flex flex-col items-center justify-center p-4">
+                                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-vc-blue-50 dark:bg-slate-800 text-vc-blue mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </span>
+                                <span class="text-xs font-bold text-vc-dark-300 tracking-wider uppercase">VoteCentral Event</span>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Floating Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span class="vc-badge {% if event.status == 'published' %}vc-badge-success{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %} uppercase tracking-wider text-[9px] shadow-sm">
+                                {{ event.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Content -->
+                    <div class="flex flex-col flex-1 p-6 justify-between space-y-4">
+                        <div class="space-y-2">
+                            <h3 class="text-base font-extrabold text-vc-dark dark:text-white leading-snug line-clamp-1">
+                                {{ event.title }}
+                            </h3>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400 line-clamp-2 min-h-[2rem]">
+                                {{ event.description|default:"No event description added yet." }}
+                            </p>
+                        </div>
+
+                        <!-- Meta details grid -->
+                        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50 dark:border-vc-dark-600 text-xs">
+                            <div>
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Price per vote</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.currency }} {{ event.vote_price|floatformat:2 }}</span>
+                            </div>
+                            <div>
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Active Nominees</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Timeline</span>
+                                <span class="font-medium text-vc-dark-400 dark:text-slate-400 text-[10px]">
+                                    {{ event.start_at|date:"M d" }} - {{ event.end_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="pt-4 flex gap-2">
+                            <a href="{{ event.get_dashboard_url }}" class="flex-1 vc-btn vc-btn-outline vc-btn-sm text-center justify-center font-bold dark:border-vc-dark-600 dark:text-slate-200">
+                                Manage Event
+                            </a>
+                            <a href="{% url 'dashboard:event_edit' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm flex items-center justify-center shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="col-span-full vc-empty py-16">
+                {% if list_type == 'competitions' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 text-vc-dark-200"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <p class="text-sm font-semibold">You haven't created any competitions yet.</p>
+                    <p class="text-xs mt-1">Get started by creating your first paid voting competition!</p>
+                    <a href="{% url 'dashboard:event_create' %}" class="vc-btn vc-btn-accent vc-btn-sm mt-4 inline-flex items-center gap-2">
+                        Create your first competition &rarr;
+                    </a>
+                {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 text-vc-dark-200"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <p class="text-sm font-semibold">You haven't created any secure elections yet.</p>
+                    <p class="text-xs mt-1">Configure candidate positions, upload eligible voters, and launch secure elections.</p>
+                    <a href="{% url 'dashboard:election_create' %}" class="vc-btn vc-btn-accent vc-btn-sm mt-4 inline-flex items-center gap-2">
+                        Create your first election &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+            <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                Showing page {{ page_obj.number }} of {{ paginator.num_pages }}
+            </span>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                        &larr; Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                        Next &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

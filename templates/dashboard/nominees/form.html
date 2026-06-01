@@ -1,0 +1,29 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}{% if object %}Edit {{ object.name }}{% else %}Add Nominee{% endif %} | VoteCentral{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="mx-auto max-w-3xl vc-animate-in">
+    <div class="vc-card p-8">
+        <p class="vc-section-label">{{ event.title }}</p>
+        <h1 class="mt-1 vc-section-title">{% if object %}Edit nominee{% else %}Add nominee{% endif %}</h1>
+
+        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-5">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg">
+                Save nominee
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}

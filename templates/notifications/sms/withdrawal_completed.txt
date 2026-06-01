@@ -1,0 +1,1 @@
+VoteCentral: your withdrawal of {{ withdrawal_currency }} {{ withdrawal_amount|floatformat:2 }} has been completed{% if payout_reference %}. Ref: {{ payout_reference }}{% endif %}.

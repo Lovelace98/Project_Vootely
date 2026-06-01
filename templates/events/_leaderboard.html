@@ -1,0 +1,38 @@
+{% if leaderboard %}
+    <div class="space-y-2">
+        {% for nominee in leaderboard %}
+            <div class="flex items-center justify-between rounded-xl px-4 py-3 transition {% if forloop.counter <= 3 %}bg-vc-blue-50/50{% else %}bg-vc-surface{% endif %} hover:bg-vc-blue-50">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="relative h-10 w-10 shrink-0 rounded-full border-2 border-vc-orange p-0.5 overflow-hidden">
+                        {% if nominee.photo %}
+                            <img src="{{ nominee.photo.url }}" alt="{{ nominee.name }}" class="h-full w-full rounded-full object-cover">
+                        {% else %}
+                            <div class="flex h-full w-full items-center justify-center rounded-full bg-vc-surface text-vc-dark-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <p class="font-semibold text-vc-dark truncate">{{ nominee.name }}</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-lg font-bold text-vc-blue">{{ nominee.total_votes }}</p>
+                    <p class="text-[0.6875rem] text-vc-dark-300">votes</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% elif leaderboard_hidden %}
+    <div class="vc-empty py-8 text-center">
+        <div class="flex justify-center mb-3">
+            <div class="bg-vc-blue-50 p-3 rounded-full text-vc-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </div>
+        </div>
+        <p class="text-sm font-medium text-vc-dark-400">Leaderboard is hidden</p>
+        <p class="text-xs text-vc-dark-300 mt-1">Check back later for results</p>
+    </div>
+{% else %}
+    <div class="vc-empty py-6">
+        No confirmed votes yet.
+    </div>
+{% endif %}

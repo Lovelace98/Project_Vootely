@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Ballot receipt | VoteCentral{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-2xl">
+    <div class="vc-card p-8 text-center">
+        <span class="vc-badge vc-badge-success">Ballot included</span>
+        <h1 class="mt-3 vc-section-title">Receipt verified</h1>
+        <p class="mt-3 text-vc-dark-400">Your receipt confirms that your ballot is included. It does not reveal your choices.</p>
+        <p class="mt-6 rounded-xl bg-vc-surface p-4 font-mono text-lg">{{ receipt.code }}</p>
+        <a href="{% url 'elections:detail' receipt.ballot.event.slug %}" class="vc-btn vc-btn-outline-blue mt-6">Back to election</a>
+    </div>
+</section>
+{% endblock %}

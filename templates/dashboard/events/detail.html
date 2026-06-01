@@ -1,0 +1,218 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}{{ event.title }} Dashboard | VoteCentral{% endblock %}
+{% block nav_my_events %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6" x-data="{ guideOpen: false, currentStep: 1 }">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between vc-animate-in">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="vc-badge {% if event.status == 'published' %}vc-badge-blue{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %}">{{ event.status }}</span>
+            </div>
+            <h1 class="mt-2 vc-section-title">{{ event.title }}</h1>
+            <p class="mt-2 max-w-3xl vc-section-subtitle">{{ event.description|default:"No event description yet." }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:event_edit' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                Edit
+            </a>
+            <a href="{% url 'dashboard:nominee_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Nominee
+            </a>
+            {% if event.status == 'draft' %}
+                {% if publish_ready %}
+                    <form id="publish-form" method="post" action="{% url 'dashboard:event_action' event.slug 'publish' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Publish Event', body: 'Are you sure you want to publish this event to the public? Once published, voters will be able to cast paid votes on your nominee pages immediately.', form: 'publish-form' })" class="vc-btn vc-btn-accent vc-btn-sm">Publish</button>
+                    </form>
+                {% else %}
+                    <button class="vc-btn vc-btn-accent vc-btn-sm opacity-50 cursor-not-allowed" disabled title="Please satisfy all list checklist items first">Publish</button>
+                {% endif %}
+            {% elif event.status == 'published' %}
+                <form id="unpublish-form" method="post" action="{% url 'dashboard:event_action' event.slug 'unpublish' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Unpublish Event', body: 'Are you sure you want to revert this event to draft? The public event page will be taken down and voters will no longer be able to cast votes until you re-publish.', form: 'unpublish-form', danger: false })" class="vc-btn vc-btn-outline vc-btn-sm">Unpublish</button>
+                </form>
+                <form id="close-form" method="post" action="{% url 'dashboard:event_action' event.slug 'close' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Close Event Permanently', body: 'Are you sure you want to close this event? Closing an event will permanently disable any future vote purchases, stop Paystack processing for this event, and lock the final leaderboard.', form: 'close-form', danger: true })" class="vc-btn vc-btn-danger vc-btn-sm">Close</button>
+                </form>
+            {% elif event.status == 'closed' %}
+                <span class="text-xs font-bold text-vc-danger py-2 px-3 bg-red-50 rounded-full border border-red-100 dark:bg-red-950/20 dark:border-red-900/30">Closed permanently</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Publish readiness warning -->
+    {% if not publish_ready %}
+        <div class="vc-card border-l-4 border-l-vc-orange bg-vc-orange-50 p-5 vc-animate-in vc-stagger-1 dark:bg-vc-orange-950/10 dark:border-l-vc-orange">
+            <p class="font-semibold text-vc-orange-700 dark:text-vc-orange-200">This event is not publish-ready yet.</p>
+            <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-vc-orange-700/80 dark:text-vc-orange-300/80">
+                {% for error in publish_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- KPI Stats -->
+    <div class="grid gap-4 sm:grid-cols-3 vc-animate-in vc-stagger-2">
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Confirmed Votes</p>
+            <p class="vc-stat-value dark:text-white">{{ summary.total_votes }}</p>
+        </div>
+        <div class="vc-stat vc-stat-accent dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label text-vc-orange">Revenue</p>
+            <p class="vc-stat-value text-vc-orange dark:text-vc-orange-100">{{ event.currency }} {{ summary.total_revenue|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Nominees</p>
+            <p class="vc-stat-value dark:text-white">{{ nominees|length }}</p>
+        </div>
+    </div>
+
+    <!-- Success Guide Banner Card (Mobile Responsive & Overlap Safe) -->
+    <div class="vc-animate-in vc-stagger-3">
+        <div class="vc-card bg-gradient-to-r from-vc-blue-50/60 via-indigo-50/20 to-white dark:from-vc-blue-950/10 dark:via-vc-dark-800/10 dark:to-vc-surface border border-vc-blue-100/50 dark:border-vc-dark-600/50 p-5 sm:p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left flex-grow">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-vc-blue-50 dark:bg-vc-blue-900/30 text-vc-blue dark:text-vc-blue-400 shadow-sm border border-vc-blue-100/30 mr-2 sm:mr-3">
+                    <svg class="h-6 w-6 animate-pulse text-vc-blue dark:text-vc-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </span>
+                <div class="space-y-1">
+                    <h3 class="text-base font-bold text-vc-dark dark:text-white">Organizer Success Roadmap</h3>
+                    <p class="text-xs text-vc-dark-400 dark:text-slate-400 leading-relaxed max-w-2xl">
+                        Unlock the full potential of your paid competition! Step through our interactive roadmap to learn nominee optimization, early-bird vote pricing strategy, WhatsApp promotion templates, and live leaderboard engagement.
+                    </p>
+                </div>
+            </div>
+            <div class="w-full md:w-auto shrink-0 flex justify-center md:justify-end">
+                <button @click="guideOpen = true" class="vc-btn vc-btn-accent vc-btn-sm py-2.5 px-6 font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 w-full md:w-auto rounded-xl">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Launch Roadmap</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three-column layout -->
+    <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <!-- Nominees -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Nominees</h2>
+                <a href="{% url 'dashboard:nominee_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                    Add nominee
+                </a>
+            </div>
+            <div class="mt-5 space-y-3">
+                {% for nominee in nominees %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-vc-dark dark:text-white">{{ nominee.name }}</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">Code {{ nominee.code }}{% if not nominee.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'dashboard:nominee_edit' event.slug nominee.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>
+                            <form method="post" action="{% url 'dashboard:nominee_delete' event.slug nominee.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="vc-btn vc-btn-danger vc-btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">
+                        Add nominees to make the event publish-ready.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Leaderboard</h2>
+            <div class="mt-5">
+                {% include 'events/_leaderboard.html' %}
+            </div>
+            {% if event.status == 'published' %}
+                <a href="{{ event.get_absolute_url }}" class="vc-btn vc-btn-outline-blue vc-btn-sm mt-5 w-full flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                    View public page
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Latest Payments -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-4 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Latest Payments</h2>
+            <p class="mt-1 text-sm text-vc-dark-400 dark:text-slate-400">Paid = votes counted. Pending = not yet. Failed = no votes.</p>
+            <div class="mt-5 space-y-3">
+                {% for payment in latest_payments %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="font-medium text-vc-dark dark:text-white">{{ payment.nominee.name }}</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ payment.vote_quantity }} vote{{ payment.vote_quantity|pluralize }} · {{ payment.currency }} {{ payment.amount|floatformat:2 }}</p>
+                        </div>
+                        <span class="vc-badge {% if payment.status == 'paid' %}vc-badge-success{% elif payment.status == 'pending' or payment.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %}">
+                            {{ payment.status }}
+                        </span>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">
+                        No payment attempts yet.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Beautiful Confirmation Modal -->
+    <div x-data="{ modalOpen: false, modalTitle: '', modalBody: '', formToSubmit: null, dangerMode: false }"
+         @open-confirm-modal.window="modalTitle = $event.detail.title; modalBody = $event.detail.body; formToSubmit = $event.detail.form; dangerMode = $event.detail.danger || false; modalOpen = true"
+         class="relative z-50 animate-fade-in"
+         style="display: none;"
+         x-show="modalOpen">
+         
+         <!-- Backdrop -->
+         <div class="fixed inset-0 bg-vc-dark/50 backdrop-blur-md transition-opacity" 
+              x-show="modalOpen" 
+              x-transition:enter="ease-out duration-300"
+              x-transition:enter-start="opacity-0"
+              x-transition:enter-end="opacity-100"
+              x-transition:leave="ease-in duration-200"
+              x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0"></div>
+
+         <!-- Modal Wrapper -->
+         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+             <div class="relative w-full max-w-md transform rounded-[2rem] bg-white dark:bg-vc-surface-raised border border-gray-100 dark:border-vc-dark-600 p-8 shadow-2xl transition-all"
+                  x-show="modalOpen"
+                  x-transition:enter="ease-out duration-300"
+                  x-transition:enter-start="opacity-0 scale-95"
+                  x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200"
+                  x-transition:leave-start="opacity-100 scale-100"
+                  x-transition:leave-end="opacity-0 scale-95"
+                  @click.away="modalOpen = false">
+                  
+                  <h3 class="text-xl font-extrabold text-vc-dark dark:text-white" x-text="modalTitle">Confirm Action</h3>
+                  <p class="mt-3 text-sm text-vc-dark-500 dark:text-slate-400 leading-relaxed" x-text="modalBody">Are you sure you want to proceed?</p>
+                  
+                  <div class="mt-6 flex justify-end gap-3">
+                      <button @click="modalOpen = false" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Cancel</button>
+                      <button @click="document.getElementById(formToSubmit).submit(); modalOpen = false" class="vc-btn vc-btn-sm" :class="dangerMode ? 'bg-vc-danger hover:bg-red-700 text-white' : 'vc-btn-accent'">Confirm &amp; Proceed</button>
+                  </div>
+             </div>
+         </div>
+    </div>
+    <!-- Success guide modal include (Outside any containing block/relative wrappers for full overlay layout) -->
+    {% include 'dashboard/includes/guide_modal_paid.html' %}
+</section>
+{% endblock %}

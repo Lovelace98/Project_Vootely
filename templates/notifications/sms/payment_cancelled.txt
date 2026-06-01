@@ -1,0 +1,1 @@
+VoteCentral: your payment for {{ nominee_name }} in {{ event_title }} was cancelled. No votes were added.

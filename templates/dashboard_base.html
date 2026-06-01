@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load dashboard_navigation %}
+
+{% block body %}
+{% dashboard_page_meta as dashboard_nav %}
+<div class="vc-dashboard-shell flex min-h-screen bg-vc-surface transition-colors duration-300" x-data="{ sidebarOpen: false, sidebarCollapsed: false, searchOpen: false, darkMode: localStorage.getItem('darkMode') === 'true' }">
+    <!-- Mobile header -->
+    <div class="vc-mobile-header w-full">
+        <a href="{% url 'dashboard:home' %}" class="text-base font-bold tracking-[0.15em] text-vc-blue">VOTECENTRAL</a>
+        <button @click="sidebarOpen = !sidebarOpen" class="vc-mobile-toggle" aria-label="Toggle menu">
+            <svg x-show="!sidebarOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="7" x2="20" y2="7"/>
+                <line x1="4" y1="12" x2="20" y2="12"/>
+                <line x1="4" y1="17" x2="20" y2="17"/>
+            </svg>
+            <svg x-show="sidebarOpen" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="vc-sidebar transition-all duration-300 shadow-sm border-r border-gray-100 flex flex-col justify-between" 
+           :class="{ 'open': sidebarOpen, 'vc-sidebar-collapsed': sidebarCollapsed }" 
+           id="vc-sidebar">
+        <div>
+            <!-- Sidebar Collapse arrow -->
+            <button @click="sidebarCollapsed = !sidebarCollapsed" 
+                    class="hidden lg:flex absolute top-8 -right-3.5 z-50 h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-md hover:text-vc-blue focus:outline-none transition-transform"
+                    :class="sidebarCollapsed ? 'rotate-180' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <!-- Brand Logo -->
+            <div class="px-2 mb-8 flex justify-center lg:justify-start">
+                <a href="{% url 'dashboard:home' %}" class="flex items-center gap-2 font-bold tracking-[0.1em] text-vc-blue text-lg" x-show="!sidebarCollapsed" x-transition>
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-vc-blue text-white font-extrabold text-sm">V</span>
+                    <span>VoteCentral</span>
+                </a>
+                <a href="{% url 'dashboard:home' %}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-vc-blue text-white font-extrabold text-sm" x-show="sidebarCollapsed" x-transition>
+                    V
+                </a>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="vc-sidebar-nav space-y-1">
+                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mb-2" x-show="!sidebarCollapsed">Main</p>
+
+                <a href="{% url 'dashboard:home' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_dashboard %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Dashboard</span>
+                </a>
+
+                <a href="{% url 'dashboard:analytics' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_analytics %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Analytics</span>
+                </a>
+
+                <a href="{% url 'dashboard:competitions' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_competitions %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Competitions</span>
+                </a>
+
+                <a href="{% url 'dashboard:elections' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_elections %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Elections</span>
+                </a>
+
+                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Finance</p>
+
+                <a href="{% url 'dashboard:revenue' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_revenue %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Revenue</span>
+                </a>
+
+                <a href="{% url 'dashboard:withdrawals' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_withdrawals %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Withdrawals</span>
+                </a>
+
+                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Settings</p>
+
+                <a href="{% url 'dashboard:notifications' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_notifications %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span x-show="!sidebarCollapsed" x-transition>Notifications</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar footer -->
+        <div class="vc-sidebar-footer border-t border-gray-100 pt-4 mt-auto">
+            <a href="{% url 'account_logout' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-400 hover:text-vc-danger transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span x-show="!sidebarCollapsed" x-transition>Log out</span>
+            </a>
+
+            <!-- Ambient Light/Dark Slider Toggle -->
+            <div class="mt-4 px-1" x-show="!sidebarCollapsed" x-transition>
+                <div class="flex h-10 w-full items-center rounded-full bg-vc-blue-50 p-1 gap-1 border border-vc-blue-100/50">
+                    <button @click="darkMode = false; localStorage.setItem('darkMode', 'false'); document.documentElement.classList.remove('dark')" 
+                            class="flex flex-1 items-center justify-center gap-2 rounded-full py-1 text-xs font-semibold transition-all focus:outline-none"
+                            :class="!darkMode ? 'bg-white text-vc-blue shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                        Light
+                    </button>
+                    <button @click="darkMode = true; localStorage.setItem('darkMode', 'true'); document.documentElement.classList.add('dark')" 
+                            class="flex flex-1 items-center justify-center gap-2 rounded-full py-1 text-xs font-semibold transition-all focus:outline-none"
+                            :class="darkMode ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                        Dark
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-center" x-show="sidebarCollapsed" x-transition>
+                <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); if (darkMode) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); }" 
+                        class="flex h-10 w-10 items-center justify-center rounded-full bg-vc-blue-50 text-vc-blue hover:bg-vc-blue-100 transition-colors focus:outline-none">
+                    <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-vc-blue-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div class="vc-sidebar-overlay" @click="sidebarOpen = false"></div>
+
+    <!-- Main content -->
+    <div class="vc-main flex flex-col flex-1 min-h-screen transition-all duration-300" 
+         :class="{ 'vc-main-collapsed': sidebarCollapsed }">
+         
+        <!-- Unified Header Area -->
+        <header class="vc-dashboard-topbar z-40 flex items-stretch justify-between px-6 lg:px-10 border-b backdrop-blur-md sticky top-0" style="padding-top: 1.75rem; padding-bottom: 1.25rem; background: color-mix(in srgb, var(--color-vc-surface) 95%, transparent); border-bottom-color: rgba(9, 8, 13, 0.07);">
+            <div class="vc-dashboard-topbar-inner flex flex-1 flex-col md:flex-row md:items-center md:justify-between gap-4 border border-gray-100 p-5 shadow-sm dark:bg-vc-surface-raised dark:border-vc-dark-600" style="border-radius: 1.4rem; background: color-mix(in srgb, var(--color-vc-surface-raised) 86%, transparent);">
+                <!-- Header Text / Welcome (Overridden per page) -->
+                <div class="vc-dashboard-title min-w-0">
+                    <div class="vc-dashboard-breadcrumb-row mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold">
+                        {% if dashboard_nav.back_url %}
+                            <a href="{{ dashboard_nav.back_url }}" class="vc-dashboard-back-link flex items-center gap-1 text-vc-blue hover:underline" style="margin-right: 0.75rem; padding-right: 0.75rem; border-right: 1px solid rgba(205, 205, 209, 0.75);">
+                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                                {{ dashboard_nav.back_label }}
+                            </a>
+                        {% endif %}
+                        <nav class="flex min-w-0 flex-wrap items-center gap-1.5 text-vc-dark-300" aria-label="Breadcrumb">
+                            {% for crumb in dashboard_nav.breadcrumbs %}
+                                {% if not forloop.first %}
+                                    <svg class="h-3 w-3 text-vc-dark-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                {% endif %}
+                                {% if crumb.url %}
+                                    <a href="{{ crumb.url }}" class="max-w-[10rem] truncate text-vc-dark-400 hover:text-vc-blue transition-colors">{{ crumb.label }}</a>
+                                {% else %}
+                                    <span class="max-w-[12rem] truncate text-vc-dark font-bold dark:text-white">{{ crumb.label }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </nav>
+                    </div>
+                    {% block dashboard_header_text %}
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-vc-dark tracking-tight leading-tight dark:text-white">{{ dashboard_nav.title }}</h1>
+                    <p class="mt-1 max-w-3xl text-sm text-vc-dark-400 font-medium dark:text-slate-400">{{ dashboard_nav.subtitle }}</p>
+                    {% endblock %}
+                </div>
+                
+                <!-- Right Header Utilities (Search, Bell, Profile Card) -->
+                <div class="vc-dashboard-actions flex items-center gap-4 sm:gap-6 shrink-0 self-end md:self-center">
+                    <!-- Search Button / Desktop Search Pill -->
+                    <button type="button" @click="searchOpen = true; $nextTick(() => $refs.searchInput.focus());" class="vc-dashboard-search-trigger flex h-11 items-center justify-center gap-3 rounded-full bg-white text-gray-500 shadow-sm border border-gray-100 hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600 dark:text-slate-400">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <span class="vc-dashboard-search-label hidden lg:inline">Search workspace</span>
+                        <span class="vc-dashboard-search-shortcut hidden lg:inline-flex">⌘K</span>
+                    </button>
+                    
+                    <!-- Notification Bell & Dropdown -->
+                    <div class="relative" x-data="{ notificationsOpen: false }">
+                        <button @click="notificationsOpen = !notificationsOpen" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm border border-gray-100 hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600">
+                            <span id="header-bell-badge" class="absolute right-2 top-2">
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="flex h-4 w-4 items-center justify-center rounded-full bg-vc-orange text-[9px] font-extrabold text-white">
+                                        {{ unread_notifications_count }}
+                                    </span>
+                                {% endif %}
+                            </span>
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="notificationsOpen" 
+                             @click.outside="notificationsOpen = false"
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-1 scale-95"
+                             class="absolute right-0 mt-2.5 origin-top-right rounded-2xl bg-white p-4 shadow-2xl focus:outline-none dark:bg-vc-surface-raised z-50"
+                             style="width: 380px; max-width: 90vw; display: none;">
+                            
+                            <!-- Header -->
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-vc-dark-600">
+                                <h3 class="text-sm font-bold text-vc-dark dark:text-white">Recent Notifications</h3>
+                                <span id="dropdown-header-badge">
+                                    {% if unread_notifications_count > 0 %}
+                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-vc-orange/10 text-vc-orange">
+                                            {{ unread_notifications_count }} new
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            <!-- List -->
+                            <div class="divide-y divide-gray-100 dark:divide-vc-dark-600 max-h-72 overflow-y-auto">
+                                {% if recent_notifications %}
+                                    {% for notif in recent_notifications %}
+                                        <div id="dropdown-notif-{{ notif.id }}" class="py-3 flex gap-3 text-left {% if not notif.is_read %}bg-vc-blue-50/20 dark:bg-vc-blue-900/10 -mx-4 px-4{% endif %} relative group transition-all duration-300">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                {% if notif.level == 'success' %}
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-green-500 dark:bg-green-950/30 dark:text-green-400">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    </span>
+                                                {% elif notif.level == 'warning' %}
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-50 text-amber-500 dark:bg-amber-950/30 dark:text-amber-400">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                    </span>
+                                                {% elif notif.level == 'danger' %}
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500 dark:bg-red-950/30 dark:text-red-400">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    </span>
+                                                {% else %}
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-vc-blue-50 text-vc-blue dark:bg-vc-blue-950/30 dark:text-vc-blue-400">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-1 min-w-0 pr-6">
+                                                <p class="text-xs font-bold text-vc-dark dark:text-white truncate">
+                                                    {{ notif.title }}
+                                                </p>
+                                                <p class="text-[11px] text-vc-dark-400 dark:text-slate-400 mt-0.5 line-clamp-2">
+                                                    {{ notif.message }}
+                                                </p>
+                                                <p class="text-[9px] text-vc-dark-300 dark:text-slate-500 mt-1 font-medium">
+                                                    {{ notif.created_at|timesince }} ago
+                                                </p>
+                                            </div>
+                                            {% if not notif.is_read %}
+                                                <button hx-post="{% url 'dashboard:mark_read' notif.id %}" 
+                                                        hx-swap="outerHTML" 
+                                                        hx-target="#dropdown-notif-{{ notif.id }}"
+                                                        class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-full bg-vc-blue/10 text-vc-blue hover:bg-vc-blue hover:text-white transition-all duration-200" 
+                                                        title="Mark as read">
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="py-8 text-center">
+                                        <svg class="h-8 w-8 text-gray-300 mx-auto dark:text-slate-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.961 8.961 0 002.3-5.541V9.75M9.143 17.082c.15.908.282 1.822.393 2.74M12.987 17.23c-.11.918-.243 1.832-.393 2.74M12.987 17.23a24.237 24.237 0 003.843-.148m-3.843.148a23.856 23.856 0 005.455-1.31 8.962 8.962 0 00-2.3-5.541V9.75M8.22 8.284a4.5 4.5 0 018.015 0m-8.015 0L4.86 5.81M16.235 8.284l3.125-2.473M16.235 8.284a9.008 9.008 0 013.124 5.88M8.219 8.284a9.008 9.008 0 00-3.122 5.88M2.25 12h1.5m16.5 0h1.5m-3.857 5.082a24.184 24.184 0 00-1.843-1.657m-9.598 1.657a24.184 24.184 0 011.843-1.657m1.843-1.657a24.22 24.22 0 00-1.843-1.657m9.598 1.657a24.22 24.22 0 01-1.843-1.657" />
+                                        </svg>
+                                        <p class="text-xs text-vc-dark-400 dark:text-slate-400">No notifications yet</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="pt-3 border-t border-gray-100 dark:border-vc-dark-600 mt-2">
+                                <a href="{% url 'dashboard:notifications' %}" class="block text-center text-xs font-bold text-vc-blue hover:text-vc-blue-600 transition-colors py-1.5 rounded-xl bg-vc-blue-50/50 hover:bg-vc-blue-50 dark:bg-vc-blue-950/20 dark:hover:bg-vc-blue-950/30">
+                                    See All Notifications
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Pill -->
+                    <a href="{% url 'dashboard:profile' %}" class="flex items-center gap-3 bg-white pl-2.5 pr-4 py-1.5 rounded-full shadow-sm border border-gray-100 hover:shadow-md transition-all dark:bg-vc-surface-raised dark:border-vc-dark-600">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-vc-blue text-sm font-bold text-white shadow-sm shrink-0 uppercase overflow-hidden">
+                            {% if request.user.avatar %}
+                                <img src="{{ request.user.avatar.url }}" alt="Avatar" class="h-full w-full object-cover">
+                            {% else %}
+                                {{ request.user.email|first }}
+                            {% endif %}
+                        </div>
+                        <div class="hidden sm:flex flex-col items-start leading-tight">
+                            <p class="text-xs font-bold text-vc-dark dark:text-white">{{ request.user.first_name|default:request.user.email|truncatechars:18 }}</p>
+                            <p class="text-[10px] font-semibold text-vc-dark-400 dark:text-slate-400">Organizer</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main workspace -->
+        <main class="vc-dashboard-main flex-1 px-6 py-8 lg:px-10">
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                        <div x-data="{ show: true }" 
+                             x-show="show" 
+                             x-init="setTimeout(() => show = false, 4000)"
+                             x-transition:leave="transition ease-in duration-300"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="vc-toast {% if message.tags == 'success' %}vc-toast-success{% elif message.tags == 'warning' %}vc-toast-warning{% elif message.tags == 'error' %}vc-toast-error{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block dashboard_content %}{% endblock %}
+        </main>
+
+        <nav class="vc-bottom-nav" aria-label="Primary mobile navigation">
+            <a href="{% url 'dashboard:competitions' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'competitions' or request.resolver_match.url_name == 'event_detail' or request.resolver_match.url_name == 'event_edit' or request.resolver_match.url_name == 'nominee_create' or request.resolver_match.url_name == 'nominee_edit' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                </span>
+                <span class="vc-bottom-nav-label">Comps</span>
+            </a>
+            <a href="{% url 'dashboard:elections' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'elections' or request.resolver_match.url_name == 'election_detail' or request.resolver_match.url_name == 'election_edit' or request.resolver_match.url_name == 'election_roster' or request.resolver_match.url_name == 'election_positions' or request.resolver_match.url_name == 'election_candidates' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                <span class="vc-bottom-nav-label">Elections</span>
+            </a>
+            <a href="{% url 'dashboard:home' %}" class="vc-bottom-nav-action {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-label="Dashboard home">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+                </span>
+            </a>
+            <a href="{% url 'dashboard:revenue' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'revenue' or request.resolver_match.url_name == 'withdrawals' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M7 15h.01"/><path d="M11 15h2"/></svg>
+                </span>
+                <span class="vc-bottom-nav-label">Revenue</span>
+            </a>
+            <a href="{% url 'dashboard:profile' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'notifications' or request.resolver_match.url_name == 'notification_settings' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                </span>
+                <span class="vc-bottom-nav-label">Me</span>
+            </a>
+        </nav>
+    </div>
+    {% include 'dashboard/includes/search_modal.html' %}
+</div>
+{% endblock body %}

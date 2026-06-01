@@ -1,0 +1,83 @@
+{% load tailwind_cli %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}VoteCentral — premium paid competitions with real-time leaderboards, Paystack checkout, and organizer revenue tracking.{% endblock %}">
+    <title>{% block title %}VoteCentral{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    {% tailwind_css %}
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col">
+    {% block body %}
+    {% include 'includes/navbar.html' %}
+
+    <main class="flex-grow w-full mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for message in messages %}
+                    <div x-data="{ show: true }" 
+                         x-show="show" 
+                         x-init="setTimeout(() => show = false, 4000)"
+                         x-transition:leave="transition ease-in duration-300"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="vc-toast {% if message.tags == 'success' %}vc-toast-success{% elif message.tags == 'warning' %}vc-toast-warning{% elif message.tags == 'error' %}vc-toast-error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        <div class="vc-card p-10 vc-animate-in">
+            <div class="mx-auto max-w-3xl text-center">
+                <p class="vc-badge vc-badge-blue mb-4">Phase 1 — Paid Competitions</p>
+                <h1 class="mb-4 text-5xl font-bold tracking-tight text-vc-dark sm:text-6xl">
+                    Vote<span class="text-vc-blue">Central</span>
+                </h1>
+                <p class="mx-auto mb-8 max-w-2xl text-lg text-vc-dark-400">
+                    Build premium paid competitions with nominee pages, Paystack checkout, leaderboard refreshes, and organizer revenue tracking.
+                </p>
+                <div class="flex flex-col justify-center gap-4 sm:flex-row">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-accent vc-btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                        Browse Active Events
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">
+                            Open Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">
+                            Create Organizer Account
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </main>
+
+    {% include 'includes/footer.html' %}
+    {% endblock body %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Organizer Login | VoteCentral{% endblock %}
+{% block meta_description %}Log in to your VoteCentral organizer dashboard to manage events, nominees, and revenue.{% endblock %}
+
+{% block body %}
+{% include 'includes/navbar.html' %}
+
+<div class="flex-grow w-full flex items-center justify-center bg-gradient-to-tr from-vc-blue/12 via-white to-vc-surface relative overflow-hidden py-16 min-h-[85vh]">
+    <!-- Ambient blurred background elements using only blue and light colors -->
+    <div class="absolute -top-40 -left-40 w-[30rem] h-[30rem] rounded-full bg-vc-blue-200/25 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-[30rem] h-[30rem] rounded-full bg-vc-blue-200/20 blur-3xl pointer-events-none"></div>
+    
+    <div class="max-w-[82rem] w-full flex flex-col justify-between items-center relative z-10 px-6 sm:px-8 lg:px-16 min-h-[75vh] gap-12">
+        <!-- Main Form and Headline Grid -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 lg:gap-20 items-center">
+            <!-- Left Side: Copy -->
+            <div class="md:col-span-5 text-vc-dark py-4">
+                <p class="text-xs font-bold tracking-[0.2em] text-vc-blue uppercase">VOTECENTRAL</p>
+                <h1 class="mt-4 text-4xl lg:text-5xl font-extrabold text-vc-dark leading-tight tracking-tight">
+                    Premium, Secure and Seamless
+                </h1>
+                <p class="mt-4 text-base text-vc-dark-500 font-normal leading-relaxed">
+                    Host paid voting events, add nominees, track real-time revenue, and manage secure payouts in minutes.
+                </p>
+            </div>
+            
+            <!-- Right Side: Beautiful Floating White Card -->
+            <div class="md:col-span-7">
+                <div class="bg-white rounded-[2rem] shadow-xl border border-vc-dark-100/50 p-8 sm:p-10 md:p-12 relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                    <h2 class="text-3xl font-extrabold text-vc-dark tracking-tight">Sign In</h2>
+                    <p class="mt-1 text-sm text-vc-dark-400 font-medium">Log in to your organizer dashboard to manage events.</p>
+
+                    <form method="post" action="{% url 'account_login' %}" class="mt-8 space-y-5">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="vc-toast vc-toast-error mb-4">
+                                {{ form.non_field_errors|join:", " }}
+                            </div>
+                        {% endif %}
+
+                        {% for field in form %}
+                            {% if field.name == 'remember' %}
+                                <div class="flex items-center gap-2 pt-1 pb-1">
+                                    <input 
+                                        type="checkbox" 
+                                        name="{{ field.html_name }}" 
+                                        id="{{ field.id_for_label }}"
+                                        class="h-5 w-5 rounded border-vc-dark-200 bg-white text-vc-blue focus:ring-vc-blue cursor-pointer"
+                                        {% if field.value %}checked{% endif %}
+                                    >
+                                    <label class="text-xs font-bold text-vc-dark-500 uppercase tracking-wider cursor-pointer select-none" for="{{ field.id_for_label }}">
+                                        Remember Me
+                                    </label>
+                                </div>
+                            {% else %}
+                                <div>
+                                    <label class="mb-1 block text-xs font-bold text-vc-dark-500 uppercase tracking-wider" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <!-- Style standard inputs inside form -->
+                                    <input 
+                                        type="{{ field.field.widget.input_type|default:'text' }}" 
+                                        name="{{ field.html_name }}" 
+                                        id="{{ field.id_for_label }}"
+                                        placeholder="{% if field.name == 'login' %}e.g. organizer@example.com{% else %}Password{% endif %}"
+                                        class="w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none"
+                                        value="{{ field.value|default:'' }}"
+                                        {% if field.field.required %}required{% endif %}
+                                    >
+                                    {% if field.errors %}
+                                        <p class="mt-1 text-xs font-semibold text-vc-danger">{{ field.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                        {% endif %}
+
+                        <div class="pt-2">
+                            <button type="submit" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+
+                    <p class="mt-6 text-center text-sm text-vc-dark-400 font-medium">
+                        New organizer?
+                        <a href="{% url 'account_signup' %}" class="font-bold text-vc-orange hover:text-vc-orange-600 transition-colors">Create an account</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Width Footer Block: Always stays at the absolute bottom in all grid layouts -->
+        <div class="w-full mt-6 flex flex-wrap items-center justify-start gap-6 text-xs text-vc-dark-400 font-semibold border-t border-vc-dark-100/35 pt-6">
+            <span class="flex items-center gap-1.5 text-vc-dark-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-vc-blue"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                English (US)
+            </span>
+            <a href="#" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
+            <a href="#" class="hover:text-vc-blue hover:underline transition-all">Plans</a>
+            <a href="mailto:{{ support_email|default:'support@votecentral.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+        </div>
+    </div>
+</div>
+
+{% include 'includes/footer.html' %}
+{% endblock body %}

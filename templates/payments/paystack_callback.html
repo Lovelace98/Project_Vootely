@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Pending Confirmation | VoteCentral{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-lg vc-animate-in">
+    <div class="vc-card p-8 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-vc-blue-50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-vc-blue animate-pulse"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <p class="mt-4 vc-badge vc-badge-blue">Paystack Callback</p>
+        <h1 class="mt-3 text-2xl font-bold text-vc-dark">Payment Submitted</h1>
+        <p class="mt-3 text-sm text-vc-dark-400">
+            Your payment has been submitted. Vote counting is finalized only after the Paystack webhook confirms the transaction.
+        </p>
+        <a href="{% url 'events:home' %}" class="vc-btn vc-btn-accent vc-btn-lg mt-6">
+            Back to Events
+        </a>
+    </div>
+</section>
+{% endblock %}

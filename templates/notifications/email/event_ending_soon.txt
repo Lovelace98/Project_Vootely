@@ -1,0 +1,9 @@
+Hello,
+
+This is a reminder that "{{ event_title }}" ends soon.
+
+End time: {{ event_end_at }}
+Organizer dashboard:
+{{ event_dashboard_url }}
+
+VoteCentral

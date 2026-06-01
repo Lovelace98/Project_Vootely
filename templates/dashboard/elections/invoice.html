@@ -1,0 +1,47 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Invoice | {{ event.title }}{% endblock %}
+{% block nav_my_events %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <div class="vc-card p-6">
+        <h1 class="vc-section-title">Election invoice</h1>
+        <p class="mt-2 text-sm text-vc-dark-400">{{ voter_count }} eligible voter{{ voter_count|pluralize }} in the current roster.</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="generate">
+                <button class="vc-btn vc-btn-outline-blue">Generate invoice</button>
+            </form>
+        </div>
+        {% if paid_for_roster %}
+            <p class="mt-4 text-sm font-semibold text-green-700">Current roster is fully paid.</p>
+        {% endif %}
+    </div>
+    <div class="vc-card p-6">
+        <h2 class="text-lg font-semibold">Invoices</h2>
+        <div class="mt-4 space-y-3">
+            {% for invoice in invoices %}
+                <div class="vc-status-row flex items-center justify-between p-4 rounded-xl border border-gray-100/50 dark:border-vc-dark-600 bg-white dark:bg-vc-surface-raised">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">{{ invoice.currency }} {{ invoice.amount|floatformat:2 }}</p>
+                        <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-1">{{ invoice.voter_count }} voters · {% if invoice.is_top_up %}top-up{% else %}initial{% endif %}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+                            <form method="post" class="inline">{% csrf_token %}
+                                <input type="hidden" name="action" value="pay">
+                                <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                                <button class="vc-btn vc-btn-accent vc-btn-sm py-1 px-3 text-xs">Pay now</button>
+                            </form>
+                        {% endif %}
+                        <span class="vc-badge {% if invoice.status == 'paid' %}vc-badge-success{% else %}vc-badge-warning{% endif %} uppercase tracking-wider text-[10px] font-bold">{{ invoice.status }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="vc-empty">No invoices yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

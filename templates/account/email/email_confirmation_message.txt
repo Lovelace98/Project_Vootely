@@ -1,0 +1,13 @@
+Hello {{ user.first_name }},
+
+Welcome to VoteCentral! We are thrilled to have you join our platform.
+
+To activate your organizer account and start launching premium, paid voting competitions with real-time leaderboards, please verify your email address by clicking the link below:
+
+{{ activate_url }}
+
+If the link does not work, copy and paste it into your browser's address bar. Once verified, you will be instantly logged in and redirected straight to your dashboard!
+
+Welcome aboard,
+The VoteCentral Team
+support@votecentral.com

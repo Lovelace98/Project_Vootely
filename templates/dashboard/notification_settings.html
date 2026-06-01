@@ -1,0 +1,92 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Notification Settings | VoteCentral{% endblock %}
+{% block nav_notifications %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <!-- Header -->
+    <div class="vc-animate-in">
+        <p class="vc-section-label">Settings</p>
+        <h1 class="mt-1 vc-section-title">Notification Settings</h1>
+        <p class="mt-1 vc-section-subtitle">Configure the phone number VoteCentral uses for organizer SMS alerts.</p>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <!-- SMS Setup Form -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-1">
+            <h2 class="text-lg font-semibold text-vc-dark">Organizer SMS Setup</h2>
+            <p class="mt-1 text-sm text-vc-dark-400">
+                Use an E.164 phone number such as <span class="font-semibold text-vc-dark">+233241234567</span>.
+            </p>
+
+            <form method="post" class="mt-6 space-y-4">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <p class="text-sm font-medium text-vc-danger">{{ form.non_field_errors|join:", " }}</p>
+                {% endif %}
+                <button type="submit" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg">
+                    Save Notification Settings
+                </button>
+            </form>
+        </div>
+
+        <!-- Current SMS Coverage -->
+        <div class="space-y-6">
+            <div class="vc-card p-6 vc-animate-in vc-stagger-2">
+                <h2 class="text-lg font-semibold text-vc-dark">Current SMS Status</h2>
+                <div class="mt-5 rounded-xl bg-vc-surface p-5 border border-vc-dark-100/30">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Phone Number</p>
+                            <p class="mt-1 text-base font-semibold text-vc-dark">{{ request.user.phone_number|default:"Not set" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">SMS Status</p>
+                            <p class="mt-1">
+                                {% if request.user.sms_opt_in %}
+                                    <span class="vc-badge vc-badge-success">Enabled</span>
+                                {% else %}
+                                    <span class="vc-badge vc-badge-neutral">Disabled</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vc-card p-6 vc-animate-in vc-stagger-3">
+                <h2 class="text-lg font-semibold text-vc-dark">What You'll Receive</h2>
+                <ul class="mt-4 space-y-3">
+                    <li class="flex items-start gap-3 text-sm text-vc-dark-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0 text-vc-blue"><polyline points="20 6 9 17 4 12"/></svg>
+                        Published and closed event alerts
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-vc-dark-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0 text-vc-blue"><polyline points="20 6 9 17 4 12"/></svg>
+                        Event starting soon and ending soon reminders
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-vc-dark-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0 text-vc-blue"><polyline points="20 6 9 17 4 12"/></svg>
+                        Withdrawal request status updates
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-vc-dark-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0 text-vc-blue"><polyline points="20 6 9 17 4 12"/></svg>
+                        Voter payment confirmed, failed, and cancelled SMS
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

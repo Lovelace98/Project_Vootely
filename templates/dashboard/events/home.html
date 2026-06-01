@@ -1,0 +1,486 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Organizer Dashboard | VoteCentral{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block dashboard_header_text %}
+<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight">Welcome back, {{ request.user.first_name|default:request.user.email|truncatechars:18 }}!</h1>
+<p class="mt-1 text-sm text-vc-dark-400 font-medium">Here's what's happening with your events today.</p>
+{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <!-- Filters & Actions Bar -->
+    <div class="vc-dashboard-filterbar flex items-center justify-between gap-3 py-2 vc-animate-in relative z-30">
+        <!-- Left Side: Timeframe capsules -->
+        <div class="vc-dashboard-filtergroup flex min-w-0 items-center gap-2">
+            <button class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-500 border border-gray-100 shadow-sm hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600 dark:text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-vc-dark-600 border border-gray-100 shadow-sm hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600 dark:text-white">
+                    {% if timeframe == 'today' %}Today
+                    {% elif timeframe == 'this_week' %}This week
+                    {% elif timeframe == 'this_month' %}This month
+                    {% elif timeframe == 'this_year' %}This year
+                    {% else %}All time{% endif %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-48 rounded-2xl bg-white shadow-lg border border-gray-100 z-50 overflow-hidden dark:bg-vc-surface-raised dark:border-vc-dark-600" style="display: none;">
+                    <div class="py-1">
+                        <a href="?timeframe=today{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">Today</a>
+                        <a href="?timeframe=this_week{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This week</a>
+                        <a href="?timeframe=this_month{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This month</a>
+                        <a href="?timeframe=this_year{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This year</a>
+                        <a href="?timeframe=all_time{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">All time</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Side: Main Action -->
+        <div class="vc-dashboard-actiongroup flex items-center justify-end gap-3">
+            <a href="{% url 'dashboard:event_create' %}" class="vc-dashboard-primary-action flex h-10 items-center gap-2 rounded-full bg-vc-blue px-5 text-sm font-bold text-white shadow-sm hover:bg-vc-blue-600 hover:shadow-md transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span class="vc-dashboard-primary-action-label">New Event</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Stats Row 1 -->
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Events Card -->
+        <div class="bg-white rounded-[2rem] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 vc-animate-in vc-stagger-1 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[145px]">
+            <div class="flex justify-between items-start">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Total events</p>
+                <a href="{% url 'dashboard:analytics' %}" class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.event_count }}</p>
+                <div class="mt-3 flex items-center">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        12.1%
+                    </span>
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Published Card -->
+        <div class="bg-white rounded-[2rem] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 vc-animate-in vc-stagger-2 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[145px]">
+            <div class="flex justify-between items-start">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Published</p>
+                <a href="{% url 'dashboard:analytics' %}" class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.published_count }}</p>
+                <div class="mt-3 flex items-center">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        6.3%
+                    </span>
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Confirmed Votes Card -->
+        <div class="bg-white rounded-[2rem] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 vc-animate-in vc-stagger-3 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[145px]">
+            <div class="flex justify-between items-start">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Confirmed votes</p>
+                <a href="{% url 'dashboard:analytics' %}" class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.confirmed_votes|default:"0" }}</p>
+                <div class="mt-3 flex items-center">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
+                        2.4%
+                    </span>
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gross Revenue Card -->
+        <div class="bg-white rounded-[2rem] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 vc-animate-in vc-stagger-4 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[145px]">
+            <div class="flex justify-between items-start">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Gross revenue</p>
+                <a href="{% url 'dashboard:revenue' %}" class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="text-3xl font-extrabold text-vc-dark tracking-tight leading-none">
+                    GHS {{ summary.confirmed_revenue|floatformat:0 }}<span class="text-base font-bold text-vc-dark-400">.00</span>
+                </p>
+                <div class="mt-3 flex items-center">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        12.1%
+                    </span>
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid Row (Money Flow & Vote Distribution) -->
+    <div class="grid gap-6 lg:grid-cols-3">
+        <!-- Money Flow Chart (Wide) -->
+        <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-1 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-vc-dark">Money flow</h2>
+                    <p class="text-xs text-vc-dark-400">Votes and revenue comparison</p>
+                </div>
+                <!-- Interactive Chart Legends and Filters -->
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-3 text-xs font-semibold text-vc-dark-500">
+                        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-vc-blue"></span>Votes</span>
+                        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-vc-blue-200"></span>Revenue</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                            <option value="">All events</option>
+                            {% for ev in events %}
+                                <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title|truncatechars:18 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="relative flex-1 w-full h-full">
+                <canvas id="moneyFlowChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Budget / Vote Share Chart (Narrow) -->
+        <div class="bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-2 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 justify-between">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-vc-dark">Vote share</h2>
+                    <p class="text-xs text-vc-dark-400">Distribution among top nominees</p>
+                </div>
+                <a href="{% url 'dashboard:analytics' %}" class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+            
+            <div class="relative flex-1 w-full flex items-center justify-center my-4 h-[180px]">
+                {% if top_nominees_list %}
+                    <canvas id="voteShareChart"></canvas>
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-vc-dark-400">Total votes</span>
+                        <span class="text-2xl font-extrabold text-vc-dark leading-none">{{ summary.confirmed_votes|default:"0" }}</span>
+                    </div>
+                {% else %}
+                    <div class="text-center py-6 text-sm text-vc-dark-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-vc-dark-200"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        No votes received yet.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Custom Legends Pinned below donut -->
+            <div class="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                {% for nominee in top_nominees_list|slice:":3" %}
+                    <div class="flex items-center justify-between text-xs text-vc-dark-500">
+                        <div class="flex items-center gap-2 truncate">
+                            <span class="h-2 w-2 rounded-full shrink-0" style="background-color: {% if forloop.first %}#191bdf{% elif forloop.counter == 2 %}#fe6807{% else %}#b8b9f5{% endif %}"></span>
+                            <span class="truncate font-semibold">{{ nominee.name }}</span>
+                        </div>
+                        <span class="font-bold shrink-0 text-vc-dark">{{ nominee.votes }} votes</span>
+                    </div>
+                {% empty %}
+                    <div class="text-[10px] text-center text-vc-dark-400">Nominees will appear here after vote purchases.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row (Recent transactions & Saving Goals/Milestones) -->
+    <div class="grid gap-6 lg:grid-cols-3">
+        <!-- Recent Transactions Table (Wide) -->
+        <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-3 flex flex-col min-h-[380px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-vc-dark">Recent transactions</h2>
+                    <p class="text-xs text-vc-dark-400">Recent votes cast across your events</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                        <option value="">All events</option>
+                        {% for ev in events %}
+                            <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title|truncatechars:18 }}</option>
+                        {% endfor %}
+                    </select>
+                    <a href="{% url 'dashboard:revenue' %}" class="text-xs font-bold text-vc-blue hover:text-vc-blue-700 transition-colors">See all &gt;</a>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto -mx-8">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-vc-blue-50/50 border-y border-gray-100">
+                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Date</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Amount</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Payer</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Method</th>
+                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Nominee</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for purchase in recent_purchases %}
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="py-4 px-8 text-xs font-semibold text-vc-dark-500 whitespace-nowrap">
+                                    {{ purchase.paid_at|date:"d M H:i" }}
+                                </td>
+                                <td class="py-4 px-6 text-xs font-extrabold text-emerald-600 whitespace-nowrap">
+                                    + {{ purchase.currency }} {{ purchase.amount_paid|floatformat:2 }}
+                                </td>
+                                <td class="py-4 px-6 text-xs font-bold text-vc-dark truncate max-w-[120px]">
+                                    {{ purchase.voter_name|default:purchase.voter_email }}
+                                </td>
+                                <td class="py-4 px-6 text-xs font-semibold text-vc-dark-400 whitespace-nowrap">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-vc-blue"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                        Paystack
+                                    </span>
+                                </td>
+                                <td class="py-4 px-8 text-xs font-bold text-vc-dark truncate max-w-[140px]">
+                                    {{ purchase.nominee.name }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-xs font-semibold text-vc-dark-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-vc-dark-200"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                    No transactions recorded yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Nominee Vote Milestones (Saving Goals - Narrow) -->
+        <div class="bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-4 flex flex-col min-h-[380px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 justify-between">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-vc-dark">Nominee milestones</h2>
+                    <p class="text-xs text-vc-dark-400">Nominees approaching top benchmarks</p>
+                </div>
+                <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:text-vc-blue hover:border-vc-blue-200 transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </span>
+            </div>
+
+            <div class="flex-1 space-y-5 overflow-y-auto pr-1 max-h-[250px]">
+                {% for milestone in nominee_milestones %}
+                    <div>
+                        <div class="flex justify-between items-end mb-1 text-xs">
+                            <span class="font-bold text-vc-dark truncate max-w-[130px]">{{ milestone.nominee.name }}</span>
+                            <span class="font-semibold text-vc-dark-400 shrink-0">{{ milestone.votes }} / {{ milestone.target }} votes</span>
+                        </div>
+                        <div class="relative w-full bg-vc-blue-50 rounded-full h-5 overflow-hidden flex items-center border border-vc-blue-100/30">
+                            <div class="bg-vc-blue h-full rounded-full transition-all duration-500" style="width: {{ milestone.percent }}%"></div>
+                            <span class="absolute left-3 text-[10px] font-extrabold text-white" :class="parseInt('{{ milestone.percent }}') > 15 ? 'text-white' : '!text-vc-blue'">
+                                {{ milestone.percent }}%
+                            </span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-12 text-xs font-semibold text-vc-dark-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-vc-dark-200"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        No active nominee milestones tracked.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="space-y-4 vc-animate-in vc-stagger-5 mt-8">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-vc-dark tracking-tight">Your Events</h2>
+            <a href="{% url 'events:home' %}" class="text-sm font-semibold text-vc-blue hover:text-vc-blue-700 transition-colors">View All</a>
+        </div>
+        {% for event in events %}
+            <a href="{{ event.get_dashboard_url }}" class="block p-6 bg-white rounded-3xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-all">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="vc-badge {% if event.status == 'published' %}vc-badge-blue{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %}">
+                                {{ event.status }}
+                            </span>
+                        </div>
+                        <h3 class="mt-2 text-lg font-semibold text-vc-dark">{{ event.title }}</h3>
+                        <p class="mt-1 text-sm text-vc-dark-400 line-clamp-1">{{ event.description|default:"No description yet."|truncatewords:20 }}</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-vc-dark-400 shrink-0">
+                        <span>{{ event.currency }} {{ event.vote_price|floatformat:2 }}/vote</span>
+                        <span class="rounded-full bg-vc-blue-50 px-2.5 py-0.5 text-xs font-semibold text-vc-blue">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </div>
+            </a>
+        {% empty %}
+            <div class="vc-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-vc-dark-300"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <p>You don't have any events yet. Create your first competition!</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Secure structured JSON Data from View Context -->
+<script id="topNomineesData" type="application/json">
+    [
+        {% for nominee in top_nominees_list %}
+            {"name": "{{ nominee.name|escapejs }}", "votes": {{ nominee.votes }}}
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Money Flow Chart (Double-Bar)
+        const moneyCtx = document.getElementById('moneyFlowChart');
+        if (moneyCtx) {
+            new Chart(moneyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Votes',
+                        data: {{ monthly_votes|safe }},
+                        backgroundColor: '#191bdf', // vc-blue
+                        borderRadius: 6,
+                        barThickness: 8,
+                        maxBarThickness: 12,
+                    }, {
+                        label: 'Revenue (GHS)',
+                        data: {{ monthly_revenue|safe }},
+                        backgroundColor: '#b8b9f5', // vc-blue-200 / lilac
+                        borderRadius: 6,
+                        barThickness: 8,
+                        maxBarThickness: 12,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#09080d',
+                            padding: 12,
+                            titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '700' },
+                            bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        if (context.datasetIndex === 1) {
+                                            label += 'GHS ' + context.parsed.y.toLocaleString();
+                                        } else {
+                                            label += context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f0f2ff', // vc-sidebar / lilac grid lines
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                color: '#a9a9af',
+                                font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' }
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                color: '#a9a9af',
+                                font: { family: "'DM Sans', sans-serif", size: 11, weight: '600' }
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Vote Share Chart (Thin-Ring Doughnut)
+        const voteCtx = document.getElementById('voteShareChart');
+        const nomineeDataEl = document.getElementById('topNomineesData');
+        const nominees = nomineeDataEl ? JSON.parse(nomineeDataEl.textContent) : [];
+        
+        if (voteCtx && nominees.length > 0) {
+            new Chart(voteCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: nominees.map(n => n.name),
+                    datasets: [{
+                        data: nominees.map(n => n.votes),
+                        backgroundColor: ['#191bdf', '#fe6807', '#b8b9f5', '#09080d', '#cdcdd1'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%', // Makes it a thin ring like the reference image
+                    plugins: {
+                        legend: {
+                            display: false // Using custom legends below chart
+                        },
+                        tooltip: {
+                            backgroundColor: '#09080d',
+                            padding: 10,
+                            titleFont: { family: "'DM Sans', sans-serif", size: 12, weight: '700' },
+                            bodyFont: { family: "'DM Sans', sans-serif", size: 11 },
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.parsed} votes (${context.label})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

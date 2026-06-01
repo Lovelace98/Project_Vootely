@@ -1,0 +1,12 @@
+Hello,
+
+Your payment for {{ event_title }} was cancelled before confirmation, so no votes were added.
+
+Nominee: {{ nominee_name }}
+Requested votes: {{ vote_quantity }}
+Reference: {{ payment_reference }}
+
+You can return to the payment status page here:
+{{ payment_status_url }}
+
+VoteCentral

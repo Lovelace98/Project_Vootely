@@ -1,0 +1,148 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}{{ event.title }} Election | VoteCentral{% endblock %}
+{% block nav_my_events %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6" x-data="{ guideOpen: false, currentStep: 1 }">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <span class="vc-badge vc-badge-blue">{{ event.status }}</span>
+            <h1 class="mt-2 vc-section-title">{{ event.title }}</h1>
+            <p class="mt-2 max-w-3xl vc-section-subtitle">{{ event.description|default:"No description yet." }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:election_edit' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Edit</a>
+            <a href="{% url 'dashboard:election_positions' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Positions</a>
+            <a href="{% url 'dashboard:election_roster' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Roster</a>
+            <a href="{% url 'dashboard:election_invoice' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Invoice</a>
+            <a href="{% url 'dashboard:election_credentials' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Credentials</a>
+            {% if event.status != 'open' and event.status != 'closed' and event.status != 'tallied' and event.status != 'certified' %}
+                <form method="post" action="{% url 'dashboard:election_action' event.slug 'open' %}">{% csrf_token %}
+                    <button class="vc-btn vc-btn-accent vc-btn-sm" {% if not can_open %}disabled title="Complete readiness checklist first"{% endif %}>Open</button>
+                </form>
+            {% endif %}
+            {% if event.status == 'open' %}
+                <form method="post" action="{% url 'dashboard:election_action' event.slug 'close' %}">{% csrf_token %}
+                    <button class="vc-btn vc-btn-danger vc-btn-sm">Close</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not can_open and event.status != 'open' and event.status != 'closed' and event.status != 'tallied' and event.status != 'certified' and event.status != 'archived' %}
+        <div class="vc-card border-l-4 border-l-vc-orange bg-vc-orange-50 p-5">
+            <p class="font-semibold text-vc-orange-700">Election readiness checklist</p>
+            <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-vc-orange-700/80">
+                {% for error in open_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- KPI Stats -->
+    <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 vc-animate-in vc-stagger-2">
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Eligible voters</p>
+            <p class="vc-stat-value dark:text-white">{{ voter_count }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Credentials</p>
+            <p class="vc-stat-value dark:text-white">{{ credential_count }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Ballots cast</p>
+            <p class="vc-stat-value dark:text-white">{{ ballot_count }}</p>
+        </div>
+        <div class="vc-stat {% if paid_for_roster %}vc-stat-blue{% else %}vc-stat-accent{% endif %} dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label {% if not paid_for_roster %}text-vc-orange{% endif %}">Invoice</p>
+            <p class="vc-stat-value {% if not paid_for_roster %}text-vc-orange dark:text-vc-orange-100{% else %}dark:text-white{% endif %}">
+                {% if paid_for_roster %}Paid{% else %}Due{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Success Guide Banner Card (Mobile Responsive & Overlap Safe) -->
+    <div class="vc-animate-in vc-stagger-3">
+        <div class="vc-card bg-gradient-to-r from-vc-blue-50/60 via-indigo-50/20 to-white dark:from-vc-blue-950/10 dark:via-vc-dark-800/10 dark:to-vc-surface border border-vc-blue-100/50 dark:border-vc-dark-600/50 p-5 sm:p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left flex-grow">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-vc-blue-50 dark:bg-vc-blue-900/30 text-vc-blue dark:text-vc-blue-400 shadow-sm border border-vc-blue-100/30 mr-2 sm:mr-3">
+                    <svg class="h-6 w-6 animate-pulse text-vc-blue dark:text-vc-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </span>
+                <div class="space-y-1">
+                    <h3 class="text-base font-bold text-vc-dark dark:text-white">Election Success Roadmap</h3>
+                    <p class="text-xs text-vc-dark-400 dark:text-slate-400 leading-relaxed max-w-2xl">
+                        Unlock a flawless secure election experience! Step through our interactive roadmap to configure executive positions & candidates, upload a secure roster, issue cryptographic single-use voter tokens, and verify results with public audited ballot receipts.
+                    </p>
+                </div>
+            </div>
+            <div class="w-full md:w-auto shrink-0 flex justify-center md:justify-end">
+                <button @click="guideOpen = true" class="vc-btn vc-btn-accent vc-btn-sm py-2.5 px-6 font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 w-full md:w-auto rounded-xl">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Launch Roadmap</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        <div class="vc-card p-6">
+            <h2 class="text-lg font-semibold text-vc-dark">Positions and candidates</h2>
+            <div class="mt-5 space-y-4">
+                {% for position in positions %}
+                    <div class="rounded-xl border border-vc-dark-100/40 p-4">
+                        <p class="font-semibold">{{ position.title }}</p>
+                        <ul class="mt-2 list-disc pl-5 text-sm text-vc-dark-400">
+                            {% for candidate in position.candidates.all %}
+                                <li>{{ candidate.name }}{% if not candidate.is_active %} (inactive){% endif %}</li>
+                            {% empty %}
+                                <li>No candidates yet.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">Add positions and candidates.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="vc-card p-6">
+            <h2 class="text-lg font-semibold text-vc-dark">Actions</h2>
+            <div class="mt-5 flex flex-wrap gap-2">
+                {% if paid_for_roster and event.status != 'roster_locked' and event.status != 'open' and event.status != 'closed' and event.status != 'tallied' and event.status != 'certified' %}
+                    <form method="post" action="{% url 'dashboard:election_action' event.slug 'lock_roster' %}">{% csrf_token %}
+                        <button class="vc-btn vc-btn-outline-blue vc-btn-sm">Lock roster</button>
+                    </form>
+                {% endif %}
+                {% if event.status == 'closed' %}
+                    <form method="post" action="{% url 'dashboard:election_action' event.slug 'tally' %}">{% csrf_token %}
+                        <button class="vc-btn vc-btn-accent vc-btn-sm">Tally results</button>
+                    </form>
+                {% endif %}
+                {% if latest_tally %}
+                    <form method="post" action="{% url 'dashboard:election_action' event.slug 'publish_results' %}">{% csrf_token %}
+                        <button class="vc-btn vc-btn-outline-blue vc-btn-sm">Publish results</button>
+                    </form>
+                    <form method="post" action="{% url 'dashboard:election_action' event.slug 'certify' %}">{% csrf_token %}
+                        <button class="vc-btn vc-btn-outline vc-btn-sm">Certify</button>
+                    </form>
+                {% endif %}
+                {% if event.status == 'open' %}
+                    <a href="{% url 'elections:detail' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Public page</a>
+                {% endif %}
+                {% if latest_tally %}
+                    <a href="{% url 'elections:results' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Results page</a>
+                {% endif %}
+            </div>
+            {% if latest_invoice %}
+                <p class="mt-5 text-sm text-vc-dark-400">Latest invoice: {{ latest_invoice.currency }} {{ latest_invoice.amount|floatformat:2 }} · {{ latest_invoice.status }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Success guide modal include (Outside any containing block/relative wrappers for full overlay layout) -->
+    {% include 'dashboard/includes/guide_modal_election.html' %}
+</section>
+{% endblock %}

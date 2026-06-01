@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Results | {{ event.title }}{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+    <div class="vc-card p-8">
+        <h1 class="vc-section-title">{{ event.title }} results</h1>
+        {% if not results_public %}
+            <p class="mt-3 text-vc-dark-400">Results are not public yet.</p>
+        {% endif %}
+    </div>
+    {% if results_public and latest_tally %}
+        {% for position in latest_tally.totals.positions %}
+            <div class="vc-card p-6">
+                <h2 class="text-lg font-semibold">{{ position.position_title }}</h2>
+                <div class="mt-4 space-y-3">
+                    {% for candidate in position.candidates %}
+                        <div class="vc-status-row"><span>{{ candidate.candidate_name }}</span><span class="font-semibold">{{ candidate.votes }}</span></div>
+                    {% endfor %}
+                    {% if position.abstentions is not None %}
+                        <div class="vc-status-row border-t border-dashed border-vc-orange/20 pt-2 text-vc-orange-700 font-medium bg-vc-orange-50/20 px-3 py-1.5 rounded-xl">
+                            <span>Abstain / Blank Votes</span>
+                            <span class="font-semibold">{{ position.abstentions }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if results_public %}
+        <div class="grid gap-6 md:grid-cols-5 vc-animate-in">
+            <!-- Interactive Lookup (Colspan 3) -->
+            <div class="vc-card p-6 md:col-span-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-vc-blue-50 dark:bg-vc-blue-900/30 text-vc-blue dark:text-vc-blue-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                    <h2 class="text-lg font-bold text-vc-dark dark:text-white">Verify Your Vote</h2>
+                </div>
+                <p class="mt-2.5 text-xs text-vc-dark-400 dark:text-slate-400 leading-relaxed">
+                    Verify that your ballot was counted exactly as cast. Enter the 16-character receipt code generated when you submitted your ballot.
+                </p>
+                <div class="mt-5">
+                    <form hx-get="{% url 'elections:verify_receipt' event.slug %}" hx-target="#verification-result" hx-indicator="#indicator" class="flex gap-2">
+                        <div class="relative flex-grow">
+                            <input type="text" name="code" placeholder="e.g. 70163FA55B76D941" 
+                                   class="w-full rounded-xl border border-vc-dark-100/60 dark:border-vc-dark-600 bg-white dark:bg-vc-surface-raised px-4 py-2.5 font-mono text-sm tracking-widest text-vc-dark dark:text-white placeholder:font-sans placeholder:tracking-normal focus:border-vc-blue focus:ring-1 focus:ring-vc-blue focus:outline-none transition-colors"
+                                   maxlength="16" required>
+                        </div>
+                        <button type="submit" class="vc-btn vc-btn-accent px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 hover:shadow-lg">
+                            <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span>Verify</span>
+                            <!-- Loading indicator spinner -->
+                            <svg id="indicator" class="htmx-indicator animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                    <div id="verification-result">
+                        <p class="text-xs text-vc-dark-300 dark:text-slate-500 mt-3">Ballot receipts verify presence in the final tally without revealing your choices.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Registry Audit List (Colspan 2) -->
+            <div class="vc-card p-6 md:col-span-2 flex flex-col justify-between" x-data="{ auditOpen: false }">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-vc-orange-50 dark:bg-vc-orange-950/30 text-vc-orange dark:text-vc-orange-400">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                            </span>
+                            <h2 class="text-lg font-bold text-vc-dark dark:text-white">Audit Registry</h2>
+                        </div>
+                        <span class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-vc-orange/10 text-vc-orange dark:bg-vc-orange/20">
+                            {{ receipts|length }} ballots
+                        </span>
+                    </div>
+                    <p class="mt-2.5 text-xs text-vc-dark-400 dark:text-slate-400 leading-relaxed">
+                        To ensure full transparency, below is the anonymous list of all counted ballot receipts. Codes are sorted alphabetically to guarantee absolute ballot privacy.
+                    </p>
+                </div>
+                <div class="mt-5">
+                    <button @click="auditOpen = !auditOpen" 
+                            class="w-full vc-btn vc-btn-outline-blue text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition focus:outline-none">
+                        <span x-text="auditOpen ? 'Hide Audit Registry' : 'View Audit Registry'">View Audit Registry</span>
+                        <svg class="h-3 w-3 transition-transform" :class="auditOpen ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+
+                <!-- Collapsible Registry List -->
+                <div x-show="auditOpen" x-collapse x-cloak class="mt-4 border-t border-gray-100 dark:border-vc-dark-600 pt-4 w-full">
+                    <div class="max-h-60 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-vc-dark-600">
+                        {% for code in receipts %}
+                            <div class="flex items-center justify-between p-2 rounded-lg bg-vc-surface dark:bg-vc-surface-raised border border-gray-50 dark:border-vc-dark-600/50 hover:bg-vc-blue-50/20 dark:hover:bg-vc-blue-900/10 transition-colors">
+                                <span class="font-mono text-xs text-vc-dark dark:text-slate-300 font-semibold tracking-wider">{{ code }}</span>
+                                <span class="flex h-4 w-4 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400">
+                                    <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                </span>
+                            </div>
+                        {% empty %}
+                            <div class="py-4 text-center text-xs text-vc-dark-400">No ballots tallied yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

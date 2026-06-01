@@ -1,0 +1,232 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Revenue &amp; Earnings | VoteCentral{% endblock %}
+{% block nav_revenue %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in" x-data="{ currentTab: '{% if request.GET.page_payments %}payments{% elif request.GET.page_attention %}attention{% elif request.GET.page_ledger %}ledger{% else %}summary{% endif %}' }">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="vc-section-label">Organizer Finance</p>
+            <h1 class="mt-1 vc-section-title dark:text-white">Revenue &amp; Earnings</h1>
+            <p class="mt-1 vc-section-subtitle dark:text-slate-400">Confirmed revenue, net earnings, and ledger activity across all your events.</p>
+        </div>
+    </div>
+
+    <!-- KPI Stats Grid -->
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Gross Revenue</p>
+            <p class="vc-stat-value text-lg sm:text-2xl dark:text-white">{{ default_currency }} {{ summary.confirmed_gross_revenue|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label text-vc-blue">Net Earnings</p>
+            <p class="vc-stat-value text-lg sm:text-2xl text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ summary.net_earnings|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Commission</p>
+            <p class="vc-stat-value text-lg sm:text-2xl dark:text-white">{{ default_currency }} {{ summary.commission_total|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Pending</p>
+            <p class="vc-stat-value text-lg sm:text-2xl dark:text-white">{{ default_currency }} {{ summary.pending_amount|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat vc-stat-accent dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label text-vc-orange">Available to Withdraw</p>
+            <p class="vc-stat-value text-lg sm:text-2xl text-vc-orange dark:text-vc-orange-100">{{ default_currency }} {{ summary.available_to_withdraw|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Votes</p>
+            <p class="vc-stat-value text-lg sm:text-2xl dark:text-white">{{ summary.confirmed_vote_total }}</p>
+        </div>
+    </div>
+
+    <!-- Tabbed Navigation -->
+    <div class="border-b border-gray-100 dark:border-vc-dark-600">
+        <nav class="flex space-x-8" aria-label="Finance Tabs">
+            <button @click="currentTab = 'summary'"
+                    :class="currentTab === 'summary' ? 'border-vc-blue text-vc-blue dark:text-vc-blue dark:border-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Event Summary
+            </button>
+            <button @click="currentTab = 'payments'"
+                    :class="currentTab === 'payments' ? 'border-vc-blue text-vc-blue dark:text-vc-blue dark:border-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Successful Payments
+            </button>
+            <button @click="currentTab = 'attention'"
+                    :class="currentTab === 'attention' ? 'border-vc-blue text-vc-blue dark:text-vc-blue dark:border-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Attention Required (Pending/Failed)
+            </button>
+            <button @click="currentTab = 'ledger'"
+                    :class="currentTab === 'ledger' ? 'border-vc-blue text-vc-blue dark:text-vc-blue dark:border-vc-blue' : 'border-transparent text-vc-dark-400 hover:text-vc-dark dark:hover:text-white'"
+                    class="border-b-2 py-4 px-1 text-sm font-semibold whitespace-nowrap focus:outline-none transition-all duration-200">
+                Ledger Activity
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="mt-6">
+        <!-- Tab 1: Event Revenue Summary -->
+        <div x-show="currentTab === 'summary'" x-transition class="space-y-4">
+            {% for row in event_rows %}
+                <div class="rounded-3xl bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 p-6 border border-gray-100/50 shadow-sm">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            <p class="font-bold text-vc-dark dark:text-white text-base">{{ row.title }}</p>
+                            <span class="vc-badge {% if row.status == 'published' %}vc-badge-blue{% elif row.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %} mt-1">{{ row.status|title }}</span>
+                        </div>
+                        <a href="{{ row.get_dashboard_url }}" class="text-xs font-bold text-vc-blue hover:text-vc-blue-600">
+                            Open event &rarr;
+                        </a>
+                    </div>
+                    <div class="mt-6 grid gap-4 grid-cols-2 md:grid-cols-4">
+                        <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">Gross</p>
+                            <p class="mt-1 text-sm font-extrabold text-vc-dark dark:text-white">{{ default_currency }} {{ row.confirmed_gross|floatformat:2 }}</p>
+                        </div>
+                        <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">Net Earnings</p>
+                            <p class="mt-1 text-sm font-extrabold text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ row.net_earnings|floatformat:2 }}</p>
+                        </div>
+                        <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">Commission ({{ commission_rate }}%)</p>
+                            <p class="mt-1 text-sm font-extrabold text-vc-dark dark:text-white">{{ default_currency }} {{ row.platform_commission|floatformat:2 }}</p>
+                        </div>
+                        <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">Pending</p>
+                            <p class="mt-1 text-sm font-extrabold text-vc-dark dark:text-white">{{ default_currency }} {{ row.pending_amount|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="vc-empty">
+                    Your finance summary will appear here once your events receive payments.
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Tab 2: Successful Payments -->
+        <div x-show="currentTab === 'payments'" x-transition class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-3xl p-6 border border-gray-100/50 shadow-sm" style="display: none;">
+            <div class="space-y-3">
+                {% for payment in recent_successful_payments %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-vc-dark dark:text-white">{{ payment.voter_name|default:"Guest Voter" }} <span class="text-xs font-normal text-vc-dark-400 dark:text-slate-400">({{ payment.voter_email|default:"no email" }})</span></p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-1">Purchased {{ payment.vote_quantity }} vote{{ payment.vote_quantity|pluralize }} for <span class="font-semibold text-vc-dark dark:text-white">{{ payment.nominee.name }}</span> in {{ payment.event.title }} · {{ payment.currency }} {{ payment.amount|floatformat:2 }}</p>
+                        </div>
+                        <span class="vc-badge vc-badge-success">{{ payment.status }}</span>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">No successful payments yet.</div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination for Successful Payments -->
+            {% if recent_successful_payments.has_other_pages %}
+                <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+                    <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                        Showing page {{ recent_successful_payments.number }} of {{ recent_successful_payments.paginator.num_pages }}
+                    </span>
+                    <div class="flex gap-2">
+                        {% if recent_successful_payments.has_previous %}
+                            <a href="?page_payments={{ recent_successful_payments.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                &larr; Previous
+                            </a>
+                        {% endif %}
+                        {% if recent_successful_payments.has_next %}
+                            <a href="?page_payments={{ recent_successful_payments.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                Next &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab 3: Attention Required -->
+        <div x-show="currentTab === 'attention'" x-transition class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-3xl p-6 border border-gray-100/50 shadow-sm" style="display: none;">
+            <div class="space-y-3">
+                {% for payment in recent_attention_payments %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-vc-dark dark:text-white">{{ payment.voter_name|default:"Guest Voter" }} <span class="text-xs font-normal text-vc-dark-400 dark:text-slate-400">({{ payment.voter_email|default:"no email" }})</span></p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-1">{{ payment.vote_quantity }} vote{{ payment.vote_quantity|pluralize }} for <span class="font-semibold text-vc-dark dark:text-white">{{ payment.nominee.name }}</span> · {{ payment.currency }} {{ payment.amount|floatformat:2 }}</p>
+                        </div>
+                        <span class="vc-badge {% if payment.status == 'pending' or payment.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %}">
+                            {{ payment.status }}
+                        </span>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">No pending or failed attempts.</div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination for Attention Required -->
+            {% if recent_attention_payments.has_other_pages %}
+                <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+                    <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                        Showing page {{ recent_attention_payments.number }} of {{ recent_attention_payments.paginator.num_pages }}
+                    </span>
+                    <div class="flex gap-2">
+                        {% if recent_attention_payments.has_previous %}
+                            <a href="?page_attention={{ recent_attention_payments.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                &larr; Previous
+                            </a>
+                        {% endif %}
+                        {% if recent_attention_payments.has_next %}
+                            <a href="?page_attention={{ recent_attention_payments.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                Next &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab 4: Ledger Activity -->
+        <div x-show="currentTab === 'ledger'" x-transition class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-3xl p-6 border border-gray-100/50 shadow-sm" style="display: none;">
+            <div class="space-y-3">
+                {% for tx in recent_ledger_transactions %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-vc-dark dark:text-white">{{ tx.payment_attempt.voter_name|default:"Guest Voter" }} <span class="text-xs font-normal text-vc-dark-400 dark:text-slate-400">({{ tx.payment_attempt.voter_email|default:"no email" }})</span></p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-1">Vote purchase for <span class="font-semibold text-vc-dark dark:text-white">{{ tx.payment_attempt.nominee.name }}</span> · {{ tx.payment_attempt.event.title }}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-xs font-bold text-vc-blue dark:text-vc-blue-200">{{ tx.reference }}</p>
+                            <p class="text-[10px] font-semibold text-vc-dark-300 dark:text-slate-400 mt-0.5">{{ tx.posted_at|date:"M j, Y g:i A" }}</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">Ledger transactions appear after confirmed payments.</div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination for Ledger Activity -->
+            {% if recent_ledger_transactions.has_other_pages %}
+                <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+                    <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                        Showing page {{ recent_ledger_transactions.number }} of {{ recent_ledger_transactions.paginator.num_pages }}
+                    </span>
+                    <div class="flex gap-2">
+                        {% if recent_ledger_transactions.has_previous %}
+                            <a href="?page_ledger={{ recent_ledger_transactions.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                &larr; Previous
+                            </a>
+                        {% endif %}
+                        {% if recent_ledger_transactions.has_next %}
+                            <a href="?page_ledger={{ recent_ledger_transactions.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                Next &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

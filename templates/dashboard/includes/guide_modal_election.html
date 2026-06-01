@@ -1,0 +1,175 @@
+<!-- Premium Success Guide Modal for Elections (Mobile Friendly) -->
+<div class="fixed inset-0 z-50 overflow-y-auto animate-fade-in"
+     style="display: none;"
+     x-show="guideOpen"
+     x-trap.noscroll="guideOpen">
+     
+     <!-- Backdrop -->
+     <div class="fixed inset-0 bg-vc-dark/60 backdrop-blur-md transition-opacity" 
+          x-show="guideOpen" 
+          x-transition:enter="ease-out duration-300"
+          x-transition:enter-start="opacity-0"
+          x-transition:enter-end="opacity-100"
+          x-transition:leave="ease-in duration-200"
+          x-transition:leave-start="opacity-100"
+          x-transition:leave-end="opacity-0"
+          @click="guideOpen = false"></div>
+
+     <!-- Modal Position -->
+     <div class="flex min-h-screen items-start sm:items-center justify-center p-3 sm:p-6 text-center">
+         <div class="relative w-full max-w-2xl transform rounded-[2rem] bg-white dark:bg-vc-surface-raised border border-gray-100 dark:border-vc-dark-600 p-5 sm:p-8 shadow-2xl text-left transition-all"
+              x-show="guideOpen"
+              x-transition:enter="ease-out duration-300"
+              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+              x-transition:leave="ease-in duration-200"
+              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+              x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+              @click.away="guideOpen = false">
+              
+              <!-- Close Header Button -->
+              <button @click="guideOpen = false" class="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 dark:bg-vc-dark-600 text-gray-400 hover:text-vc-blue transition-colors focus:outline-none" aria-label="Close guide">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+
+              <h2 class="text-xl sm:text-2xl font-extrabold text-vc-dark dark:text-white flex items-center gap-2">
+                  <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-vc-blue-50 dark:bg-vc-blue-900/30 text-vc-blue dark:text-vc-blue-400">
+                      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                  </span>
+                  <span>Secure Election Setup</span>
+              </h2>
+
+              <!-- Stepper Header (Desktop view) -->
+              <div class="hidden sm:grid grid-cols-4 gap-4 mt-6">
+                  <template x-for="step in [1, 2, 3, 4]">
+                      <div class="flex flex-col gap-1.5 cursor-pointer" @click="currentStep = step">
+                          <!-- Progress Bar -->
+                          <div class="h-1.5 rounded-full transition-all duration-300"
+                               :class="currentStep >= step ? 'bg-vc-blue' : 'bg-vc-dark-100 dark:bg-vc-dark-600'"></div>
+                          <span class="text-[10px] font-bold uppercase tracking-wider transition-colors"
+                                :class="currentStep === step ? 'text-vc-blue' : 'text-vc-dark-300 dark:text-slate-500'"
+                                x-text="'Step ' + step"></span>
+                      </div>
+                  </template>
+              </div>
+
+              <!-- Stepper Header (Mobile view) -->
+              <div class="sm:hidden flex items-center justify-between mt-5 pb-3 border-b border-gray-50 dark:border-vc-dark-600/50">
+                  <span class="text-xs font-bold text-vc-blue uppercase tracking-wider" x-text="'Step ' + currentStep + ' of 4'"></span>
+                  <div class="flex gap-1">
+                      <template x-for="step in [1, 2, 3, 4]">
+                          <span class="h-1.5 w-1.5 rounded-full transition-all duration-300"
+                                :class="currentStep === step ? 'bg-vc-blue w-4' : 'bg-vc-dark-100 dark:bg-vc-dark-600'"></span>
+                      </template>
+                  </div>
+              </div>
+
+              <!-- Step Contents -->
+              <div class="mt-4 sm:mt-8 min-h-[10rem] sm:min-h-[14rem] flex flex-col justify-between">
+                  <!-- Step 1: Positions & Candidates -->
+                  <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3 sm:space-y-4">
+                      <div class="flex items-center space-x-4 md:space-x-5">
+                          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-vc-blue-50 dark:bg-vc-blue-900/30 text-vc-blue dark:text-vc-blue-400 border border-vc-blue-100/20 mr-1 sm:mr-2">
+                              <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                          </span>
+                          <div>
+                              <h3 class="text-sm sm:text-base font-bold text-vc-dark dark:text-white leading-snug">Step 1: Configure Balloting & Positions</h3>
+                              <p class="text-[10px] sm:text-[11px] text-vc-dark-400">Lay down the democratic framework.</p>
+                          </div>
+                      </div>
+                      <p class="text-xs text-vc-dark-500 dark:text-slate-400 leading-relaxed">
+                          Build the structure of your ballot before registering voters. A solid balloting setup requires:
+                      </p>
+                      <ul class="list-disc pl-5 text-xs text-vc-dark-400 dark:text-slate-400 space-y-1.5 leading-relaxed">
+                          <li><strong>Define Executive Positions</strong>: Create clearly structured categories (e.g. President, Treasurer).</li>
+                          <li><strong>Configure Max Choices</strong>: Specify if voters can choose multiple candidates (e.g., select at most 2 committee members).</li>
+                          <li><strong>Nominate Candidates</strong>: Ensure every position has active candidates associated with it.</li>
+                      </ul>
+                  </div>
+
+                  <!-- Step 2: Roster Upload & Invoice -->
+                  <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3 sm:space-y-4">
+                      <div class="flex items-center space-x-4 md:space-x-5">
+                          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-100/20 mr-1 sm:mr-2">
+                              <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          </span>
+                          <div>
+                              <h3 class="text-sm sm:text-base font-bold text-vc-dark dark:text-white leading-snug">Step 2: Roster Upload & Settle Invoice</h3>
+                              <p class="text-[10px] sm:text-[11px] text-vc-dark-400">Lock down your registry & activate portal.</p>
+                          </div>
+                      </div>
+                      <p class="text-xs text-vc-dark-500 dark:text-slate-400 leading-relaxed">
+                          To protect the integrity of the election, the eligible voter roster must be paid for and locked:
+                      </p>
+                      <ul class="list-disc pl-5 text-xs text-vc-dark-400 dark:text-slate-400 space-y-1.5 leading-relaxed">
+                          <li><strong>CSV Roster Upload</strong>: Import your voter register containing `external_id`, `name`, `email`, and `phone` headers.</li>
+                          <li><strong>Graduated Pricing</strong>: Settle the billing fee (which scales progressively based on your total registry size).</li>
+                          <li><strong>Pay with Paystack</strong>: Instantly pay via Paystack MoMo or Card directly on the unpaid invoice card.</li>
+                      </ul>
+                  </div>
+
+                  <!-- Step 3: Cryptographic Token Issuing -->
+                  <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3 sm:space-y-4">
+                      <div class="flex items-center space-x-4 md:space-x-5">
+                          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-vc-orange/10 text-vc-orange border border-vc-orange/20 mr-1 sm:mr-2">
+                              <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-2 4a2 2 0 012 2m-8-3a3 3 0 11-6 0 3 3 0 016 0zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          </span>
+                          <div>
+                              <h3 class="text-sm sm:text-base font-bold text-vc-dark dark:text-white leading-snug">Step 3: Issue Cryptographic Voter Tokens</h3>
+                              <p class="text-[10px] sm:text-[11px] text-vc-dark-400">Zero-trust, secure ballot delivery.</p>
+                          </div>
+                      </div>
+                      <p class="text-xs text-vc-dark-500 dark:text-slate-400 leading-relaxed">
+                          Once the invoice is settled and your roster is locked, you can bulk-issue secure cryptographic credentials:
+                      </p>
+                      <ul class="list-disc pl-5 text-xs text-vc-dark-400 dark:text-slate-400 space-y-1.5 leading-relaxed">
+                          <li><strong>Unique 24-Character Tokens</strong>: The system generates highly secure, single-use cryptographic tokens.</li>
+                          <li><strong>Automated Email Delivery</strong>: Each voter automatically receives a private voting email containing their unique credential code and instant access link.</li>
+                          <li><strong>Voter Secrecy</strong>: Tokens are hashed before being stored in the database, ensuring no administrator can trace a cast ballot back to a specific voter.</li>
+                      </ul>
+                  </div>
+
+                  <!-- Step 4: Tallies & Cryptographic Auditing -->
+                  <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3 sm:space-y-4">
+                      <div class="flex items-center space-x-4 md:space-x-5">
+                          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border border-purple-100/20 mr-1 sm:mr-2">
+                              <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                          </span>
+                          <div>
+                              <h3 class="text-sm sm:text-base font-bold text-vc-dark dark:text-white leading-snug">Step 4: Close, Tally, & Audit Ballot Receipts</h3>
+                              <p class="text-[10px] sm:text-[11px] text-vc-dark-400">Guaranteed democratic mathematical transparency.</p>
+                          </div>
+                      </div>
+                      <p class="text-xs text-vc-dark-500 dark:text-slate-400 leading-relaxed">
+                          When the election window closes, close the voting channel, tally results, and publish certified reports:
+                      </p>
+                      <ul class="list-disc pl-5 text-xs text-vc-dark-400 dark:text-slate-400 space-y-1.5 leading-relaxed">
+                          <li><strong>Voter Ballot Verification</strong>: When casting a vote, each voter is given a private receipt code. On the public results page, voters can enter this code to verify their ballot was securely counted in the final tally.</li>
+                          <li><strong>Alphabetical Audit Registry</strong>: We list all counted ballot receipts on the public page in alphabetical order to preserve absolute ballot secrecy while showing 100% auditable proof that no fake votes were injected.</li>
+                      </ul>
+                  </div>
+
+                  <!-- Navigation controls -->
+                  <div class="mt-8 pt-4 border-t border-gray-100 dark:border-vc-dark-600 flex items-center justify-between gap-3">
+                      <div>
+                          <button x-show="currentStep > 1" @click="currentStep--" 
+                                  class="vc-btn vc-btn-outline vc-btn-sm py-2 px-4 rounded-xl text-xs font-bold transition flex items-center gap-1.5 focus:outline-none">
+                              &larr; Back
+                          </button>
+                      </div>
+                      <div class="flex gap-2">
+                          <button x-show="currentStep < 4" @click="currentStep++" 
+                                  class="vc-btn vc-btn-accent vc-btn-sm py-2 px-5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 focus:outline-none">
+                              <span>Next</span>
+                              &rarr;
+                          </button>
+                          <button x-show="currentStep === 4" @click="guideOpen = false" 
+                                  class="vc-btn vc-btn-accent vc-btn-sm py-2 px-5 rounded-xl text-xs font-bold transition focus:outline-none shadow-md">
+                              Finish &amp; Close
+                          </button>
+                      </div>
+                  </div>
+              </div>
+         </div>
+     </div>
+</div>

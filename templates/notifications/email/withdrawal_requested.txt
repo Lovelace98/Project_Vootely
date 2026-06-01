@@ -1,0 +1,11 @@
+Hello,
+
+VoteCentral has received your withdrawal request.
+
+Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
+Review status: pending
+
+You can track this request in your organizer dashboard:
+{{ withdrawal_dashboard_url }}
+
+VoteCentral

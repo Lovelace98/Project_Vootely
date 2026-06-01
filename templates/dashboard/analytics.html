@@ -1,0 +1,165 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Advanced Analytics | VoteCentral{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+
+{% block dashboard_header_text %}
+<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight dark:text-white">Advanced Analytics</h1>
+<p class="mt-1 text-sm text-vc-dark-400 font-medium dark:text-slate-400">Track and analyze deep sales performance metrics, voter shares, and nominee leaderboards.</p>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6 vc-animate-in">
+    <!-- Filters Bar -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-6 shadow-sm border border-gray-100/50">
+        <!-- Left timeframe filters -->
+        <div class="flex items-center gap-2" x-data="{ open: false }">
+            <button @click="open = !open" class="flex h-10 items-center gap-2 rounded-full bg-vc-blue-50 px-4 text-sm font-bold text-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white">
+                {% if timeframe == 'today' %}Today
+                {% elif timeframe == 'this_week' %}This week
+                {% elif timeframe == 'this_month' %}This month
+                {% elif timeframe == 'this_year' %}This year
+                {% else %}All time{% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-vc-blue dark:text-white"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div x-show="open" @click.away="open = false" class="absolute left-6 mt-36 w-48 rounded-2xl bg-white shadow-lg border border-gray-100 z-50 overflow-hidden dark:bg-vc-surface-raised dark:border-vc-dark-600" style="display: none;">
+                <div class="py-1">
+                    <a href="?timeframe=today{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">Today</a>
+                    <a href="?timeframe=this_week{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This week</a>
+                    <a href="?timeframe=this_month{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This month</a>
+                    <a href="?timeframe=this_year{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">This year</a>
+                    <a href="?timeframe=all_time{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}" class="block px-4 py-2 text-sm text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue dark:text-slate-300 dark:hover:bg-slate-800">All time</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right event selector -->
+        <div class="flex items-center gap-3">
+            <label class="text-xs font-bold text-vc-dark-400 dark:text-slate-400">Sort per event:</label>
+            <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-2 pl-4 pr-10 text-sm font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                <option value="">All events</option>
+                {% for ev in events %}
+                    <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Overview Stats cards -->
+    <div class="grid gap-6 sm:grid-cols-2">
+        <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-6 border border-gray-100 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Total Analytics Revenue</p>
+                <p class="text-3xl font-extrabold text-vc-dark dark:text-white mt-2 leading-none">{{ default_currency }} {{ total_revenue|floatformat:2 }}</p>
+            </div>
+            <div class="h-12 w-12 rounded-full bg-vc-blue-50 dark:bg-slate-800 flex items-center justify-center text-vc-blue dark:text-white shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-6 border border-gray-100 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Total Votes Tracked</p>
+                <p class="text-3xl font-extrabold text-vc-dark dark:text-white mt-2 leading-none">{{ total_votes }}</p>
+            </div>
+            <div class="h-12 w-12 rounded-full bg-vc-orange-50 dark:bg-slate-800 flex items-center justify-center text-vc-orange dark:text-white shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart row: Sales trends by day of the week -->
+    <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-8 border border-gray-100/50 shadow-sm">
+        <div class="mb-6">
+            <h2 class="text-lg font-bold text-vc-dark dark:text-white">Weekly sales activity</h2>
+            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Votes volume trend per weekday (Sunday to Saturday)</p>
+        </div>
+        <div class="h-[280px] w-full">
+            <canvas id="weeklySalesTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Nominee Performance breakdown -->
+    <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-8 border border-gray-100/50 shadow-sm overflow-hidden">
+        <div class="mb-6">
+            <h2 class="text-lg font-bold text-vc-dark dark:text-white">Nominee Earnings &amp; Performance</h2>
+            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Granular audit breakdown of all active nominees, sorted by votes.</p>
+        </div>
+
+        <div class="overflow-x-auto -mx-8 px-8">
+            <div class="overflow-hidden border border-gray-100/80 dark:border-vc-dark-600 rounded-2xl shadow-sm">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-vc-blue-50/50 dark:bg-slate-800/50 border-y border-gray-100 dark:border-vc-dark-600">
+                            <th class="py-3 px-8 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Nominee Name</th>
+                            <th class="py-3 px-6 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Event</th>
+                            <th class="py-3 px-6 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Votes received</th>
+                            <th class="py-3 px-8 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Gross revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-vc-dark-600">
+                        {% for nominee in nominees_perf %}
+                            <tr class="hover:bg-gray-50/50 dark:hover:bg-vc-dark-50/50 transition-colors">
+                                <td class="py-4 px-8 text-sm font-bold text-vc-dark dark:text-white">{{ nominee.name }}</td>
+                                <td class="py-4 px-6 text-xs font-semibold text-vc-dark-400 dark:text-slate-400">{{ nominee.event.title }}</td>
+                                <td class="py-4 px-6 text-xs font-extrabold text-vc-dark dark:text-slate-200">{{ nominee.votes }} votes</td>
+                                <td class="py-4 px-8 text-sm font-extrabold text-emerald-600">{{ default_currency }} {{ nominee.earnings|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-12 text-center text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                                    No active nominee records found matching filters.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const trendCtx = document.getElementById('weeklySalesTrendChart');
+        if (trendCtx) {
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{
+                        label: 'Votes Cast',
+                        data: {{ weekly_votes|safe }},
+                        borderColor: '#191bdf',
+                        backgroundColor: 'rgba(25, 27, 223, 0.05)',
+                        borderWidth: 3.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#191bdf'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f0f2ff', drawBorder: false },
+                            ticks: { font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

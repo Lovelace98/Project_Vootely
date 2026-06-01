@@ -1,0 +1,124 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Organizer Withdrawals | VoteCentral{% endblock %}
+{% block nav_withdrawals %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6">
+    <!-- Header -->
+    <div class="vc-animate-in">
+        <p class="vc-section-label">Organizer Finance</p>
+        <h1 class="mt-1 vc-section-title">Withdrawals</h1>
+        <p class="mt-1 vc-section-subtitle">Submit payout requests, monitor review status, and track available balance.</p>
+    </div>
+
+    <!-- KPI Stats -->
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="vc-stat vc-stat-accent vc-animate-in vc-stagger-1">
+            <p class="vc-stat-label">Available to Withdraw</p>
+            <p class="vc-stat-value text-vc-orange">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat vc-stat-blue vc-animate-in vc-stagger-2">
+            <p class="vc-stat-label">Confirmed Earnings</p>
+            <p class="vc-stat-value">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat vc-animate-in vc-stagger-3">
+            <p class="vc-stat-label">In Progress</p>
+            <p class="vc-stat-value">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
+        </div>
+        <div class="vc-stat vc-animate-in vc-stagger-4">
+            <p class="vc-stat-label">Total Withdrawn</p>
+            <p class="vc-stat-value">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <!-- Request payout -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3">
+            <h2 class="text-lg font-semibold text-vc-dark">Request a Payout</h2>
+            <p class="mt-1 text-sm text-vc-dark-400">Pending requests don't count as paid out. Approved and processing requests reduce available balance.</p>
+            <form method="post" class="mt-6 space-y-4">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="relative">
+                        <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        
+                        {% if field.name == 'otp' %}
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    {{ field }}
+                                </div>
+                                <button type="button" 
+                                        hx-post="{% url 'dashboard:request_otp' %}" 
+                                        hx-target="#otp-status"
+                                        hx-swap="innerHTML"
+                                        class="vc-btn vc-btn-outline-blue vc-btn-sm shrink-0 h-[48px] self-end">
+                                    Send Code
+                                </button>
+                            </div>
+                            <div id="otp-status" class="mt-2"></div>
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+
+                        {% if field.name == 'bank_account_number' %}
+                            <div id="account-verification-status" class="mt-2"></div>
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <p class="mt-1 text-xs text-vc-dark-300">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <p class="text-sm font-medium text-vc-danger">{{ form.non_field_errors|join:", " }}</p>
+                {% endif %}
+                <button type="submit" class="vc-btn vc-btn-accent vc-btn-block vc-btn-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Submit Withdrawal Request
+                </button>
+            </form>
+        </div>
+
+        <!-- Withdrawal history -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-4">
+            <div class="flex items-center justify-between gap-4">
+                <h2 class="text-lg font-semibold text-vc-dark">Withdrawal History</h2>
+                <span class="text-xs text-vc-dark-300">Reviewed in admin</span>
+            </div>
+            <div class="mt-5 space-y-3">
+                {% for withdrawal in withdrawals %}
+                    <div class="rounded-xl bg-vc-surface p-4 border border-vc-dark-100/30">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-vc-dark">{{ withdrawal.currency }} {{ withdrawal.amount|floatformat:2 }}</p>
+                                <p class="text-sm text-vc-dark-400">{{ withdrawal.bank_name }} · {{ withdrawal.bank_account_number }}</p>
+                            </div>
+                            <span class="vc-badge {% if withdrawal.status == 'completed' %}vc-badge-success{% elif withdrawal.status == 'approved' or withdrawal.status == 'processing' %}vc-badge-warning{% elif withdrawal.status == 'pending' %}vc-badge-neutral{% else %}vc-badge-danger{% endif %}">
+                                {{ withdrawal.status }}
+                            </span>
+                        </div>
+                        <div class="mt-3 space-y-1 text-sm text-vc-dark-400">
+                            <p>Requested {{ withdrawal.requested_at|date:"M j, Y g:i A" }}</p>
+                            {% if withdrawal.payout_reference %}
+                                <p>Payout ref: <span class="font-medium text-vc-dark">{{ withdrawal.payout_reference }}</span></p>
+                            {% endif %}
+                            {% if withdrawal.review_notes %}
+                                <p class="italic">{{ withdrawal.review_notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">
+                        Withdrawal requests appear here after your first payout.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

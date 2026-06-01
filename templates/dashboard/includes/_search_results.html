@@ -1,0 +1,128 @@
+<div class="space-y-5 max-h-[440px] overflow-y-auto p-4">
+    {% if events %}
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-blue mb-2 dark:text-vc-blue-200">Events &amp; Elections</p>
+            <div class="space-y-2">
+                {% for event in events %}
+                    <a href="{% if event.kind == 'secure_election' %}{% url 'dashboard:election_detail' event.slug %}{% else %}{{ event.get_dashboard_url }}{% endif %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ event.title }}</p>
+                                <span class="vc-badge {% if event.kind == 'secure_election' %}vc-badge-blue{% else %}vc-badge-orange{% endif %} text-[8px]">{{ event.get_kind_display }}</span>
+                            </div>
+                            <p class="mt-1 text-xs text-vc-dark-400 dark:text-slate-400">{{ event.get_status_display }} · {{ event.start_at|date:"M d, Y" }}</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if nominees or election_candidates %}
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-orange mb-2 dark:text-vc-orange-100">People</p>
+            <div class="space-y-2">
+                {% for nominee in nominees %}
+                    <a href="{% url 'dashboard:nominee_edit' nominee.event.slug nominee.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-orange-50/50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ nominee.name }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Nominee · Code {{ nominee.code }} · {{ nominee.event.title }}</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
+                    </a>
+                {% endfor %}
+                {% for candidate in election_candidates %}
+                    <a href="{% url 'dashboard:election_candidates' candidate.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ candidate.name }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Election candidate · {{ candidate.position.title }} · {{ candidate.event.title }}</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if election_positions or election_voters or election_credentials or election_invoices %}
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400 mb-2 dark:text-slate-300">Election Setup</p>
+            <div class="space-y-2">
+                {% for position in election_positions %}
+                    <a href="{% url 'dashboard:election_positions' position.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ position.title }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Position · {{ position.event.title }} · {{ position.candidates.count }} candidate{{ position.candidates.count|pluralize }}</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
+                    </a>
+                {% endfor %}
+                {% for voter in election_voters %}
+                    <a href="{% url 'dashboard:election_roster' voter.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ voter.name }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Roster voter · {{ voter.external_id }}{% if voter.email %} · {{ voter.email }}{% endif %} · {{ voter.event.title }}</p>
+                        </div>
+                        <span class="vc-badge vc-badge-neutral text-[8px]">{{ voter.status }}</span>
+                    </a>
+                {% endfor %}
+                {% for credential in election_credentials %}
+                    <a href="{% url 'dashboard:election_credentials' credential.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ credential.voter.name }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Credential · {{ credential.voter.external_id }} · {{ credential.event.title }}</p>
+                        </div>
+                        <span class="vc-badge vc-badge-blue text-[8px]">{{ credential.status }}</span>
+                    </a>
+                {% endfor %}
+                {% for invoice in election_invoices %}
+                    <a href="{% url 'dashboard:election_invoice' invoice.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ invoice.event.title }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Invoice · {{ invoice.currency }} {{ invoice.amount|floatformat:2 }} · {{ invoice.voter_count }} voter{{ invoice.voter_count|pluralize }}</p>
+                        </div>
+                        <span class="vc-badge {% if invoice.status == 'paid' %}vc-badge-success{% elif invoice.status == 'pending' %}vc-badge-warning{% else %}vc-badge-neutral{% endif %} text-[8px]">{{ invoice.status }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if payments or organizer_payments %}
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-success mb-2 dark:text-emerald-400">Transactions &amp; Payments</p>
+            <div class="space-y-2">
+                {% for payment in payments %}
+                    <div class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface dark:bg-vc-dark-50 border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-bold text-vc-dark dark:text-white">{{ payment.voter_name|default:payment.voter_email|default:"Anonymous voter" }} · {{ payment.vote_quantity }} vote{{ payment.vote_quantity|pluralize }}</p>
+                            <p class="text-[10px] text-vc-dark-400 dark:text-slate-400">Voter payment · Ref {{ payment.gateway_reference }} · {{ payment.event.title }}</p>
+                        </div>
+                        <span class="vc-badge {% if payment.status == 'paid' %}vc-badge-success{% elif payment.status == 'pending' or payment.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %} text-[8px]">
+                            {{ payment.status }}
+                        </span>
+                    </div>
+                {% endfor %}
+                {% for payment in organizer_payments %}
+                    <a href="{% url 'dashboard:election_invoice' payment.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-bold text-vc-dark dark:text-white">{{ payment.payer_email }} · {{ payment.currency }} {{ payment.amount|floatformat:2 }}</p>
+                            <p class="text-[10px] text-vc-dark-400 dark:text-slate-400">Organizer invoice payment · Ref {{ payment.gateway_reference }} · {{ payment.event.title }}</p>
+                        </div>
+                        <span class="vc-badge {% if payment.status == 'paid' %}vc-badge-success{% elif payment.status == 'pending' or payment.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %} text-[8px]">
+                            {{ payment.status }}
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if not events and not nominees and not election_candidates and not election_positions and not election_voters and not election_credentials and not election_invoices and not payments and not organizer_payments %}
+        <div class="text-center py-8 text-vc-dark-400 dark:text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-vc-dark-200"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <p class="text-xs font-semibold">No matches found for "{{ query }}"</p>
+        </div>
+    {% endif %}
+</div>

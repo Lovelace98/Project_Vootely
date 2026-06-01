@@ -1,0 +1,13 @@
+Hello,
+
+Your payment for {{ event_title }} has been confirmed.
+
+Nominee: {{ nominee_name }}
+Votes counted: {{ vote_quantity }}
+Amount: {{ payment_currency }} {{ payment_amount }}
+Reference: {{ payment_reference }}
+
+You can review the payment status here:
+{{ payment_status_url }}
+
+VoteCentral

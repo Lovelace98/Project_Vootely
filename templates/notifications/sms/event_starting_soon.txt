@@ -1,0 +1,1 @@
+VoteCentral reminder: {{ event_title }} starts on {{ event_start_at|date:"M j, g:i A" }}.

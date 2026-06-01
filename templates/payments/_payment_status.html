@@ -1,0 +1,16 @@
+{% if payment_status %}
+    <div
+        class="vc-card border-l-4 p-5 {% if payment_status.variant == 'success' %}border-l-vc-success bg-vc-success-light{% elif payment_status.variant == 'warning' %}border-l-vc-warning bg-vc-warning-light{% else %}border-l-vc-danger bg-vc-danger-light{% endif %}"
+        {% if payment_status.should_poll and payment_status_poll_url %}
+            hx-get="{{ payment_status_poll_url }}"
+            hx-trigger="every 5s"
+            hx-swap="outerHTML"
+        {% endif %}
+    >
+        <p class="vc-badge {% if payment_status.variant == 'success' %}vc-badge-success{% elif payment_status.variant == 'warning' %}vc-badge-warning{% else %}vc-badge-danger{% endif %}">
+            {{ payment_status.badge }}
+        </p>
+        <h3 class="mt-2 text-lg font-bold text-vc-dark">{{ payment_status.title }}</h3>
+        <p class="mt-2 text-sm text-vc-dark-500">{{ payment_status.message }}</p>
+    </div>
+{% endif %}

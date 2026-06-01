@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Status | VoteCentral{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-4xl space-y-6 vc-animate-in">
+    <div class="vc-card p-6 sm:p-8">
+        <p class="vc-section-label">Payment Status</p>
+        <h1 class="mt-1 vc-section-title">Track Your Vote Payment</h1>
+        <p class="mt-2 vc-section-subtitle">
+            Vote counting is finalized only after VoteCentral receives a confirmed Paystack webhook.
+        </p>
+
+        {% if payment_attempt %}
+            <div class="mt-6 grid gap-4 sm:grid-cols-3">
+                <div class="rounded-xl bg-vc-surface p-4 border border-vc-dark-100/30">
+                    <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Event</p>
+                    <p class="mt-2 text-base font-semibold text-vc-dark">{{ payment_attempt.event.title }}</p>
+                </div>
+                <div class="rounded-xl bg-vc-surface p-4 border border-vc-dark-100/30">
+                    <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Nominee</p>
+                    <p class="mt-2 text-base font-semibold text-vc-dark">{{ payment_attempt.nominee.name }}</p>
+                </div>
+                <div class="rounded-xl bg-vc-surface p-4 border border-vc-dark-100/30">
+                    <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Payment Reference</p>
+                    <p class="mt-2 break-all text-sm font-semibold text-vc-blue">{{ payment_attempt.gateway_reference }}</p>
+                </div>
+            </div>
+        {% elif payment_reference %}
+            <div class="mt-6 rounded-xl bg-vc-surface p-4 border border-vc-dark-100/30">
+                <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Payment Reference</p>
+                <p class="mt-2 break-all text-sm font-semibold text-vc-blue">{{ payment_reference }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if payment_status %}
+        {% include 'payments/_payment_status.html' %}
+    {% else %}
+        <div class="vc-card border-l-4 border-l-vc-warning bg-vc-warning-light p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-vc-warning">Reference Required</p>
+            <h3 class="mt-2 text-lg font-bold text-vc-dark">Payment reference not found</h3>
+            <p class="mt-2 text-sm text-vc-dark-500">We could not find a payment reference in the callback response. Try returning to the event and starting the payment again.</p>
+        </div>
+    {% endif %}
+
+    <div class="flex flex-wrap gap-3">
+        <a href="{{ return_url }}" class="vc-btn vc-btn-accent">Back to Voting</a>
+        <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline">Browse Events</a>
+    </div>
+</section>
+{% endblock %}

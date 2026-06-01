@@ -1,0 +1,51 @@
+<div x-show="searchOpen" 
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     @keydown.window.escape="searchOpen = false"
+     @keydown.window.prevent.cmd.k="searchOpen = true; $nextTick(() => $refs.searchInput.focus());"
+     @keydown.window.prevent.slash="if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { searchOpen = true; $nextTick(() => $refs.searchInput.focus()); }"
+     class="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center pt-[10vh] px-4"
+     style="display: none;"
+     role="dialog" 
+     aria-modal="true">
+    
+    <!-- Backdrop overlay -->
+    <div class="fixed inset-0 bg-vc-dark/50 backdrop-blur-md transition-opacity" @click="searchOpen = false"></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-2xl bg-white dark:bg-vc-surface-raised rounded-3xl shadow-2xl border border-gray-100 dark:border-vc-dark-600 overflow-hidden transform transition-all duration-300"
+         x-show="searchOpen"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+         x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+        
+        <!-- Search Input Header -->
+        <div class="flex items-center gap-3 border-b border-gray-100 dark:border-vc-dark-600 px-5 py-4">
+            <svg class="h-5 w-5 text-vc-dark-300 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" 
+                   x-ref="searchInput"
+                   name="q"
+                   placeholder="Search events, elections, people, voters, invoices, or payments..." 
+                   class="w-full text-base bg-transparent border-0 outline-none focus:ring-0 text-vc-dark dark:text-white p-0 placeholder:text-vc-dark-300 focus:outline-none"
+                   hx-get="{% url 'dashboard:search' %}"
+                   hx-trigger="keyup changed delay:250ms"
+                   hx-target="#search-results"
+                   autocomplete="off">
+            <button @click="searchOpen = false" class="text-[10px] font-bold text-vc-dark-300 hover:text-vc-dark dark:hover:text-white border border-gray-200 dark:border-vc-dark-600 rounded px-1.5 py-0.5 bg-gray-50 dark:bg-slate-800">
+                ESC
+            </button>
+        </div>
+
+        <!-- Search Results Container -->
+        <div id="search-results">
+            <p class="text-xs text-vc-dark-300 italic dark:text-slate-400 p-6 text-center">Type at least 2 characters to search your workspace.</p>
+        </div>
+    </div>
+</div>

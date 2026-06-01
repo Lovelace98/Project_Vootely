@@ -1,0 +1,50 @@
+<header x-data="{ mobileNavOpen: false }" class="sticky top-0 z-30 border-b border-vc-dark-100/50 bg-white/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <a href="{% url 'events:home' %}" class="text-lg font-bold tracking-[0.15em] text-vc-blue">
+            VOTECENTRAL
+        </a>
+        <nav class="hidden items-center gap-1 sm:flex">
+            <a href="{% url 'events:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                Events
+            </a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                    Dashboard
+                </a>
+                <a href="{% url 'dashboard:revenue' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                    Revenue
+                </a>
+                <a href="{% url 'account_logout' %}" class="ml-2 rounded-full border border-vc-dark-200 px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:border-vc-blue hover:text-vc-blue">
+                    Logout
+                </a>
+            {% else %}
+                <a href="{% url 'account_login' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                    Login
+                </a>
+                <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm ml-2">
+                    Host an Event
+                </a>
+            {% endif %}
+        </nav>
+        <!-- Mobile menu button -->
+        <button class="flex items-center justify-center rounded-lg p-2 text-vc-dark-400 hover:bg-vc-blue-50 hover:text-vc-blue sm:hidden"
+                @click="mobileNavOpen = !mobileNavOpen"
+                :aria-expanded="mobileNavOpen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+    </div>
+    <!-- Mobile nav dropdown -->
+    <div class="sm:hidden">
+        <div x-show="mobileNavOpen" x-transition class="border-t border-vc-dark-100/50 bg-white px-4 py-4 space-y-1">
+            <a href="{% url 'events:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Events</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Dashboard</a>
+                <a href="{% url 'dashboard:revenue' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Revenue</a>
+                <a href="{% url 'account_logout' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Logout</a>
+            {% else %}
+                <a href="{% url 'account_login' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Login</a>
+                <a href="{% url 'account_signup' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-orange hover:bg-vc-orange-50">Host an Event</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
