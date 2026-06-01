@@ -147,18 +147,19 @@
                         <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-vc-blue"></span>Votes</span>
                         <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-vc-blue-200"></span>Revenue</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                    <form method="get" hx-boost="true" data-dashboard-boost data-progress="true" class="flex items-center gap-2">
+                        <input type="hidden" name="timeframe" value="{{ timeframe }}">
+                        <select name="event" onchange="this.form.requestSubmit()" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
                             <option value="">All events</option>
                             {% for ev in events %}
                                 <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title|truncatechars:18 }}</option>
                             {% endfor %}
                         </select>
-                    </div>
+                    </form>
                 </div>
             </div>
-            <div class="relative flex-1 w-full h-full">
-                <canvas id="moneyFlowChart"></canvas>
+            <div class="relative h-[280px] w-full">
+                <canvas id="moneyFlowChart" style="max-height: 280px !important;"></canvas>
             </div>
         </div>
 
@@ -174,9 +175,9 @@
                 </a>
             </div>
             
-            <div class="relative flex-1 w-full flex items-center justify-center my-4 h-[180px]">
+            <div class="relative h-[180px] w-full flex items-center justify-center my-4">
                 {% if top_nominees_list %}
-                    <canvas id="voteShareChart"></canvas>
+                    <canvas id="voteShareChart" style="max-height: 180px !important;"></canvas>
                     <div class="absolute flex flex-col items-center justify-center">
                         <span class="text-[10px] uppercase font-bold tracking-wider text-vc-dark-400">Total votes</span>
                         <span class="text-2xl font-extrabold text-vc-dark leading-none">{{ summary.confirmed_votes|default:"0" }}</span>
@@ -209,32 +210,35 @@
     <!-- Bottom Row (Recent transactions & Saving Goals/Milestones) -->
     <div class="grid gap-6 lg:grid-cols-3">
         <!-- Recent Transactions Table (Wide) -->
-        <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-3 flex flex-col min-h-[380px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50">
+        <div class="lg:col-span-2 bg-white rounded-[2rem] p-6 sm:p-8 vc-animate-in vc-stagger-3 flex flex-col min-h-[380px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-lg font-bold text-vc-dark">Recent transactions</h2>
                     <p class="text-xs text-vc-dark-400">Recent votes cast across your events</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                    <form method="get" hx-boost="true" data-dashboard-boost data-progress="true">
+                        <input type="hidden" name="timeframe" value="{{ timeframe }}">
+                        <select name="event" onchange="this.form.requestSubmit()" class="py-1.5 pl-3 pr-8 text-xs font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
                         <option value="">All events</option>
                         {% for ev in events %}
                             <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title|truncatechars:18 }}</option>
                         {% endfor %}
-                    </select>
+                        </select>
+                    </form>
                     <a href="{% url 'dashboard:revenue' %}" class="text-xs font-bold text-vc-blue hover:text-vc-blue-700 transition-colors">See all &gt;</a>
                 </div>
             </div>
             
-            <div class="overflow-x-auto -mx-8">
-                <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto">
+                <table class="min-w-[600px] w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-vc-blue-50/50 border-y border-gray-100">
-                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Date</th>
-                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Amount</th>
-                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Payer</th>
-                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Method</th>
-                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue">Nominee</th>
+                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue whitespace-nowrap">Date</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue whitespace-nowrap">Amount</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue whitespace-nowrap">Payer</th>
+                            <th class="py-3 px-6 text-[10px] font-bold uppercase tracking-wider text-vc-blue whitespace-nowrap">Method</th>
+                            <th class="py-3 px-8 text-[10px] font-bold uppercase tracking-wider text-vc-blue whitespace-nowrap">Nominee</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -287,8 +291,8 @@
             <div class="flex-1 space-y-5 overflow-y-auto pr-1 max-h-[250px]">
                 {% for milestone in nominee_milestones %}
                     <div>
-                        <div class="flex justify-between items-end mb-1 text-xs">
-                            <span class="font-bold text-vc-dark truncate max-w-[130px]">{{ milestone.nominee.name }}</span>
+                        <div class="flex justify-between items-end gap-2 mb-1 text-xs">
+                            <span class="font-bold text-vc-dark truncate flex-1 min-w-0" title="{{ milestone.nominee.name }}">{{ milestone.nominee.name }}</span>
                             <span class="font-semibold text-vc-dark-400 shrink-0">{{ milestone.votes }} / {{ milestone.target }} votes</span>
                         </div>
                         <div class="relative w-full bg-vc-blue-50 rounded-full h-5 overflow-hidden flex items-center border border-vc-blue-100/30">
@@ -328,7 +332,7 @@
                     </div>
                     <div class="flex items-center gap-4 text-sm text-vc-dark-400 shrink-0">
                         <span>{{ event.currency }} {{ event.vote_price|floatformat:2 }}/vote</span>
-                        <span class="rounded-full bg-vc-blue-50 px-2.5 py-0.5 text-xs font-semibold text-vc-blue">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
+                        <span class="rounded-full bg-vc-blue-50 px-2.5 py-0.5 text-xs font-semibold text-vc-blue">{{ event.active_nominee_count }} nominee{{ event.active_nominee_count|pluralize }}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                 </div>
@@ -342,145 +346,15 @@
     </div>
 </section>
 
-<!-- Secure structured JSON Data from View Context -->
-<script id="topNomineesData" type="application/json">
-    [
+<script id="dashboardHomeChartData" type="application/json">
+{
+    "monthly_votes": {{ monthly_votes|safe }},
+    "monthly_revenue": {{ monthly_revenue|safe }},
+    "top_nominees": [
         {% for nominee in top_nominees_list %}
-            {"name": "{{ nominee.name|escapejs }}", "votes": {{ nominee.votes }}}
-            {% if not forloop.last %},{% endif %}
+            {"name": "{{ nominee.name|escapejs }}", "votes": {{ nominee.votes }}}{% if not forloop.last %},{% endif %}
         {% endfor %}
     ]
-</script>
-
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Money Flow Chart (Double-Bar)
-        const moneyCtx = document.getElementById('moneyFlowChart');
-        if (moneyCtx) {
-            new Chart(moneyCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: 'Votes',
-                        data: {{ monthly_votes|safe }},
-                        backgroundColor: '#191bdf', // vc-blue
-                        borderRadius: 6,
-                        barThickness: 8,
-                        maxBarThickness: 12,
-                    }, {
-                        label: 'Revenue (GHS)',
-                        data: {{ monthly_revenue|safe }},
-                        backgroundColor: '#b8b9f5', // vc-blue-200 / lilac
-                        borderRadius: 6,
-                        barThickness: 8,
-                        maxBarThickness: 12,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#09080d',
-                            padding: 12,
-                            titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '700' },
-                            bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
-                            cornerRadius: 8,
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        if (context.datasetIndex === 1) {
-                                            label += 'GHS ' + context.parsed.y.toLocaleString();
-                                        } else {
-                                            label += context.parsed.y.toLocaleString();
-                                        }
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#f0f2ff', // vc-sidebar / lilac grid lines
-                                drawBorder: false,
-                            },
-                            ticks: {
-                                color: '#a9a9af',
-                                font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' }
-                            },
-                            border: { display: false }
-                        },
-                        x: {
-                            grid: {
-                                display: false,
-                                drawBorder: false,
-                            },
-                            ticks: {
-                                color: '#a9a9af',
-                                font: { family: "'DM Sans', sans-serif", size: 11, weight: '600' }
-                            },
-                            border: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // 2. Vote Share Chart (Thin-Ring Doughnut)
-        const voteCtx = document.getElementById('voteShareChart');
-        const nomineeDataEl = document.getElementById('topNomineesData');
-        const nominees = nomineeDataEl ? JSON.parse(nomineeDataEl.textContent) : [];
-        
-        if (voteCtx && nominees.length > 0) {
-            new Chart(voteCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: nominees.map(n => n.name),
-                    datasets: [{
-                        data: nominees.map(n => n.votes),
-                        backgroundColor: ['#191bdf', '#fe6807', '#b8b9f5', '#09080d', '#cdcdd1'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '80%', // Makes it a thin ring like the reference image
-                    plugins: {
-                        legend: {
-                            display: false // Using custom legends below chart
-                        },
-                        tooltip: {
-                            backgroundColor: '#09080d',
-                            padding: 10,
-                            titleFont: { family: "'DM Sans', sans-serif", size: 12, weight: '700' },
-                            bodyFont: { family: "'DM Sans', sans-serif", size: 11 },
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.parsed} votes (${context.label})`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    });
+}
 </script>
 {% endblock %}

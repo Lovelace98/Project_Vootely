@@ -109,6 +109,38 @@ class PaystackPaymentTests(TestCase):
         self.assertEqual(attempt.vote_quantity, 3)
         self.assertEqual(attempt.voter_email, 'buyer@example.com')
 
+    @patch('payments.views.initialize_paystack_transaction')
+    def test_payment_initiation_returns_json_for_ajax_request(self, mocked_initialize):
+        event = self.create_event()
+        nominee = self.create_nominee(event)
+        mocked_initialize.return_value = {
+            'status': True,
+            'data': {
+                'access_code': 'access-ajax-123',
+                'authorization_url': 'https://paystack.test/checkout/access-ajax-123',
+            },
+        }
+
+        response = self.client.post(
+            reverse('payments:paystack_initiate'),
+            data={
+                'event_slug': event.slug,
+                'nominee_ref': nominee.slug,
+                'quantity': 3,
+                'voter_name': 'Ajax Buyer',
+                'voter_email': 'ajax@example.com',
+                'voter_phone': '0240000000',
+            },
+            headers={'Accept': 'application/json'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['access_code'], 'access-ajax-123')
+        self.assertEqual(data['amount'], 7.50)
+        self.assertEqual(data['quantity'], 3)
+
     def test_valid_webhook_marks_payment_paid_and_creates_vote_purchase(self):
         event = self.create_event()
         nominee = self.create_nominee(event)

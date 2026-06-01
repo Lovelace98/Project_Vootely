@@ -64,7 +64,8 @@ class CustomUserAuthTests(TestCase):
                 'last_name': 'Kyeremeh',
                 'organizer_type': 'company',
                 'referral_source': 'social_media',
-                'referral_source_other': ''
+                'referral_source_other': '',
+                'agree_to_terms': True
             },
             follow=True
         )
@@ -80,4 +81,31 @@ class CustomUserAuthTests(TestCase):
         self.assertEqual(user.last_name, 'Kyeremeh')
         self.assertEqual(user.organizer_type, 'company')
         self.assertEqual(user.referral_source, 'Social Media (Facebook, Twitter, etc.)')
+
+    def test_signup_fails_without_agree_to_terms(self):
+        # Sign up without checking the terms checkbox
+        response = self.client.post(
+            reverse('account_signup'),
+            data={
+                'email': 'terms_fail_org@example.com',
+                'password1': 'Strong-Pass-123',
+                'password2': 'Strong-Pass-123',
+                'first_name': 'Ama',
+                'last_name': 'Kyeremeh',
+                'organizer_type': 'company',
+                'referral_source': 'social_media',
+                'referral_source_other': '',
+                'agree_to_terms': False
+            },
+            follow=True
+        )
+        
+        # Verify the response is 200 (form re-renders with errors) but contains the validation error message
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'You must agree to the Terms of Service and Privacy Policy to register.')
+        
+        # Verify that no user was created
+        user_model = get_user_model()
+        self.assertFalse(user_model.objects.filter(email='terms_fail_org@example.com').exists())
+
 

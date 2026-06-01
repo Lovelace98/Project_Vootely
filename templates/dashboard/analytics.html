@@ -36,12 +36,15 @@
         <!-- Right event selector -->
         <div class="flex items-center gap-3">
             <label class="text-xs font-bold text-vc-dark-400 dark:text-slate-400">Sort per event:</label>
-            <select onchange="location.href='?timeframe={{ timeframe }}&event=' + this.value" class="py-2 pl-4 pr-10 text-sm font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
-                <option value="">All events</option>
-                {% for ev in events %}
-                    <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title }}</option>
-                {% endfor %}
-            </select>
+            <form method="get" hx-boost="true" data-dashboard-boost data-progress="true">
+                <input type="hidden" name="timeframe" value="{{ timeframe }}">
+                <select name="event" onchange="this.form.requestSubmit()" class="py-2 pl-4 pr-10 text-sm font-semibold text-vc-dark-600 rounded-full bg-gray-50 border-0 ring-1 ring-inset ring-gray-100 focus:ring-vc-blue focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-vc-dark-600">
+                    <option value="">All events</option>
+                    {% for ev in events %}
+                        <option value="{{ ev.slug }}" {% if selected_event_slug == ev.slug %}selected{% endif %}>{{ ev.title }}</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
     </div>
 
@@ -73,93 +76,31 @@
             <h2 class="text-lg font-bold text-vc-dark dark:text-white">Weekly sales activity</h2>
             <p class="text-xs text-vc-dark-400 dark:text-slate-400">Votes volume trend per weekday (Sunday to Saturday)</p>
         </div>
-        <div class="h-[280px] w-full">
-            <canvas id="weeklySalesTrendChart"></canvas>
+        <div class="relative h-[280px] w-full">
+            <canvas id="weeklySalesTrendChart" style="max-height: 280px !important;"></canvas>
         </div>
     </div>
 
     <!-- Nominee Performance breakdown -->
-    <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-8 border border-gray-100/50 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-8 border border-gray-100/50 shadow-sm">
         <div class="mb-6">
             <h2 class="text-lg font-bold text-vc-dark dark:text-white">Nominee Earnings &amp; Performance</h2>
             <p class="text-xs text-vc-dark-400 dark:text-slate-400">Granular audit breakdown of all active nominees, sorted by votes.</p>
         </div>
 
-        <div class="overflow-x-auto -mx-8 px-8">
-            <div class="overflow-hidden border border-gray-100/80 dark:border-vc-dark-600 rounded-2xl shadow-sm">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-vc-blue-50/50 dark:bg-slate-800/50 border-y border-gray-100 dark:border-vc-dark-600">
-                            <th class="py-3 px-8 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Nominee Name</th>
-                            <th class="py-3 px-6 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Event</th>
-                            <th class="py-3 px-6 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Votes received</th>
-                            <th class="py-3 px-8 text-xs font-bold uppercase tracking-wider text-vc-blue dark:text-vc-blue-200">Gross revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-vc-dark-600">
-                        {% for nominee in nominees_perf %}
-                            <tr class="hover:bg-gray-50/50 dark:hover:bg-vc-dark-50/50 transition-colors">
-                                <td class="py-4 px-8 text-sm font-bold text-vc-dark dark:text-white">{{ nominee.name }}</td>
-                                <td class="py-4 px-6 text-xs font-semibold text-vc-dark-400 dark:text-slate-400">{{ nominee.event.title }}</td>
-                                <td class="py-4 px-6 text-xs font-extrabold text-vc-dark dark:text-slate-200">{{ nominee.votes }} votes</td>
-                                <td class="py-4 px-8 text-sm font-extrabold text-emerald-600">{{ default_currency }} {{ nominee.earnings|floatformat:2 }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="py-12 text-center text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
-                                    No active nominee records found matching filters.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div data-lazy-url="{% url 'dashboard:analytics_nominees_fragment' %}?timeframe={{ timeframe }}{% if selected_event_slug %}&event={{ selected_event_slug }}{% endif %}">
+            <div class="space-y-3">
+                <div class="vc-skeleton vc-skeleton-line w-1/2"></div>
+                <div class="vc-skeleton vc-skeleton-line w-full"></div>
+                <div class="vc-skeleton vc-skeleton-line w-11/12"></div>
+                <div class="vc-skeleton vc-skeleton-line w-10/12"></div>
+                <div class="vc-skeleton vc-skeleton-line w-full"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const trendCtx = document.getElementById('weeklySalesTrendChart');
-        if (trendCtx) {
-            new Chart(trendCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-                    datasets: [{
-                        label: 'Votes Cast',
-                        data: {{ weekly_votes|safe }},
-                        borderColor: '#191bdf',
-                        backgroundColor: 'rgba(25, 27, 223, 0.05)',
-                        borderWidth: 3.5,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#191bdf'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#f0f2ff', drawBorder: false },
-                            ticks: { font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { family: "'DM Sans', sans-serif", size: 10, weight: '600' } }
-                        }
-                    }
-                }
-            });
-        }
-    });
+<script id="dashboardAnalyticsChartData" type="application/json">
+{"weekly_votes": {{ weekly_votes|safe }}}
 </script>
 {% endblock %}

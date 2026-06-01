@@ -36,7 +36,7 @@
             {% endif %}
 
             {% if state == 'active' %}
-                <form method="post" action="{% url 'payments:paystack_initiate' %}" class="mt-6 space-y-4">
+                <form method="post" action="{% url 'payments:paystack_initiate' %}" class="mt-6 space-y-4" x-data @submit.prevent="$dispatch('open-payment-modal', { type: 'vote', form: $el })">
                     {% csrf_token %}
                     {% for field in payment_form.hidden_fields %}
                         {{ field }}
@@ -52,7 +52,7 @@
                     {% endfor %}
                     <button type="submit" class="vc-btn vc-btn-accent vc-btn-block vc-btn-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                        Continue to Paystack
+                        Proceed to Payment
                     </button>
                 </form>
             {% else %}

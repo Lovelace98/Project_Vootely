@@ -104,6 +104,10 @@ class LedgerEntry(models.Model):
 
     class Meta:
         ordering = ('pk',)
+        indexes = [
+            models.Index(fields=('account', 'kind', '-created_at'), name='ledger_acct_kind_created'),
+            models.Index(fields=('transaction', 'kind'), name='ledger_tx_kind'),
+        ]
 
     def __str__(self):
         return f'{self.kind} {self.amount}'
@@ -165,6 +169,9 @@ class WithdrawalRequest(models.Model):
 
     class Meta:
         ordering = ('-requested_at',)
+        indexes = [
+            models.Index(fields=('organizer', 'status', '-requested_at'), name='wd_org_status_request'),
+        ]
 
     def __str__(self):
         return f'{self.organizer} {self.amount} {self.currency}'

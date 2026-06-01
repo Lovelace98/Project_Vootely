@@ -187,6 +187,9 @@ class ElectionVoter(models.Model):
         constraints = [
             models.UniqueConstraint(fields=('event', 'external_id'), name='unique_election_voter_external_id'),
         ]
+        indexes = [
+            models.Index(fields=('event', 'status', 'external_id'), name='voter_event_status_ext'),
+        ]
 
     def __str__(self):
         return f'{self.name} ({self.external_id})'
@@ -229,6 +232,9 @@ class ElectionCredential(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=('event', 'status', '-created_at'), name='cred_event_status_created'),
+        ]
 
     def mark_opened(self):
         if self.status == self.Status.ISSUED:
@@ -409,6 +415,9 @@ class BallotSelection(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=('ballot', 'position', 'candidate'), name='unique_ballot_position_candidate'),
+        ]
+        indexes = [
+            models.Index(fields=('position', 'candidate'), name='ballot_sel_pos_candidate'),
         ]
 
 

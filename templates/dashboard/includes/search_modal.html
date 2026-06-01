@@ -37,6 +37,10 @@
                    hx-get="{% url 'dashboard:search' %}"
                    hx-trigger="keyup changed delay:250ms"
                    hx-target="#search-results"
+                   hx-select="unset"
+                   hx-swap="innerHTML"
+                   hx-push-url="false"
+                   hx-disinherit="hx-select hx-swap hx-push-url"
                    autocomplete="off">
             <button @click="searchOpen = false" class="text-[10px] font-bold text-vc-dark-300 hover:text-vc-dark dark:hover:text-white border border-gray-200 dark:border-vc-dark-600 rounded px-1.5 py-0.5 bg-gray-50 dark:bg-slate-800">
                 ESC

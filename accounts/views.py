@@ -84,6 +84,7 @@ class DashboardNotificationSettingsView(SafeIntegrityMixin, LoginRequiredMixin, 
 
 from notifications.models import InAppNotification
 from django.core.paginator import Paginator
+from events.performance import bump_notification_cache
 
 class DashboardNotificationsView(LoginRequiredMixin, View):
     template_name = 'dashboard/notifications.html'
@@ -98,6 +99,7 @@ class DashboardNotificationsView(LoginRequiredMixin, View):
         unread_on_page = [n for n in page_obj if not n.is_read]
         if unread_on_page:
             InAppNotification.objects.filter(id__in=[n.id for n in unread_on_page]).update(is_read=True)
+            bump_notification_cache(request.user.pk)
         
         # Recompute unread count so badge is accurate on this same page load
         refreshed_unread = InAppNotification.objects.filter(user=request.user, is_read=False).count()
@@ -111,6 +113,7 @@ class DashboardNotificationsView(LoginRequiredMixin, View):
 class MarkAllNotificationsReadView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         InAppNotification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        bump_notification_cache(request.user.pk)
         messages.success(request, 'All notifications marked as read.')
         return redirect('dashboard:notifications')
 

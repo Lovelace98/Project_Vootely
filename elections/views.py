@@ -3,7 +3,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -368,6 +368,19 @@ class DashboardElectionInvoiceView(OrganizerElectionMixin, TemplateView):
                 if invoice and invoice.status != ElectionInvoice.Status.PAID:
                     attempt = create_organizer_payment_attempt(invoice, owner=request.user)
                     if attempt.status == OrganizerPaymentAttempt.Status.PENDING and attempt.gateway_checkout_url:
+                        if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                            return JsonResponse({
+                                'status': 'success',
+                                'access_code': attempt.gateway_access_code,
+                                'reference': attempt.gateway_reference,
+                                'checkout_url': attempt.gateway_checkout_url,
+                                'callback_url': reverse('payments:paystack_callback') + f'?reference={attempt.gateway_reference}&status=success',
+                                'amount': float(attempt.amount),
+                                'currency': attempt.currency,
+                                'email': attempt.payer_email,
+                                'invoice_id': invoice.id,
+                                'event_title': self.event.title,
+                            })
                         return redirect(attempt.gateway_checkout_url)
                     payload = initialize_organizer_paystack_transaction(attempt)
                     data = payload.get('data') or {}
@@ -384,11 +397,29 @@ class DashboardElectionInvoiceView(OrganizerElectionMixin, TemplateView):
                                 'gateway_response',
                             ]
                         )
+                    if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                        return JsonResponse({
+                            'status': 'success',
+                            'access_code': attempt.gateway_access_code,
+                            'reference': attempt.gateway_reference,
+                            'checkout_url': attempt.gateway_checkout_url,
+                            'callback_url': reverse('payments:paystack_callback') + f'?reference={attempt.gateway_reference}&status=success',
+                            'amount': float(attempt.amount),
+                            'currency': attempt.currency,
+                            'email': attempt.payer_email,
+                            'invoice_id': invoice.id,
+                            'event_title': self.event.title,
+                        })
                     return redirect(attempt.gateway_checkout_url)
             else:
                 invoice = generate_invoice(self.event, actor=request.user, request=request)
                 messages.success(request, 'Election invoice generated.')
         except Exception as exc:
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(exc)
+                }, status=400)
             messages.error(request, str(exc))
         return redirect('dashboard:election_invoice', slug=self.event.slug)
 

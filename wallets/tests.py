@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -10,6 +11,7 @@ from events.models import Event
 from nominees.models import Nominee
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
+from events.performance import dashboard_analytics_context
 
 from .models import LedgerEntry, LedgerTransaction, WithdrawalRequest
 from .services import (
@@ -129,6 +131,48 @@ class RevenuePageTests(TestCase):
         self.assertContains(response, '12.50')
         self.assertContains(response, '7.50')
         self.assertContains(response, str(organizer_credits.first().amount))
+
+    def test_analytics_context_applies_timeframe_to_nominee_rows(self):
+        cache.clear()
+        event = self.create_event(self.organizer, 'Analytics Event')
+        nominee = Nominee.objects.create(event=event, name='Esi', is_active=True)
+        old_attempt = self.create_paid_attempt(event, nominee, 'old-analytics', Decimal('10.00'), 4)
+        VotePurchase.objects.filter(payment_attempt=old_attempt).update(
+            paid_at=timezone.now() - timedelta(days=45)
+        )
+        self.create_paid_attempt(event, nominee, 'new-analytics', Decimal('5.00'), 2)
+
+        context = dashboard_analytics_context(self.organizer, timeframe='this_month')
+
+        self.assertEqual(context['total_votes'], 2)
+        self.assertEqual(context['total_revenue'], Decimal('5.00'))
+        self.assertEqual(context['nominees_perf'][0].votes, 2)
+        self.assertEqual(context['nominees_perf'][0].earnings, Decimal('5.00'))
+
+    def test_analytics_nominees_fragment_requires_authentication(self):
+        response = self.client.get(reverse('dashboard:analytics_nominees_fragment'))
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_analytics_nominees_fragment_is_scoped_to_organizer(self):
+        cache.clear()
+        own_event = self.create_event(self.organizer, 'Own Analytics Event')
+        own_nominee = Nominee.objects.create(event=own_event, name='Ama', is_active=True)
+        self.create_paid_attempt(own_event, own_nominee, 'own-fragment', Decimal('12.00'), 6)
+
+        other_event = self.create_event(self.other, 'Other Analytics Event')
+        other_nominee = Nominee.objects.create(event=other_event, name='Kojo', is_active=True)
+        self.create_paid_attempt(other_event, other_nominee, 'other-fragment', Decimal('18.00'), 9)
+
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+        response = self.client.get(reverse('dashboard:analytics_nominees_fragment'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ama')
+        self.assertContains(response, 'Own Analytics Event')
+        self.assertContains(response, '6 votes')
+        self.assertNotContains(response, 'Kojo')
+        self.assertNotContains(response, 'Other Analytics Event')
 
 
 class WithdrawalFlowTests(TestCase):

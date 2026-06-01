@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -45,6 +45,11 @@ class PaystackInitiateView(View):
 
         form = PaymentInitiationForm(request.POST)
         if not form.is_valid():
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Please provide valid payment details.'
+                }, status=400)
             messages.error(request, 'Please provide valid payment details.')
             return redirect('events:home')
 
@@ -52,10 +57,20 @@ class PaystackInitiateView(View):
         try:
             nominee = Nominee.resolve_for_event(event, form.cleaned_data['nominee_ref'])
         except Nominee.DoesNotExist:
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Nominee not found.'
+                }, status=400)
             messages.error(request, 'Nominee not found.')
             return redirect(event.get_absolute_url())
 
         if not nominee.is_active or not event.accepts_votes():
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Voting is not available for this event right now.'
+                }, status=400)
             messages.error(request, 'Voting is not available for this event right now.')
             return redirect(event.get_absolute_url())
 
@@ -94,6 +109,11 @@ class PaystackInitiateView(View):
                     'gateway_response',
                 ]
             )
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Unable to initialize payment right now.'
+                }, status=400)
             messages.error(request, 'Unable to initialize payment right now.')
             return redirect(nominee.get_absolute_url())
 
@@ -110,6 +130,22 @@ class PaystackInitiateView(View):
                 'gateway_response',
             ]
         )
+
+        if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            return JsonResponse({
+                'status': 'success',
+                'access_code': payment_attempt.gateway_access_code,
+                'reference': payment_attempt.gateway_reference,
+                'checkout_url': payment_attempt.gateway_checkout_url,
+                'callback_url': reverse('payments:paystack_callback') + f'?reference={payment_attempt.gateway_reference}&status=success',
+                'amount': float(payment_attempt.amount),
+                'currency': payment_attempt.currency,
+                'email': payment_attempt.voter_email,
+                'voter_name': payment_attempt.voter_name,
+                'nominee_name': nominee.name,
+                'quantity': quantity,
+            })
+
         return redirect(payment_attempt.gateway_checkout_url)
 
 
@@ -151,6 +187,10 @@ class PaystackCallbackView(View):
             messages.warning(request, 'We could not find a payment reference in the callback response.')
             return redirect('payments:status_lookup')
 
+        # Directly verify and settle transaction from server callback
+        from .services import verify_and_process_paystack_payment
+        verify_and_process_paystack_payment(reference)
+
         try:
             attempt = PaymentAttempt.objects.select_related('event', 'nominee').get(
                 gateway_reference=reference
@@ -168,12 +208,26 @@ class PaystackCallbackView(View):
                 )
             except OrganizerPaymentAttempt.DoesNotExist:
                 return redirect('payments:status_detail', reference=reference)
-            callback_status = request.GET.get('status', '')
+            callback_status = request.GET.get('status', '').strip().lower()
             record_organizer_paystack_callback(organizer_attempt, callback_status=callback_status)
+            
+            if organizer_attempt.status == OrganizerPaymentAttempt.Status.PAID:
+                messages.success(request, f"Payment successful! The fee for election '{organizer_attempt.event.title}' has been securely paid.")
+            elif organizer_attempt.status in {OrganizerPaymentAttempt.Status.FAILED, OrganizerPaymentAttempt.Status.CANCELLED}:
+                messages.error(request, f"Payment for election '{organizer_attempt.event.title}' was unsuccessful or cancelled.")
+            else:
+                messages.info(request, f"Payment for election '{organizer_attempt.event.title}' is pending confirmation.")
             return redirect(organizer_payment_status_redirect_url(organizer_attempt))
 
-        callback_status = request.GET.get('status', '')
+        callback_status = request.GET.get('status', '').strip().lower()
         record_paystack_callback(attempt, callback_status=callback_status)
+        
+        if attempt.status == PaymentAttempt.Status.PAID:
+            messages.success(request, f"Payment successful! {attempt.vote_quantity} votes have been securely recorded for {attempt.nominee.name}.")
+        elif attempt.status in {PaymentAttempt.Status.FAILED, PaymentAttempt.Status.CANCELLED}:
+            messages.error(request, f"Payment was unsuccessful or cancelled. No votes were recorded.")
+        else:
+            messages.info(request, f"Payment is pending confirmation. Your votes will count once Paystack confirms it.")
         return redirect(payment_status_redirect_url(attempt))
 
 

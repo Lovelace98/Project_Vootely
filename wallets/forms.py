@@ -40,6 +40,13 @@ class WithdrawalRequestForm(forms.ModelForm):
             self.fields['bank_code'].required = False
             self.fields['payout_type'].required = False
             self.fields['otp'].required = False
+
+        partial_hx_attrs = {
+            'hx-select': 'unset',
+            'hx-swap': 'innerHTML',
+            'hx-push-url': 'false',
+            'hx-disinherit': 'hx-select hx-swap hx-push-url',
+        }
         
         # Modern styling & HTMX triggers
         for field_name, field in self.fields.items():
@@ -50,6 +57,7 @@ class WithdrawalRequestForm(forms.ModelForm):
                     'hx-get': '/dashboard/withdrawals/bank-list/',
                     'hx-target': '#id_bank_code',
                     'hx-trigger': 'change',
+                    **partial_hx_attrs,
                 })
             
             if field_name == 'bank_code':
@@ -58,6 +66,7 @@ class WithdrawalRequestForm(forms.ModelForm):
                     'hx-target': '#account-verification-status',
                     'hx-trigger': 'change',
                     'hx-include': '#id_bank_code,#id_bank_account_number',
+                    **partial_hx_attrs,
                 })
 
             if field_name == 'bank_account_number':
@@ -66,6 +75,7 @@ class WithdrawalRequestForm(forms.ModelForm):
                     'hx-target': '#account-verification-status',
                     'hx-trigger': 'keyup delay:300ms',
                     'hx-include': '#id_bank_code,#id_bank_account_number',
+                    **partial_hx_attrs,
                 })
 
             if field_name == 'payout_name':
@@ -80,7 +90,14 @@ class WithdrawalRequestForm(forms.ModelForm):
         banks = get_paystack_banks(type='ghipss' if payout_type == 'bank' else 'mobile_money')
         self.fields['bank_code'].widget = forms.Select(
             choices=[('', '--- Select Provider ---')] + [(b['code'], b['name']) for b in banks],
-            attrs={'class': 'vc-input'}
+            attrs={
+                'class': 'vc-input',
+                'hx-get': '/dashboard/withdrawals/resolve-account/',
+                'hx-target': '#account-verification-status',
+                'hx-trigger': 'change',
+                'hx-include': '#id_bank_code,#id_bank_account_number',
+                **partial_hx_attrs,
+            }
         )
 
     def clean_amount(self):

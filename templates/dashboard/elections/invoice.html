@@ -29,7 +29,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
-                            <form method="post" class="inline">{% csrf_token %}
+                            <form method="post" class="inline" @submit.prevent="$dispatch('open-payment-modal', { type: 'invoice', form: $el })">{% csrf_token %}
                                 <input type="hidden" name="action" value="pay">
                                 <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
                                 <button class="vc-btn vc-btn-accent vc-btn-sm py-1 px-3 text-xs">Pay now</button>

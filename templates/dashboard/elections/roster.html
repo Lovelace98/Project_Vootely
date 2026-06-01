@@ -25,40 +25,39 @@
                 <p class="mt-1 text-sm text-vc-dark-400">Please format your voter list using the columns defined below. Ensure the header row matches exactly.</p>
             </div>
 
-            <!-- Interactive HTML Preview Table -->
             <div class="overflow-x-auto rounded-xl border border-vc-dark-100/50 bg-slate-50/50 dark:bg-vc-dark-900/10">
-                <table class="w-full text-left text-xs border-collapse">
+                <table class="min-w-[650px] w-full text-left text-xs border-collapse">
                     <thead>
                         <tr class="bg-slate-100/70 border-b border-vc-dark-100/50 text-vc-dark-600 font-semibold uppercase tracking-wider">
-                            <th class="p-3">Column Header</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3">Sample Value</th>
-                            <th class="p-3">Requirements / Description</th>
+                            <th class="p-3 whitespace-nowrap">Column Header</th>
+                            <th class="p-3 whitespace-nowrap">Status</th>
+                            <th class="p-3 whitespace-nowrap">Sample Value</th>
+                            <th class="p-3 whitespace-nowrap">Requirements / Description</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-vc-dark-100/30 text-vc-dark-500 font-medium">
                         <tr>
-                            <td class="p-3 font-mono font-bold text-vc-blue">external_id</td>
-                            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">Required</span></td>
-                            <td class="p-3 font-mono">V001</td>
+                            <td class="p-3 font-mono font-bold text-vc-blue whitespace-nowrap">external_id</td>
+                            <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">Required</span></td>
+                            <td class="p-3 font-mono whitespace-nowrap">V001</td>
                             <td class="p-3 text-xs">Unique ID for the voter (e.g. Student ID, Staff ID, Registration Number). No duplicates.</td>
                         </tr>
                         <tr>
-                            <td class="p-3 font-mono font-bold text-vc-blue">name</td>
-                            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">Required</span></td>
-                            <td class="p-3">Kwame Mensah</td>
+                            <td class="p-3 font-mono font-bold text-vc-blue whitespace-nowrap">name</td>
+                            <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">Required</span></td>
+                            <td class="p-3 whitespace-nowrap">Kwame Mensah</td>
                             <td class="p-3 text-xs">The voter's full display name. Used for visual confirmation and receipt logs.</td>
                         </tr>
                         <tr>
-                            <td class="p-3 font-mono font-bold text-vc-blue">email</td>
-                            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-vc-blue-50 text-vc-blue border border-vc-blue-100">Optional</span></td>
-                            <td class="p-3">kwame@example.com</td>
+                            <td class="p-3 font-mono font-bold text-vc-blue whitespace-nowrap">email</td>
+                            <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-vc-blue-50 text-vc-blue border border-vc-blue-100">Optional</span></td>
+                            <td class="p-3 whitespace-nowrap">kwame@example.com</td>
                             <td class="p-3 text-xs">Recommended. Used to automatically deliver secure voting credentials via email.</td>
                         </tr>
                         <tr>
-                            <td class="p-3 font-mono font-bold text-vc-blue">phone</td>
-                            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-vc-blue-50 text-vc-blue border border-vc-blue-100">Optional</span></td>
-                            <td class="p-3">0241234567</td>
+                            <td class="p-3 font-mono font-bold text-vc-blue whitespace-nowrap">phone</td>
+                            <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-vc-blue-50 text-vc-blue border border-vc-blue-100">Optional</span></td>
+                            <td class="p-3 whitespace-nowrap">0241234567</td>
                             <td class="p-3 text-xs">Optional contact number. Standard format (e.g. Ghana local/international).</td>
                         </tr>
                     </tbody>
@@ -117,36 +116,36 @@
         </div>
 
         <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-sm text-left border-collapse">
+            <table class="min-w-[600px] w-full text-sm text-left border-collapse">
                 <thead>
                     <tr class="text-vc-dark-600 font-semibold border-b border-gray-100 pb-2">
-                        <th class="py-3 px-2">Voter ID</th>
-                        <th class="py-3 px-2">Name</th>
-                        <th class="py-3 px-2">Email Address</th>
-                        <th class="py-3 px-2">Phone Number</th>
-                        <th class="py-3 px-2">Status</th>
+                        <th class="py-3 px-2 whitespace-nowrap">Voter ID</th>
+                        <th class="py-3 px-2 whitespace-nowrap">Name</th>
+                        <th class="py-3 px-2 whitespace-nowrap">Email Address</th>
+                        <th class="py-3 px-2 whitespace-nowrap">Phone Number</th>
+                        <th class="py-3 px-2 whitespace-nowrap">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for voter in voters %}
                         <tr class="hover:bg-slate-50/50 text-vc-dark-500 font-medium">
-                            <td class="py-3 px-2 font-mono text-xs text-vc-blue">{{ voter.external_id }}</td>
-                            <td class="py-3 px-2">{{ voter.name }}</td>
-                            <td class="py-3 px-2">
+                            <td class="py-3 px-2 font-mono text-xs text-vc-blue whitespace-nowrap">{{ voter.external_id }}</td>
+                            <td class="py-3 px-2 whitespace-nowrap">{{ voter.name }}</td>
+                            <td class="py-3 px-2 whitespace-nowrap">
                                 {% if voter.email %}
                                     {{ voter.email }}
                                 {% else %}
                                     <span class="text-vc-dark-300 italic text-xs">No email (Manual Export Only)</span>
                                 {% endif %}
                             </td>
-                            <td class="py-3 px-2">
+                            <td class="py-3 px-2 whitespace-nowrap">
                                 {% if voter.phone %}
                                     {{ voter.phone }}
                                 {% else %}
                                     <span class="text-vc-dark-300 italic text-xs">No phone</span>
                                 {% endif %}
                             </td>
-                            <td class="py-3 px-2">
+                            <td class="py-3 px-2 whitespace-nowrap">
                                 <span class="vc-badge {% if voter.status == 'eligible' %}vc-badge-green{% else %}vc-badge-red{% endif %} capitalize font-semibold">
                                     {{ voter.status }}
                                 </span>

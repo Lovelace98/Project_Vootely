@@ -52,7 +52,10 @@
                                 <button type="button" 
                                         hx-post="{% url 'dashboard:request_otp' %}" 
                                         hx-target="#otp-status"
+                                        hx-select="unset"
                                         hx-swap="innerHTML"
+                                        hx-push-url="false"
+                                        hx-disinherit="hx-select hx-push-url"
                                         class="vc-btn vc-btn-outline-blue vc-btn-sm shrink-0 h-[48px] self-end">
                                     Send Code
                                 </button>

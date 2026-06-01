@@ -217,6 +217,29 @@ class SecureElectionTests(TestCase):
         sent_payload = mocked_post.call_args.kwargs['json']
         self.assertEqual(sent_payload['metadata']['payment_type'], 'secure_election_invoice')
 
+    @override_settings(PAYSTACK_SECRET_KEY='test-secret')
+    @patch('elections.views.initialize_organizer_paystack_transaction')
+    def test_election_invoice_pay_returns_json_for_ajax_request(self, mocked_initialize):
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        import_roster(self.event, self.roster_file(1), actor=self.organizer)
+        invoice = generate_invoice(self.event, actor=self.organizer)
+        mocked_initialize.return_value = {
+            'status': True,
+            'data': {'access_code': 'ajax-access-999', 'authorization_url': 'https://checkout.example/pay-ajax'},
+        }
+
+        response = self.client.post(
+            reverse('dashboard:election_invoice', args=[self.event.slug]),
+            data={'action': 'pay', 'invoice_id': invoice.id},
+            headers={'Accept': 'application/json'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['access_code'], 'ajax-access-999')
+        self.assertEqual(data['amount'], float(invoice.amount))
+
     def test_organizer_invoice_webhook_is_idempotent_and_unlocks_payment(self):
         import_roster(self.event, self.roster_file(1), actor=self.organizer)
         invoice = generate_invoice(self.event, actor=self.organizer)

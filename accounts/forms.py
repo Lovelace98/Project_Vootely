@@ -109,13 +109,25 @@ class CustomSignupForm(SignupForm):
             'placeholder': 'e.g., billboard, radio ad',
         })
     )
+    agree_to_terms = forms.BooleanField(
+        required=True,
+        error_messages={
+            'required': 'You must agree to the Terms of Service and Privacy Policy to register.'
+        },
+        label="I agree to the Terms of Service and Privacy Policy"
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Apply custom visual styling to all form inputs
         for name, field in self.fields.items():
-            classes = 'w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none'
-            field.widget.attrs['class'] = classes
+            if name == 'agree_to_terms':
+                field.widget.attrs['class'] = (
+                    'h-5 w-5 rounded-lg border-vc-dark-200 text-vc-blue focus:ring-vc-blue cursor-pointer transition-colors duration-200'
+                )
+            else:
+                classes = 'w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none'
+                field.widget.attrs['class'] = classes
         
         # Inject Alpine.js attributes for conditional rendering
         self.fields['referral_source'].widget.attrs['x-model'] = 'referral'
@@ -134,4 +146,5 @@ class CustomSignupForm(SignupForm):
             
         user.save()
         return user
+
 

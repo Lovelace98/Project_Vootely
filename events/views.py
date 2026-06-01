@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db.models import DecimalField, IntegerField, Sum, Value
+from django.db.models import DecimalField, IntegerField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -13,26 +13,10 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 from votecentral.mixins import SafeIntegrityMixin
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
-from wallets.models import LedgerEntry
-from wallets.services import get_available_withdrawal_balance
 
 from .forms import EventForm
 from .models import Event
-
-
-def build_event_leaderboard(event):
-    return event.nominees.filter(is_active=True).annotate(
-        total_votes=Coalesce(
-            Sum('vote_purchases__quantity'),
-            Value(0),
-            output_field=IntegerField(),
-        ),
-        total_amount=Coalesce(
-            Sum('vote_purchases__amount_paid'),
-            Value(Decimal('0.00')),
-            output_field=DecimalField(max_digits=10, decimal_places=2),
-        ),
-    ).order_by('-total_votes', '-total_amount', 'name')
+from .performance import build_event_leaderboard, dashboard_home_context
 
 
 class OrganizerEventMixin(LoginRequiredMixin):
@@ -129,176 +113,13 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from django.utils import timezone
-        import datetime
-        from django.db.models.functions import ExtractMonth
-
-        # 1. Gather Filter Parameters
-        timeframe = self.request.GET.get('timeframe', 'this_month').strip().lower()
-        event_slug = self.request.GET.get('event', '').strip()
-
-        now = timezone.now()
-        start_date = None
-        
-        if timeframe == 'today':
-            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif timeframe == 'this_week':
-            start_date = now - datetime.timedelta(days=now.weekday())
-            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif timeframe == 'this_month':
-            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        elif timeframe == 'this_year':
-            start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        # 2. Build Base Querysets
-        events = Event.objects.filter(
-            owner=self.request.user,
-            kind=Event.Kind.PAID_COMPETITION,
-        ).prefetch_related('nominees')
-        
-        purchases_qs = VotePurchase.objects.filter(event__owner=self.request.user)
-        attempts_qs = PaymentAttempt.objects.filter(event__owner=self.request.user)
-        ledger_qs = LedgerEntry.objects.filter(
-            account__owner=self.request.user,
-            kind=LedgerEntry.Kind.ORGANIZER_SALE_CREDIT,
-        )
-
-        # Filter by timeframe
-        if start_date:
-            purchases_qs = purchases_qs.filter(paid_at__gte=start_date)
-            attempts_qs = attempts_qs.filter(initiated_at__gte=start_date)
-            ledger_qs = ledger_qs.filter(created_at__gte=start_date)
-
-        # Filter by selected event if provided
-        if event_slug:
-            purchases_qs = purchases_qs.filter(event__slug=event_slug)
-            attempts_qs = attempts_qs.filter(event__slug=event_slug)
-            ledger_qs = ledger_qs.filter(transaction__payment_attempt__event__slug=event_slug)
-
-        # 3. Calculate KPI Summaries
-        pending_statuses = [
-            PaymentAttempt.Status.INITIALIZED,
-            PaymentAttempt.Status.PENDING,
-        ]
-        
-        totals = purchases_qs.aggregate(
-            total_votes=Coalesce(
-                Sum('quantity'),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            total_revenue=Coalesce(
-                Sum('amount_paid'),
-                Value(Decimal('0.00')),
-                output_field=DecimalField(max_digits=10, decimal_places=2),
-            ),
-        )
-        
-        pending_amount = attempts_qs.filter(
-            status__in=pending_statuses
-        ).aggregate(
-            total=Coalesce(
-                Sum('amount'),
-                Value(Decimal('0.00')),
-                output_field=DecimalField(max_digits=10, decimal_places=2),
+        context.update(
+            dashboard_home_context(
+                self.request.user,
+                timeframe=self.request.GET.get('timeframe', 'this_month'),
+                event_slug=self.request.GET.get('event', ''),
             )
-        )['total']
-        
-        net_earnings = ledger_qs.aggregate(
-            total=Coalesce(
-                Sum('amount'),
-                Value(Decimal('0.00')),
-                output_field=DecimalField(max_digits=10, decimal_places=2),
-            )
-        )['total']
-
-        # Recent transactions
-        recent_purchases = purchases_qs.select_related('nominee', 'event').order_by('-paid_at')[:3]
-
-        # 4. Top Nominees (for vote share card)
-        from nominees.models import Nominee
-        top_nominees_qs = Nominee.objects.filter(
-            event__owner=self.request.user,
-            is_active=True
         )
-        if event_slug:
-            top_nominees_qs = top_nominees_qs.filter(event__slug=event_slug)
-            
-        top_nominees = top_nominees_qs.annotate(
-            total_votes=Coalesce(
-                Sum('vote_purchases__quantity'),
-                Value(0),
-                output_field=IntegerField()
-            )
-        ).order_by('-total_votes')[:5]
-
-        # Calculate milestones
-        nominee_milestones = []
-        for nominee in top_nominees:
-            votes = nominee.total_votes
-            if votes < 50:
-                target = 50
-            elif votes < 250:
-                target = 250
-            elif votes < 1000:
-                target = 1000
-            else:
-                target = ((votes // 1000) + 1) * 1000
-                
-            percent = int((votes / target) * 100) if target > 0 else 0
-            nominee_milestones.append({
-                'nominee': nominee,
-                'votes': votes,
-                'target': target,
-                'percent': percent,
-            })
-
-        # 5. Dynamic Monthly Sales trends for the current year
-        current_year = now.year
-        stats_by_month = VotePurchase.objects.filter(
-            event__owner=self.request.user,
-            paid_at__year=current_year
-        )
-        if event_slug:
-            stats_by_month = stats_by_month.filter(event__slug=event_slug)
-            
-        stats_by_month = stats_by_month.annotate(
-            month=ExtractMonth('paid_at')
-        ).values('month').annotate(
-            votes=Sum('quantity'),
-            revenue=Sum('amount_paid')
-        ).order_by('month')
-
-        monthly_votes = [0] * 12
-        monthly_revenue = [0.0] * 12
-        for stat in stats_by_month:
-            m = stat['month']
-            if 1 <= m <= 12:
-                monthly_votes[m - 1] = stat['votes'] or 0
-                monthly_revenue[m - 1] = float(stat['revenue'] or 0.0)
-
-        # Context updates
-        context['events'] = events
-        context['recent_purchases'] = recent_purchases
-        context['nominee_milestones'] = nominee_milestones
-        context['top_nominees_list'] = [
-            {'name': nominee.name, 'votes': nominee.total_votes}
-            for nominee in top_nominees if nominee.total_votes > 0
-        ]
-        context['monthly_votes'] = monthly_votes
-        context['monthly_revenue'] = monthly_revenue
-        context['timeframe'] = timeframe
-        context['selected_event_slug'] = event_slug
-        
-        context['summary'] = {
-            'event_count': events.count(),
-            'published_count': events.filter(status=Event.Status.PUBLISHED).count(),
-            'confirmed_votes': totals['total_votes'],
-            'confirmed_revenue': totals['total_revenue'],
-            'pending_amount': pending_amount,
-            'net_earnings': net_earnings,
-            'available_to_withdraw': get_available_withdrawal_balance(self.request.user),
-        }
         return context
 
 
@@ -403,7 +224,6 @@ class DashboardEventActionView(OrganizerEventMixin, View):
         return HttpResponseRedirect(event.get_dashboard_url())
 
 
-from django.db.models import Q
 from elections.models import (
     ElectionCandidate,
     ElectionCredential,
@@ -561,3 +381,15 @@ class DashboardElectionsListView(LoginRequiredMixin, ListView):
         context['title'] = 'Secure Elections'
         context['subtitle'] = 'Configure eligible voters, candidate positions, and secure tallies.'
         return context
+
+
+class PrivacyPolicyView(TemplateView):
+    template_name = 'legal/privacy_policy.html'
+
+
+class TermsOfServiceView(TemplateView):
+    template_name = 'legal/terms_of_service.html'
+
+
+class OrganizerAgreementView(TemplateView):
+    template_name = 'legal/merchant_agreement.html'

@@ -223,6 +223,89 @@ def payment_status_redirect_url(payment_attempt):
     return reverse('payments:status_detail', args=[payment_attempt.gateway_reference])
 
 
+def verify_and_process_paystack_payment(reference):
+    if not settings.PAYSTACK_SECRET_KEY:
+        return None
+
+    try:
+        response = requests.get(
+            f'https://api.paystack.co/transaction/verify/{reference}',
+            headers={
+                'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+                'Content-Type': 'application/json',
+            },
+            timeout=10,
+        )
+    except requests.RequestException:
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    body = response.json()
+    if not body.get('status') or not body.get('data'):
+        return None
+
+    data = body['data']
+    status = data.get('status')
+    if status == 'success':
+        payload = {'event': 'charge.success', 'data': data}
+        
+        # Check if it is a standard payment attempt
+        try:
+            attempt = PaymentAttempt.objects.get(gateway_reference=reference)
+            if attempt.status != PaymentAttempt.Status.PAID:
+                handle_paystack_webhook(payload)
+                return 'vote_success'
+        except PaymentAttempt.DoesNotExist:
+            pass
+
+        # Check if it is an organizer payment attempt
+        try:
+            from elections.models import OrganizerPaymentAttempt
+            from elections.services import handle_organizer_paystack_webhook
+            
+            attempt = OrganizerPaymentAttempt.objects.get(gateway_reference=reference)
+            if attempt.status != OrganizerPaymentAttempt.Status.PAID:
+                handle_organizer_paystack_webhook(payload)
+                return 'organizer_success'
+        except (OrganizerPaymentAttempt.DoesNotExist, ImportError):
+            pass
+    elif status in {'abandoned', 'failed', 'reversed'}:
+        # Check standard payment attempt
+        try:
+            attempt = PaymentAttempt.objects.get(gateway_reference=reference)
+            if attempt.status not in {PaymentAttempt.Status.PAID, PaymentAttempt.Status.FAILED, PaymentAttempt.Status.CANCELLED}:
+                mark_payment_attempt_unsuccessful(
+                    attempt,
+                    gateway_status=status,
+                    failure_reason=data.get('gateway_response') or 'The payment was not completed successfully.',
+                    cancelled=(status == 'abandoned'),
+                )
+                return 'vote_failed'
+        except PaymentAttempt.DoesNotExist:
+            pass
+
+        # Check organizer payment attempt
+        try:
+            from elections.models import OrganizerPaymentAttempt
+            from elections.services import mark_organizer_attempt_unsuccessful
+            
+            attempt = OrganizerPaymentAttempt.objects.get(gateway_reference=reference)
+            if attempt.status not in {OrganizerPaymentAttempt.Status.PAID, OrganizerPaymentAttempt.Status.FAILED, OrganizerPaymentAttempt.Status.CANCELLED}:
+                mark_organizer_attempt_unsuccessful(
+                    attempt,
+                    gateway_status=status,
+                    failure_reason=data.get('gateway_response') or 'The payment was not completed successfully.',
+                    cancelled=(status == 'abandoned'),
+                )
+                return 'organizer_failed'
+        except (OrganizerPaymentAttempt.DoesNotExist, ImportError):
+            pass
+
+    return None
+
+
 @transaction.atomic
 def handle_paystack_webhook(payload):
     event_name = payload.get('event')

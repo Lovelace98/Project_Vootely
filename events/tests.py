@@ -2,12 +2,13 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event
-from events.views import build_event_leaderboard
+from events.performance import dashboard_home_context, build_event_leaderboard
 from nominees.models import Nominee
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
@@ -157,3 +158,70 @@ class EventFlowTests(TestCase):
 
         self.assertContains(response, '5')
         self.assertContains(response, '12.50')
+
+    def test_dashboard_summary_cache_invalidates_after_vote_purchase(self):
+        cache.clear()
+        event = self.create_event(status=Event.Status.PUBLISHED)
+        nominee = self.create_nominee(event)
+
+        first_context = dashboard_home_context(self.organizer, timeframe='all_time')
+        self.assertEqual(first_context['summary']['confirmed_votes'], 0)
+
+        attempt = PaymentAttempt.objects.create(
+            event=event,
+            nominee=nominee,
+            amount=Decimal('7.50'),
+            currency='GHS',
+            vote_quantity=3,
+            voter_email='cached@example.com',
+            gateway_reference='cache-invalidation-ref',
+            status=PaymentAttempt.Status.PAID,
+        )
+        VotePurchase.objects.create(
+            event=event,
+            nominee=nominee,
+            payment_attempt=attempt,
+            quantity=3,
+            amount_paid=Decimal('7.50'),
+            currency='GHS',
+            payment_reference='cache-invalidation-ref',
+        )
+
+        refreshed_context = dashboard_home_context(self.organizer, timeframe='all_time')
+        self.assertEqual(refreshed_context['summary']['confirmed_votes'], 3)
+        self.assertEqual(refreshed_context['summary']['confirmed_revenue'], Decimal('7.50'))
+
+    def test_dashboard_summary_cache_is_scoped_by_organizer(self):
+        cache.clear()
+        own_event = self.create_event(status=Event.Status.PUBLISHED)
+        own_nominee = self.create_nominee(own_event, name='Own Nominee')
+        other_event = self.create_event(owner=self.other_user, status=Event.Status.PUBLISHED, title='Other Event')
+        other_nominee = self.create_nominee(other_event, name='Other Nominee')
+
+        for event, nominee, reference, amount, quantity in [
+            (own_event, own_nominee, 'own-cache-scope', Decimal('5.00'), 2),
+            (other_event, other_nominee, 'other-cache-scope', Decimal('20.00'), 8),
+        ]:
+            attempt = PaymentAttempt.objects.create(
+                event=event,
+                nominee=nominee,
+                amount=amount,
+                currency='GHS',
+                vote_quantity=quantity,
+                voter_email=f'{reference}@example.com',
+                gateway_reference=reference,
+                status=PaymentAttempt.Status.PAID,
+            )
+            VotePurchase.objects.create(
+                event=event,
+                nominee=nominee,
+                payment_attempt=attempt,
+                quantity=quantity,
+                amount_paid=amount,
+                currency='GHS',
+                payment_reference=reference,
+            )
+
+        context = dashboard_home_context(self.organizer, timeframe='all_time')
+        self.assertEqual(context['summary']['confirmed_votes'], 2)
+        self.assertEqual(context['summary']['confirmed_revenue'], Decimal('5.00'))

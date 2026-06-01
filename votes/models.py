@@ -34,6 +34,10 @@ class VotePurchase(models.Model):
 
     class Meta:
         ordering = ('-paid_at',)
+        indexes = [
+            models.Index(fields=('event', '-paid_at'), name='vote_event_paid_at'),
+            models.Index(fields=('nominee', '-paid_at'), name='vote_nominee_paid_at'),
+        ]
 
     def __str__(self):
         return f'{self.nominee.name} x {self.quantity}'

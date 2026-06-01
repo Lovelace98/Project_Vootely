@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event
+from events.performance import build_tally_fast
 from notifications.phone import normalize_phone_number
 from payments.services import amount_to_minor_units, generate_reference
 
@@ -651,28 +652,7 @@ def cast_ballot(event, raw_token, selections, *, request=None):
 
 
 def build_tally(event):
-    totals = []
-    for position in event.election_positions.filter(is_active=True).order_by('display_order', 'title'):
-        candidate_rows = []
-        for candidate in position.candidates.filter(is_active=True).order_by('display_order', 'name'):
-            count = BallotSelection.objects.filter(position=position, candidate=candidate).count()
-            candidate_rows.append(
-                {
-                    'candidate_id': candidate.id,
-                    'candidate_name': candidate.name,
-                    'votes': count,
-                }
-            )
-        abstentions = BallotSelection.objects.filter(position=position, candidate=None).count()
-        totals.append(
-            {
-                'position_id': position.id,
-                'position_title': position.title,
-                'candidates': candidate_rows,
-                'abstentions': abstentions,
-            }
-        )
-    return totals
+    return build_tally_fast(event)
 
 
 def generate_tally(event, *, actor=None, publish=False, request=None):

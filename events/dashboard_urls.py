@@ -19,6 +19,7 @@ from wallets.views import (
     RequestOTPView,
     ResolveAccountView,
     DashboardAnalyticsView,
+    DashboardAnalyticsNomineesFragmentView,
 )
 from elections.views import (
     DashboardElectionActionView,
@@ -57,6 +58,11 @@ urlpatterns = [
     path('profile/', DashboardProfileView.as_view(), name='profile'),
     path('search/', DashboardSearchView.as_view(), name='search'),
     path('analytics/', DashboardAnalyticsView.as_view(), name='analytics'),
+    path(
+        'analytics/fragments/nominees/',
+        DashboardAnalyticsNomineesFragmentView.as_view(),
+        name='analytics_nominees_fragment',
+    ),
     path('notifications/', DashboardNotificationsView.as_view(), name='notifications'),
     path('notifications/read-all/', MarkAllNotificationsReadView.as_view(), name='mark_all_read'),
     path('notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='mark_read'),

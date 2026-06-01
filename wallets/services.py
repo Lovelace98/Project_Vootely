@@ -184,6 +184,10 @@ def post_payment_ledger_transaction(payment_attempt):
             ),
         ]
     )
+    from events.performance import bump_event_cache, bump_organizer_cache
+
+    bump_organizer_cache(payment_attempt.event.owner_id)
+    bump_event_cache(payment_attempt.event_id)
     return transaction_row
 
 
@@ -224,4 +228,7 @@ def post_withdrawal_ledger_transaction(withdrawal_request):
             ),
         ]
     )
+    from events.performance import bump_organizer_cache
+
+    bump_organizer_cache(withdrawal_request.organizer_id)
     return transaction_row

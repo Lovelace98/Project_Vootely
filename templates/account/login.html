@@ -99,12 +99,12 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-vc-blue"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 English (US)
             </span>
-            <a href="#" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
-            <a href="#" class="hover:text-vc-blue hover:underline transition-all">Plans</a>
-            <a href="mailto:{{ support_email|default:'support@votecentral.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+            <a href="{% url 'events:terms_of_service' %}" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
+            <a href="{% url 'events:privacy_policy' %}" class="hover:text-vc-blue hover:underline transition-all">Privacy</a>
+            <a href="{% url 'events:organizer_agreement' %}" class="hover:text-vc-blue hover:underline transition-all">Organizer Agreement</a>
+            <a href="mailto:lovesdesigns1@gmail.com" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
         </div>
     </div>
 </div>
 
-{% include 'includes/footer.html' %}
 {% endblock body %}

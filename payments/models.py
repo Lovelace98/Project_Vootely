@@ -56,6 +56,10 @@ class PaymentAttempt(models.Model):
 
     class Meta:
         ordering = ('-initiated_at',)
+        indexes = [
+            models.Index(fields=('event', 'status', '-initiated_at'), name='pay_event_status_init'),
+            models.Index(fields=('event', 'nominee', 'status'), name='pay_event_nom_status'),
+        ]
 
     def __str__(self):
         return self.gateway_reference

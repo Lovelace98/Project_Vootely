@@ -85,6 +85,10 @@ class Event(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=('owner', 'kind', 'status', 'start_at'), name='evt_owner_kind_stat_start'),
+            models.Index(fields=('owner', 'kind', '-created_at'), name='evt_owner_kind_created'),
+        ]
 
     def __str__(self):
         return self.title

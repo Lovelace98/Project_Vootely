@@ -1,9 +1,70 @@
-<footer class="border-t border-vc-dark-100/50 bg-white">
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-        <div>
-            <p class="text-sm font-bold tracking-[0.15em] text-vc-blue">VOTECENTRAL</p>
-            <p class="mt-1 text-sm text-vc-dark-400">Premium paid competitions with real-time leaderboards.</p>
+<footer class="border-t border-vc-dark-100/50 bg-white dark:bg-vc-surface-raised dark:border-vc-dark-100/10 mt-auto">
+    <!-- Main Footer Links Grid -->
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 pb-8 border-b border-vc-dark-100/35 dark:border-vc-dark-100/10">
+            
+            <!-- Column 1: Brand & Tagline -->
+            <div class="md:col-span-5 space-y-4">
+                <span class="text-xl font-black tracking-[0.2em] text-vc-blue">VOOTELY</span>
+                <p class="text-sm text-vc-dark-400 font-medium leading-relaxed max-w-sm">
+                    Premium paid competitions with real-time leaderboards, seamless Paystack payments, and ledger-backed organizer wallets.
+                </p>
+            </div>
+            
+            <!-- Column 2: Legal Pages -->
+            <div class="md:col-span-3 space-y-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-500">Legal &amp; Trust</p>
+                <ul class="space-y-2.5 text-xs font-semibold text-vc-dark-400">
+                    <li>
+                        <a href="{% url 'events:privacy_policy' %}" class="hover:text-vc-blue transition-colors duration-200 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-vc-blue/40"></span>
+                            Privacy Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'events:terms_of_service' %}" class="hover:text-vc-blue transition-colors duration-200 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-vc-blue/40"></span>
+                            Terms of Service
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'events:organizer_agreement' %}" class="hover:text-vc-blue transition-colors duration-200 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-vc-blue/40"></span>
+                            Organizer Agreement
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Column 3: Contact & Support -->
+            <div class="md:col-span-4 space-y-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-500">Support &amp; Contact</p>
+                <ul class="space-y-2.5 text-xs font-semibold text-vc-dark-400">
+                    <li class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-vc-blue"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <a href="mailto:lovesdesigns1@gmail.com" class="hover:text-vc-blue transition-colors duration-200">lovesdesigns1@gmail.com</a>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-vc-blue"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <a href="tel:+233548988503" class="hover:text-vc-blue transition-colors duration-200">+233 548988503</a>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-vc-blue"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <a href="https://www.lovesdesigns.org" target="_blank" class="hover:text-vc-blue transition-colors duration-200">www.lovesdesigns.org</a>
+                    </li>
+                </ul>
+            </div>
+            
         </div>
-        <p class="text-xs text-vc-dark-300">Built with Django, HTMX &amp; Paystack</p>
+        
+        <!-- Bottom Bar -->
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-vc-dark-400">
+            <p>
+                Product of <a href="https://www.lovesdesigns.org" target="_blank" class="hover:text-vc-blue hover:underline font-bold text-vc-dark transition-all duration-200">Love's Designs</a>
+            </p>
+            <p class="text-vc-dark-300">
+                &copy; {% now "Y" %} Vootely. All rights reserved.
+            </p>
+        </div>
     </div>
 </footer>
