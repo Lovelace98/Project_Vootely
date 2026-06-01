@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ─────────────────────────────────────────────────────
    VoteCentral Design System Tokens
    Brand:  Blue #191bdf · Orange #fe6807 · Dark #09080d
