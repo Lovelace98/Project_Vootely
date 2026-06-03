@@ -69,12 +69,25 @@ class Command(BaseCommand):
             event.vote_price = event.vote_price or Decimal('2.00')
             event.save()
 
+        from nominees.models import CompetitionCategory
+        category, _ = CompetitionCategory.objects.get_or_create(
+            event=event,
+            slug='demo-category',
+            defaults={
+                'name': 'Demo Category',
+                'description': 'Demo category for local testing.',
+                'display_order': 1,
+                'is_active': True,
+            }
+        )
+
         nominees = []
         for index, name in enumerate(['Ama Serwaa', 'Kojo Mensah', 'Esi Arthur'], start=1):
             nominee, _ = Nominee.objects.get_or_create(
                 event=event,
                 slug=name.lower().replace(' ', '-'),
                 defaults={
+                    'category': category,
                     'name': name,
                     'bio': f'{name} is part of the local VoteCentral demo event.',
                     'display_order': index,
@@ -97,6 +110,7 @@ class Command(BaseCommand):
                     'nominee': nominee,
                     'amount': amount,
                     'currency': 'GHS',
+                    'platform_commission_percent': Decimal('10.00'),
                     'vote_quantity': quantity,
                     'voter_name': voter_name,
                     'voter_email': voter_email,

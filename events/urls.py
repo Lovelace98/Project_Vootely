@@ -1,10 +1,12 @@
 from django.urls import path
 
-from nominees.views import PublicNomineeDetailView, PublicNomineePaymentStatusView
+from nominees.views import PublicNominationCreateView, PublicNomineeDetailView, PublicNomineePaymentStatusView
 
 from .views import (
     EventDetailView,
     EventLeaderboardPartialView,
+    LandingContactInquiryCreateView,
+    LandingPageView,
     HomeView,
     PrivacyPolicyView,
     TermsOfServiceView,
@@ -14,7 +16,9 @@ from .views import (
 app_name = 'events'
 
 urlpatterns = [
-    path('', HomeView.as_view(), name='home'),
+    path('', LandingPageView.as_view(), name='landing'),
+    path('contact/', LandingContactInquiryCreateView.as_view(), name='contact_inquiry_submit'),
+    path('events/', HomeView.as_view(), name='home'),
     path('privacy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('terms/', TermsOfServiceView.as_view(), name='terms_of_service'),
     path('organizer-agreement/', OrganizerAgreementView.as_view(), name='organizer_agreement'),
@@ -34,5 +38,9 @@ urlpatterns = [
         PublicNomineePaymentStatusView.as_view(),
         name='nominee_payment_status',
     ),
+    path(
+        'events/<slug:event_slug>/nominate/',
+        PublicNominationCreateView.as_view(),
+        name='nominate',
+    ),
 ]
-

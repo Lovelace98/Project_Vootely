@@ -8,6 +8,11 @@ from accounts.views import (
     MarkNotificationReadView,
 )
 from nominees.views import (
+    DashboardCategoryCreateView,
+    DashboardCategoryDeleteView,
+    DashboardCategoryUpdateView,
+    DashboardNominationReviewView,
+    DashboardNominationSubmissionListView,
     DashboardNomineeCreateView,
     DashboardNomineeDeleteView,
     DashboardNomineeUpdateView,
@@ -123,6 +128,21 @@ urlpatterns = [
         name='nominee_create',
     ),
     path(
+        'events/<slug:event_slug>/categories/new/',
+        DashboardCategoryCreateView.as_view(),
+        name='category_create',
+    ),
+    path(
+        'events/<slug:event_slug>/categories/<slug:category_slug>/edit/',
+        DashboardCategoryUpdateView.as_view(),
+        name='category_edit',
+    ),
+    path(
+        'events/<slug:event_slug>/categories/<slug:category_slug>/delete/',
+        DashboardCategoryDeleteView.as_view(),
+        name='category_delete',
+    ),
+    path(
         'events/<slug:event_slug>/nominees/<slug:slug>/edit/',
         DashboardNomineeUpdateView.as_view(),
         name='nominee_edit',
@@ -131,5 +151,15 @@ urlpatterns = [
         'events/<slug:event_slug>/nominees/<slug:slug>/delete/',
         DashboardNomineeDeleteView.as_view(),
         name='nominee_delete',
+    ),
+    path(
+        'events/<slug:event_slug>/nominations/',
+        DashboardNominationSubmissionListView.as_view(),
+        name='nomination_queue',
+    ),
+    path(
+        'events/<slug:event_slug>/nominations/<int:pk>/',
+        DashboardNominationReviewView.as_view(),
+        name='nomination_review',
     ),
 ]

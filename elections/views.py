@@ -152,6 +152,11 @@ class DashboardElectionPositionsView(OrganizerElectionMixin, FormView):
         self.event = self.get_event()
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.event
+        return kwargs
+
     def form_valid(self, form):
         try:
             ensure_setup_can_change(self.event)
@@ -198,6 +203,31 @@ class DashboardElectionCandidatesView(OrganizerElectionMixin, FormView):
             candidate.event = self.event
             candidate.save()
             audit(self.event, 'candidate_created', actor=self.request.user, obj=candidate, request=self.request)
+
+            # Notify candidate
+            from notifications.services import queue_notification, queue_sms_notification
+            from notifications.models import Notification
+
+            if candidate.email:
+                queue_notification(
+                    channel=Notification.Channel.EMAIL,
+                    event_type=Notification.EventType.CANDIDATE_CONFIRMED,
+                    recipient_email=candidate.email,
+                    recipient_name=candidate.name,
+                    event=self.event,
+                    candidate=candidate,
+                    dedupe_parts=(self.event.pk, candidate.pk, 'confirmed_email'),
+                )
+            if candidate.phone:
+                queue_sms_notification(
+                    event_type=Notification.EventType.CANDIDATE_CONFIRMED,
+                    recipient_phone=candidate.phone,
+                    recipient_name=candidate.name,
+                    event=self.event,
+                    candidate=candidate,
+                    dedupe_parts=(self.event.pk, candidate.pk, 'confirmed_sms'),
+                )
+
             messages.success(self.request, 'Candidate added.')
         except ValidationError as exc:
             for message in exc.messages:
@@ -222,6 +252,11 @@ class DashboardElectionPositionUpdateView(SafeIntegrityMixin, OrganizerElectionM
     def get_queryset(self):
         return ElectionPosition.objects.filter(event=self.get_event())
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.get_event()
+        return kwargs
+
     def form_valid(self, form):
         try:
             ensure_setup_can_change(self.get_event())
@@ -231,8 +266,14 @@ class DashboardElectionPositionUpdateView(SafeIntegrityMixin, OrganizerElectionM
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(self.request, message)
-            return self.form_invalid(form)
+            return redirect('dashboard:election_positions', slug=self.get_event().slug)
         return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"{field.capitalize()}: {error}")
+        return redirect('dashboard:election_positions', slug=self.get_event().slug)
 
     def get_success_url(self):
         return reverse('dashboard:election_positions', args=[self.get_event().slug])
@@ -275,8 +316,14 @@ class DashboardElectionCandidateUpdateView(SafeIntegrityMixin, OrganizerElection
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(self.request, message)
-            return self.form_invalid(form)
+            return redirect('dashboard:election_candidates', slug=self.get_event().slug)
         return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"{field.capitalize()}: {error}")
+        return redirect('dashboard:election_candidates', slug=self.get_event().slug)
 
     def get_success_url(self):
         return reverse('dashboard:election_candidates', args=[self.get_event().slug])
@@ -311,7 +358,7 @@ class DashboardElectionRosterView(OrganizerElectionMixin, FormView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('download') == 'template':
             response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="votecentral-roster-template.csv"'
+            response['Content-Disposition'] = 'attachment; filename="vootely-roster-template.csv"'
             writer = csv.writer(response)
             writer.writerow(['external_id', 'name', 'email', 'phone'])
             writer.writerow(['V001', 'Kwame Mensah', 'kwame@example.com', '0241234567'])

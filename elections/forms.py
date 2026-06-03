@@ -26,6 +26,8 @@ class ElectionEventForm(StyledModelForm):
         }
         help_texts = {
             'is_public': 'Required before voters can access the election page.',
+            'banner': 'Landscape view. Recommended size: 1200x630 pixels (Aspect ratio 16:9). Used for detail pages. File size must be less than 2MB.',
+            'flyer': 'Square view. Recommended size: 1080x1080 pixels (Aspect ratio 1:1). Used for listings and card grids. File size must be less than 2MB.',
         }
 
     def __init__(self, *args, **kwargs):
@@ -42,23 +44,53 @@ class ElectionEventForm(StyledModelForm):
             raise forms.ValidationError('End date must be after the start date.')
         return cleaned_data
 
+    def clean_banner(self):
+        banner = self.cleaned_data.get('banner')
+        if banner and hasattr(banner, 'size'):
+            if banner.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('Banner image size must be less than 2MB.')
+        return banner
+
+    def clean_flyer(self):
+        flyer = self.cleaned_data.get('flyer')
+        if flyer and hasattr(flyer, 'size'):
+            if flyer.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('Flyer image size must be less than 2MB.')
+        return flyer
+
 
 class ElectionPositionForm(StyledModelForm):
     class Meta:
         model = ElectionPosition
         fields = ['title', 'max_choices', 'display_order', 'is_active']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, event=None, **kwargs):
+        self.event = event
         super().__init__(*args, **kwargs)
         self._apply_styles()
+
+    def clean_title(self):
+        title = (self.cleaned_data.get('title') or '').strip()
+        event = self.event or getattr(self.instance, 'event', None)
+        if event and title:
+            duplicate_qs = ElectionPosition.objects.exclude(pk=self.instance.pk).filter(
+                event=event,
+                title__iexact=title,
+            )
+            if duplicate_qs.exists():
+                raise forms.ValidationError('A position with this title already exists for this election.')
+        return title
 
 
 class ElectionCandidateForm(StyledModelForm):
     class Meta:
         model = ElectionCandidate
-        fields = ['position', 'name', 'bio', 'photo', 'display_order', 'is_active']
+        fields = ['position', 'name', 'bio', 'photo', 'email', 'phone', 'display_order', 'is_active']
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4}),
+        }
+        help_texts = {
+            'photo': 'Recommended aspect ratio: 1:1 (Square). Format: JPG, PNG. File size must be less than 2MB.',
         }
 
     def __init__(self, *args, event=None, **kwargs):
@@ -67,6 +99,26 @@ class ElectionCandidateForm(StyledModelForm):
         if event is not None:
             self.fields['position'].queryset = event.election_positions.filter(is_active=True)
         self._apply_styles()
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if photo and hasattr(photo, 'size'):
+            if photo.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('Photo size must be less than 2MB.')
+        return photo
+
+    def clean(self):
+        cleaned_data = super().clean()
+        position = cleaned_data.get('position')
+        name = (cleaned_data.get('name') or '').strip()
+        if position and name:
+            duplicate_qs = ElectionCandidate.objects.exclude(pk=self.instance.pk).filter(
+                position=position,
+                name__iexact=name,
+            )
+            if duplicate_qs.exists():
+                self.add_error('name', 'A candidate with this name already exists for the selected position.')
+        return cleaned_data
 
 
 class RosterUploadForm(forms.Form):

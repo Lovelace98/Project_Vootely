@@ -41,7 +41,9 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, blank=True)
-    sms_opt_in = models.BooleanField(default=False)
+    sms_opt_in = models.BooleanField(default=True)
+    email_opt_in = models.BooleanField(default=True)
+    marketing_opt_in = models.BooleanField(default=True)
     
     organizer_type = models.CharField(
         max_length=20,
@@ -51,7 +53,7 @@ class User(AbstractUser):
     referral_source = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Where did you hear about VoteCentral?",
+        help_text="Where did you hear about Vootely?",
     )
     avatar = models.ImageField(
         upload_to='avatars/',

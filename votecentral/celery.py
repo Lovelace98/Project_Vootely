@@ -19,4 +19,8 @@ app.conf.beat_schedule = {
         'task': 'notifications.retry_failed_notifications',
         'schedule': crontab(minute='*/15'),
     },
+    'scan-voter-turnout-reminders-hourly': {
+        'task': 'notifications.scan_voter_turnout_reminders',
+        'schedule': crontab(minute=0),
+    },
 }

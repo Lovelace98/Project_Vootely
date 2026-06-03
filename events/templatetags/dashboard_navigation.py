@@ -88,7 +88,7 @@ def dashboard_page_meta(context):
         crumbs.append({'label': title, 'url': _reverse(route)})
     elif url_name == 'notification_settings':
         title = 'Notification Settings'
-        subtitle = 'Choose how VoteCentral reaches you about activity and payouts.'
+        subtitle = 'Choose how Vootely reaches you about activity and payouts.'
         crumbs.extend(
             [
                 {'label': 'Profile', 'url': _reverse('dashboard:profile')},
@@ -105,7 +105,7 @@ def dashboard_page_meta(context):
             ]
         )
         back_label = 'Back to competitions'
-    elif url_name in {'event_detail', 'event_edit', 'nominee_create', 'nominee_edit'}:
+    elif url_name in {'event_detail', 'event_edit', 'nominee_create', 'nominee_edit', 'category_create', 'category_edit', 'nomination_queue', 'nomination_review'}:
         event_label = _event_label(event, 'Competition')
         event_url = _reverse('dashboard:event_detail', getattr(event, 'slug', '')) if event else ''
         crumbs.append({'label': 'Competitions', 'url': _reverse('dashboard:competitions')})
@@ -133,6 +133,33 @@ def dashboard_page_meta(context):
                 }
             )
             back_label = 'Back to competition'
+        elif url_name == 'category_create':
+            title = 'Add category'
+            subtitle = 'Create a category nominees can be grouped and submitted under.'
+            crumbs.append({'label': 'Add category', 'url': _reverse('dashboard:category_create', getattr(event, 'slug', '')) if event else ''})
+            back_label = 'Back to competition'
+        elif url_name == 'category_edit':
+            title = 'Edit category'
+            subtitle = 'Update category details and ordering.'
+            category_label = _object_label(obj, 'Edit category')
+            crumbs.append(
+                {
+                    'label': category_label,
+                    'url': _reverse('dashboard:category_edit', getattr(event, 'slug', ''), getattr(obj, 'slug', '')) if event and obj else '',
+                }
+            )
+            back_label = 'Back to competition'
+        elif url_name == 'nomination_queue':
+            title = 'Nomination queue'
+            subtitle = 'Review pending, approved, and rejected self-nominations.'
+            crumbs.append({'label': 'Nominations', 'url': _reverse('dashboard:nomination_queue', getattr(event, 'slug', '')) if event else ''})
+            back_label = 'Back to competition'
+        elif url_name == 'nomination_review':
+            title = 'Review nomination'
+            subtitle = 'Approve or reject a public nomination submission.'
+            crumbs.append({'label': 'Nominations', 'url': _reverse('dashboard:nomination_queue', getattr(event, 'slug', '')) if event else ''})
+            crumbs.append({'label': 'Review', 'url': _reverse('dashboard:nomination_review', getattr(event, 'slug', ''), getattr(obj, 'pk', '')) if event and obj else ''})
+            back_label = 'Back to nominations'
         else:
             back_label = 'Back to competitions'
     elif url_name == 'election_create':

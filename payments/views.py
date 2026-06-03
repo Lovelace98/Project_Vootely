@@ -2,7 +2,6 @@ import json
 from decimal import Decimal
 
 from django.contrib import messages
-from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -14,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from events.models import Event
 from nominees.models import Nominee
+from votecentral.rate_limits import is_rate_limited
 
 from .forms import PaymentInitiationForm
 from .models import PaymentAttempt
@@ -26,21 +26,9 @@ from .services import (
     resolve_payment_status_by_reference,
     verify_paystack_signature,
 )
-
-
-def rate_limit(request, key_prefix, limit, window_seconds):
-    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
-    cache_key = f'{key_prefix}:{ip_address}'
-    added = cache.add(cache_key, 1, timeout=window_seconds)
-    if added:
-        return False
-    count = cache.incr(cache_key)
-    return count > limit
-
-
 class PaystackInitiateView(View):
     def post(self, request, *args, **kwargs):
-        if rate_limit(request, 'paystack-init', 10, 60):
+        if is_rate_limited(request, 'paystack-init', 10, 60):
             return HttpResponse('Too many requests.', status=429)
 
         form = PaymentInitiationForm(request.POST)
@@ -65,6 +53,15 @@ class PaystackInitiateView(View):
             messages.error(request, 'Nominee not found.')
             return redirect(event.get_absolute_url())
 
+        if not event.has_platform_commission():
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'This event is not ready to accept votes yet.'
+                }, status=400)
+            messages.error(request, 'This event is not ready to accept votes yet.')
+            return redirect(event.get_absolute_url())
+
         if not nominee.is_active or not event.accepts_votes():
             if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
@@ -81,6 +78,7 @@ class PaystackInitiateView(View):
             nominee=nominee,
             amount=amount,
             currency=event.currency,
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=quantity,
             voter_name=form.cleaned_data['voter_name'],
             voter_email=form.cleaned_data['voter_email'],
@@ -154,7 +152,7 @@ class PaystackWebhookView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        if rate_limit(request, 'paystack-webhook', 120, 60):
+        if is_rate_limited(request, 'paystack-webhook', 120, 60):
             return HttpResponse('Too many requests.', status=429)
 
         signature = request.headers.get('x-paystack-signature', '')

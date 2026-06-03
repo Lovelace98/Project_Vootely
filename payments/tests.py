@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event
-from nominees.models import Nominee
+from nominees.models import CompetitionCategory, Nominee
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
 from wallets.models import LedgerTransaction
@@ -38,6 +38,7 @@ class PaystackPaymentTests(TestCase):
             'title': 'Best Artist Award',
             'description': 'Paystack test event',
             'currency': 'GHS',
+            'platform_commission_percent': Decimal('10.00'),
             'vote_price': Decimal('2.50'),
             'start_at': now - timedelta(hours=1),
             'end_at': now + timedelta(days=1),
@@ -49,7 +50,8 @@ class PaystackPaymentTests(TestCase):
         return Event.objects.create(**data)
 
     def create_nominee(self, event, name='Ada'):
-        return Nominee.objects.create(event=event, name=name, is_active=True)
+        category, _ = CompetitionCategory.objects.get_or_create(event=event, name=f'{name} Category')
+        return Nominee.objects.create(event=event, category=category, name=name, is_active=True)
 
     def sign_payload(self, payload):
         raw = json.dumps(payload).encode('utf-8')
@@ -108,6 +110,7 @@ class PaystackPaymentTests(TestCase):
         self.assertEqual(attempt.amount, Decimal('7.50'))
         self.assertEqual(attempt.vote_quantity, 3)
         self.assertEqual(attempt.voter_email, 'buyer@example.com')
+        self.assertEqual(attempt.platform_commission_percent, event.platform_commission_percent)
 
     @patch('payments.views.initialize_paystack_transaction')
     def test_payment_initiation_returns_json_for_ajax_request(self, mocked_initialize):
@@ -141,6 +144,29 @@ class PaystackPaymentTests(TestCase):
         self.assertEqual(data['amount'], 7.50)
         self.assertEqual(data['quantity'], 3)
 
+    @patch('payments.views.initialize_paystack_transaction')
+    def test_payment_initiation_rejects_event_without_commission(self, mocked_initialize):
+        event = self.create_event(platform_commission_percent=None)
+        nominee = self.create_nominee(event)
+
+        response = self.client.post(
+            reverse('payments:paystack_initiate'),
+            data={
+                'event_slug': event.slug,
+                'nominee_ref': nominee.slug,
+                'quantity': 1,
+                'voter_name': 'Guest Buyer',
+                'voter_email': 'buyer@example.com',
+                'voter_phone': '0240000000',
+            },
+            headers={'Accept': 'application/json'},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'This event is not ready to accept votes yet.')
+        self.assertEqual(PaymentAttempt.objects.count(), 0)
+        mocked_initialize.assert_not_called()
+
     def test_valid_webhook_marks_payment_paid_and_creates_vote_purchase(self):
         event = self.create_event()
         nominee = self.create_nominee(event)
@@ -149,6 +175,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('7.50'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=3,
             voter_name='Guest Buyer',
             voter_email='buyer@example.com',
@@ -181,6 +208,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('7.50'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=3,
             voter_email='buyer@example.com',
             gateway_reference='callback-ref',
@@ -228,6 +256,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('7.50'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=3,
             voter_email='buyer@example.com',
             gateway_reference='hidden-ref',
@@ -253,6 +282,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='pending@example.com',
             gateway_reference='pending-ref',
@@ -275,6 +305,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='paid@example.com',
             gateway_reference='paid-ref',
@@ -305,6 +336,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='cancelled@example.com',
             gateway_reference='cancel-ref',
@@ -328,6 +360,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='pending@example.com',
             gateway_reference='status-ref-public',
@@ -349,6 +382,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='pending@example.com',
             gateway_reference='status-ref',
@@ -367,7 +401,7 @@ class PaystackPaymentTests(TestCase):
         response = self.client.get(reverse('payments:status_detail', args=['unknown-ref']))
 
         self.assertContains(response, 'Payment reference not found')
-        self.assertContains(response, 'could not find a VoteCentral payment')
+        self.assertContains(response, 'could not find a Vootely payment')
 
     def test_payment_status_lookup_does_not_expose_other_nominee_payment(self):
         event = self.create_event()
@@ -378,6 +412,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee_a,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_email='secret@example.com',
             gateway_reference='secret-ref',
@@ -399,6 +434,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_name='Repeat Buyer',
             voter_email='repeat@example.com',
@@ -457,6 +493,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_name='Late Buyer',
             voter_email='late@example.com',
@@ -486,6 +523,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_name='Failed Buyer',
             voter_email='failed@example.com',
@@ -525,6 +563,7 @@ class PaystackPaymentTests(TestCase):
             nominee=nominee,
             amount=Decimal('5.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=2,
             voter_name='Invalid Buyer',
             voter_email='invalid@example.com',

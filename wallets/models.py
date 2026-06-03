@@ -179,6 +179,8 @@ class WithdrawalRequest(models.Model):
     def clean(self):
         if self.amount and self.amount <= Decimal('0.00'):
             raise ValidationError({'amount': 'Withdrawal amount must be greater than zero.'})
+        if self.wallet_account_id and self.organizer_id and self.wallet_account.owner_id != self.organizer_id:
+            raise ValidationError({'wallet_account': 'Choose the organizer wallet account for this payout.'})
         if self.pk and self.status != self.Status.COMPLETED:
             try:
                 self.ledger_transaction
@@ -187,6 +189,21 @@ class WithdrawalRequest(models.Model):
             else:
                 raise ValidationError(
                     'Completed withdrawals that have posted to the ledger cannot move back to another state.'
+                )
+        if (
+            self.organizer_id
+            and self.amount
+            and self.status in {self.Status.APPROVED, self.Status.PROCESSING, self.Status.COMPLETED}
+        ):
+            from .services import get_available_withdrawal_balance
+
+            available_balance = get_available_withdrawal_balance(
+                self.organizer,
+                exclude_withdrawal=self,
+            )
+            if self.amount > available_balance:
+                raise ValidationError(
+                    {'amount': f'This withdrawal exceeds the available balance of {available_balance:.2f}.'}
                 )
 
     @property

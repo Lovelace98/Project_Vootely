@@ -5,7 +5,6 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 from .models import Notification
-from .phone import format_hubtel_phone_number
 
 
 @dataclass
@@ -35,6 +34,24 @@ class NotificationDeliveryError(RuntimeError):
         self.provider_error_code = provider_error_code
 
 
+def resolve_sms_provider():
+    provider = getattr(settings, 'SMS_PROVIDER', '').strip().lower()
+    if provider == 'arkesel':
+        return provider
+    if settings.ARKESEL_API_KEY and settings.ARKESEL_SMS_FROM:
+        return 'arkesel'
+    return ''
+
+
+def resolve_email_provider():
+    provider = getattr(settings, 'EMAIL_PROVIDER', '').strip().lower()
+    if provider == 'brevo':
+        return 'brevo'
+    if settings.BREVO_API_KEY:
+        return 'brevo'
+    return 'django-email'
+
+
 class EmailAdapter:
     provider_name = 'django-email'
 
@@ -55,24 +72,159 @@ class EmailAdapter:
         )
 
 
-class HubtelSmsAdapter:
-    provider_name = 'hubtel'
+class ArkeselSmsAdapter:
+    provider_name = 'arkesel'
+
+    @staticmethod
+    def _normalize_response_payload(payload):
+        if isinstance(payload, dict):
+            return payload
+        if isinstance(payload, list):
+            return {
+                'status': 'success',
+                'data': payload,
+            }
+        return {
+            'status': 'error',
+            'message': 'Unexpected Arkesel response format.',
+            'raw': payload,
+        }
+
+    @staticmethod
+    def _first_message_id(data):
+        if isinstance(data, list) and data:
+            first_item = data[0] or {}
+            if isinstance(first_item, dict):
+                return str(
+                    first_item.get('id')
+                    or first_item.get('ID')
+                    or first_item.get('message_id')
+                    or first_item.get('messageId')
+                    or ''
+                )
+            return ''
+        if isinstance(data, dict):
+            return str(
+                data.get('id')
+                or data.get('ID')
+                or data.get('message_id')
+                or data.get('messageId')
+                or ''
+            )
+        return ''
+
+    def _send_v2(self, notification):
+        endpoint = getattr(settings, 'ARKESEL_SMS_BASE_URL', 'https://sms.arkesel.com/api/v2/sms/send').rstrip('/')
+        if not endpoint.endswith('/sms/send') and not endpoint.endswith('/send'):
+            endpoint = f'{endpoint}/sms/send'
+
+        payload = {
+            'sender': getattr(settings, 'ARKESEL_SMS_FROM', 'Vootely'),
+            'recipients': [notification.recipient_phone],
+            'message': notification.body_text,
+        }
+        headers = {
+            'api-key': settings.ARKESEL_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
+
+        response = requests.post(
+            endpoint,
+            json=payload,
+            headers=headers,
+            timeout=15,
+        )
+        try:
+            response_payload = response.json()
+        except Exception:
+            response_payload = {'raw': response.text}
+        response_payload = self._normalize_response_payload(response_payload)
+
+        status = (response_payload.get('status') or '').strip().lower()
+        code = str(response_payload.get('code') or response.status_code)
+        message = (response_payload.get('message') or '').strip()
+
+        if response.status_code not in (200, 201) or status != 'success':
+            raise NotificationDeliveryError(
+                message or f'Arkesel V2 SMS failed with code {code}',
+                provider=self.provider_name,
+                provider_status=status or str(response.status_code),
+                provider_payload=response_payload,
+                provider_error_code=code,
+            )
+
+        data = response_payload.get('data')
+        return NotificationSendResult(
+            deliveries=1,
+            provider=self.provider_name,
+            provider_status='success',
+            provider_message_id=self._first_message_id(data or response_payload),
+            provider_payload=response_payload,
+            provider_error_code=code,
+        )
+
+    def _send_v1(self, notification):
+        endpoint = getattr(settings, 'ARKESEL_SMS_LEGACY_URL', 'https://sms.arkesel.com/sms/api')
+        sender = getattr(settings, 'ARKESEL_SMS_FROM', 'Vootely')
+        recipient_phone = notification.recipient_phone.lstrip('+')
+
+        payload = {
+            'action': 'send-sms',
+            'api_key': settings.ARKESEL_API_KEY,
+            'to': recipient_phone,
+            'from': sender,
+            'sms': notification.body_text,
+        }
+        response = requests.post(
+            endpoint,
+            params={'api_key': settings.ARKESEL_API_KEY},
+            json=payload,
+            timeout=15,
+        )
+        try:
+            response_payload = response.json()
+        except Exception:
+            response_payload = {'raw': response.text}
+
+        response_code = None
+        response_message = ''
+        if isinstance(response_payload, dict):
+            response_code = response_payload.get('code')
+            response_message = (response_payload.get('message') or '').strip()
+        elif isinstance(response_payload, list) and response_payload:
+            response_code = response.status_code
+            first_item = response_payload[0] or {}
+            if isinstance(first_item, dict):
+                response_message = (first_item.get('message') or '').strip()
+
+        code = str(response_code or response.status_code)
+        if response.status_code != 200 or str(response_code or '').upper() != 'OK':
+            raise NotificationDeliveryError(
+                response_message or f'Arkesel V1 SMS failed with code {code}',
+                provider=self.provider_name,
+                provider_status=str(response_code or response.status_code),
+                provider_payload=response_payload,
+                provider_error_code=code,
+            )
+
+        return NotificationSendResult(
+            deliveries=1,
+            provider=self.provider_name,
+            provider_status='ok',
+            provider_message_id=self._first_message_id(response_payload),
+            provider_payload=response_payload,
+            provider_error_code=code,
+        )
 
     def send(self, notification):
-        if not settings.HUBTEL_CLIENT_ID or not settings.HUBTEL_CLIENT_SECRET:
+        if not settings.ARKESEL_API_KEY:
             raise NotificationDeliveryError(
-                'Hubtel SMS credentials are not configured.',
+                'Arkesel SMS credentials are not configured.',
                 provider=self.provider_name,
                 provider_status='configuration_error',
             )
-        if not settings.HUBTEL_SMS_FROM:
-            raise NotificationDeliveryError(
-                'HUBTEL_SMS_FROM is not configured.',
-                provider=self.provider_name,
-                provider_status='configuration_error',
-            )
-
-        recipient_phone = format_hubtel_phone_number(notification.recipient_phone)
+        recipient_phone = notification.recipient_phone
         if not recipient_phone:
             raise NotificationDeliveryError(
                 'A valid SMS recipient phone number is required.',
@@ -80,54 +232,110 @@ class HubtelSmsAdapter:
                 provider_status='invalid_recipient',
             )
 
-        endpoint = settings.HUBTEL_SMS_BASE_URL.rstrip('/')
-        if not endpoint.endswith('/send'):
-            endpoint = f'{endpoint}/send'
-
-        payload = {
-            'From': settings.HUBTEL_SMS_FROM,
-            'To': recipient_phone,
-            'Content': notification.body_text,
-        }
-        response = requests.post(
-            endpoint,
-            json=payload,
-            auth=(settings.HUBTEL_CLIENT_ID, settings.HUBTEL_CLIENT_SECRET),
-            timeout=settings.HUBTEL_TIMEOUT_SECONDS,
-        )
         try:
-            response_payload = response.json()
-        except ValueError:
-            response_payload = {'raw': response.text}
+            return self._send_v2(notification)
+        except NotificationDeliveryError as exc:
+            auth_failure = (
+                str(exc.provider_error_code) == '401'
+                or 'invalid key' in str(exc).lower()
+                or 'authentication' in str(exc).lower()
+            )
+            if not auth_failure:
+                raise
+            return self._send_v1(notification)
 
-        if response.status_code < 200 or response.status_code >= 300:
+
+class BrevoEmailAdapter:
+    provider_name = 'brevo'
+
+    def send(self, notification):
+        if not settings.BREVO_API_KEY:
             raise NotificationDeliveryError(
-                response_payload.get('message')
-                or response.reason
-                or 'Hubtel SMS request failed.',
+                'Brevo API key is not configured.',
                 provider=self.provider_name,
-                provider_status=str(response_payload.get('responseCode') or response.status_code),
-                provider_payload=response_payload,
-                provider_error_code=str(response_payload.get('responseCode') or response.status_code),
+                provider_status='configuration_error',
             )
 
-        data = response_payload.get('data') or {}
+        endpoint = getattr(settings, 'BREVO_API_URL', 'https://api.brevo.com/v3/smtp/email')
+        headers = {
+            'api-key': settings.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
+
+        # Parse sender details from DEFAULT_FROM_EMAIL
+        sender_name, sender_email = 'Vootely', '853e5e001@smtp-brevo.com'
+        from_email_config = getattr(settings, 'DEFAULT_FROM_EMAIL', '')
+        if '<' in from_email_config and '>' in from_email_config:
+            sender_name = from_email_config.split('<')[0].strip()
+            sender_email = from_email_config.split('<')[1].split('>')[0].strip()
+        elif from_email_config:
+            sender_email = from_email_config.strip()
+            sender_name = 'Vootely'
+
+        payload = {
+            'sender': {'name': sender_name, 'email': sender_email},
+            'to': [{
+                'email': notification.recipient_email,
+                'name': notification.recipient_name or notification.recipient_email
+            }],
+            'subject': notification.subject,
+            'textContent': notification.body_text,
+        }
+
+        if notification.body_html:
+            payload['htmlContent'] = notification.body_html
+
+        try:
+            response = requests.post(
+                endpoint,
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+            response_payload = response.json()
+        except Exception as exc:
+            raise NotificationDeliveryError(
+                f'Brevo HTTP request failed: {exc}',
+                provider=self.provider_name,
+                provider_status='http_error',
+            )
+
+        if response.status_code not in (200, 201, 202) or 'messageId' not in response_payload:
+            raise NotificationDeliveryError(
+                response_payload.get('message') or f'Brevo API returned error status {response.status_code}',
+                provider=self.provider_name,
+                provider_status='failed',
+                provider_payload=response_payload,
+                provider_error_code=response_payload.get('code') or str(response.status_code),
+            )
+
         return NotificationSendResult(
             deliveries=1,
             provider=self.provider_name,
-            provider_status=str(data.get('status') or response_payload.get('responseCode') or 'accepted'),
-            provider_message_id=str(
-                data.get('messageId')
-                or data.get('messageID')
-                or response_payload.get('messageId')
-                or ''
-            ),
+            provider_status='sent',
+            provider_message_id=response_payload.get('messageId', ''),
             provider_payload=response_payload,
-            provider_error_code=str(response_payload.get('responseCode') or ''),
         )
 
 
 def get_notification_adapter(notification):
+    provider = (getattr(notification, 'provider', '') or '').strip().lower()
     if notification.channel == Notification.Channel.SMS:
-        return HubtelSmsAdapter()
-    return EmailAdapter()
+        provider = provider or resolve_sms_provider()
+        if provider == 'arkesel':
+            return ArkeselSmsAdapter()
+        raise NotificationDeliveryError(
+            'No SMS provider is configured.',
+            provider='',
+            provider_status='configuration_error',
+        )
+    else:
+        if provider == 'brevo':
+            return BrevoEmailAdapter()
+        if provider in {'django-email', 'console'}:
+            return EmailAdapter()
+        provider = resolve_email_provider()
+        if provider == 'brevo':
+            return BrevoEmailAdapter()
+        return EmailAdapter()

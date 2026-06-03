@@ -8,7 +8,7 @@ class WithdrawalRequestForm(forms.ModelForm):
     otp = forms.CharField(
         max_length=6,
         min_length=6,
-        required=False,
+        required=True,
         help_text='Enter the 6-digit code sent to your email.'
     )
     class Meta:
@@ -32,14 +32,8 @@ class WithdrawalRequestForm(forms.ModelForm):
     def __init__(self, *args, organizer=None, **kwargs):
         self.organizer = organizer
         super().__init__(*args, **kwargs)
-        
-        # Make fields optional during unit testing to prevent legacy tests from failing
-        import sys
-        is_testing = 'test' in sys.argv
-        if is_testing:
-            self.fields['bank_code'].required = False
-            self.fields['payout_type'].required = False
-            self.fields['otp'].required = False
+        self.fields['bank_code'].required = True
+        self.fields['payout_type'].required = True
 
         partial_hx_attrs = {
             'hx-select': 'unset',
@@ -108,28 +102,19 @@ class WithdrawalRequestForm(forms.ModelForm):
 
     def clean_otp(self):
         otp = self.cleaned_data.get('otp')
-        import sys
-        is_testing = 'test' in sys.argv
-        if is_testing and not otp:
-            return '123456'
-            
         if not otp:
             raise forms.ValidationError('This field is required.')
-            
+
         if self.organizer is None:
             return otp
-            
+
         from django.core.cache import cache
         cached_otp = cache.get(f'withdrawal_otp_{self.organizer.pk}')
-        
-        # For demo purposes, '123456' always works if no OTP in cache
-        if not cached_otp and otp == '123456':
-             return otp
-             
+
         if not cached_otp:
             raise forms.ValidationError('OTP has expired or was never requested.')
-        
+
         if otp != cached_otp:
             raise forms.ValidationError('Invalid security code.')
-            
+
         return otp

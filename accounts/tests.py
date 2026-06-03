@@ -39,11 +39,20 @@ class CustomUserAuthTests(TestCase):
             email='notify@example.com',
             password='strong-pass-123',
         )
+        self.assertTrue(user.sms_opt_in)  # Default True
+        self.assertTrue(user.email_opt_in)  # Default True
+        self.assertTrue(user.marketing_opt_in)  # Default True
+
         self.client.login(email='notify@example.com', password='strong-pass-123')
 
         response = self.client.post(
             reverse('dashboard:notification_settings'),
-            data={'phone_number': '0241 234 567', 'sms_opt_in': 'on'},
+            data={
+                'phone_number': '0241 234 567',
+                'sms_opt_in': 'on',
+                'email_opt_in': '',  # Toggle off
+                'marketing_opt_in': 'on',
+            },
             follow=True,
         )
 
@@ -51,6 +60,8 @@ class CustomUserAuthTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(user.phone_number, '+233241234567')
         self.assertTrue(user.sms_opt_in)
+        self.assertFalse(user.email_opt_in)
+        self.assertTrue(user.marketing_opt_in)
 
     def test_signup_onboarding_saves_profiling_and_triggers_verification(self):
         # Execute signup via the new high-fidelity signup form

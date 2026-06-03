@@ -3,20 +3,22 @@ import hmac
 import json
 from datetime import timedelta
 from decimal import Decimal
+from unittest import mock
 from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event
-from nominees.models import Nominee
+from nominees.models import CompetitionCategory, NominationSubmission, Nominee
 from notifications.adapters import NotificationSendResult
 from notifications.models import Notification
-from notifications.services import dispatch_notification, queue_event_reminders, queue_notification
+from notifications.services import dispatch_notification, queue_event_reminders, queue_nomination_approved, queue_nomination_rejected, queue_nomination_submitted, queue_notification, queue_sms_notification
 from notifications.tasks import send_notification
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
@@ -33,6 +35,11 @@ from wallets.services import get_organizer_account, post_payment_ledger_transact
     SERVER_EMAIL='support@example.com',
     NOTIFICATION_ADMIN_EMAILS=['ops@example.com'],
     CELERY_TASK_ALWAYS_EAGER=True,
+    SMS_PROVIDER='',
+    ARKESEL_API_KEY='',
+    ARKESEL_SMS_FROM='',
+    EMAIL_PROVIDER='',
+    BREVO_API_KEY='',
 )
 class NotificationFlowTests(TestCase):
     def setUp(self):
@@ -55,6 +62,7 @@ class NotificationFlowTests(TestCase):
             'title': 'Best Artist Award',
             'description': 'Notification test event',
             'currency': 'GHS',
+            'platform_commission_percent': Decimal('10.00'),
             'vote_price': Decimal('2.50'),
             'start_at': now - timedelta(hours=1),
             'end_at': now + timedelta(days=1),
@@ -66,7 +74,23 @@ class NotificationFlowTests(TestCase):
         return Event.objects.create(**data)
 
     def create_nominee(self, event, name='Ada'):
-        return Nominee.objects.create(event=event, name=name, is_active=True)
+        category, _ = CompetitionCategory.objects.get_or_create(event=event, name=f'{name} Category')
+        return Nominee.objects.create(event=event, category=category, name=name, is_active=True)
+
+    def create_submission(self, event, status=NominationSubmission.Status.PENDING, **overrides):
+        category = overrides.pop('category', None)
+        if category is None:
+            category, _ = CompetitionCategory.objects.get_or_create(event=event, name='Best Student')
+        data = {
+            'event': event,
+            'category': category,
+            'name': 'Ama',
+            'email': 'ama@example.com',
+            'phone_number': '0240000000' if status == NominationSubmission.Status.PENDING else '0240000001',
+            'status': status,
+        }
+        data.update(overrides)
+        return NominationSubmission.objects.create(**data)
 
     def create_paid_attempt(self, event, nominee, reference='paid-ref', amount=Decimal('5.00'), quantity=2):
         attempt = PaymentAttempt.objects.create(
@@ -74,6 +98,7 @@ class NotificationFlowTests(TestCase):
             nominee=nominee,
             amount=amount,
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=quantity,
             voter_name='Guest Buyer',
             voter_email='buyer@example.com',
@@ -110,11 +135,60 @@ class NotificationFlowTests(TestCase):
             },
         }
 
+    def test_queue_nomination_submitted_notifies_organizer(self):
+        event = self.create_event()
+        submission = self.create_submission(event)
+
+        queue_nomination_submitted(submission)
+
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.NOMINATION_SUBMITTED,
+                recipient_email=self.organizer.email,
+            ).exists()
+        )
+
+    def test_queue_nomination_review_outcomes_notify_submitter(self):
+        event = self.create_event()
+        category = CompetitionCategory.objects.create(event=event, name='Most Fashionable')
+        nominee = Nominee.objects.create(event=event, category=category, name='Esi', is_active=True)
+        approved = self.create_submission(
+            event,
+            status=NominationSubmission.Status.APPROVED,
+            category=category,
+            approved_nominee=nominee,
+            name='Esi',
+            email='esi@example.com',
+        )
+        rejected = self.create_submission(
+            event,
+            status=NominationSubmission.Status.REJECTED,
+            category=category,
+            name='Kojo',
+            email='kojo@example.com',
+            phone_number='0240000002',
+        )
+
+        queue_nomination_approved(approved)
+        queue_nomination_rejected(rejected)
+
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.NOMINATION_APPROVED,
+                recipient_email='esi@example.com',
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.NOMINATION_REJECTED,
+                recipient_email='kojo@example.com',
+            ).exists()
+        )
+
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_successful_payment_webhook_creates_notification_row(self):
         event = self.create_event()
@@ -152,10 +226,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_failed_and_cancelled_payment_webhooks_create_matching_notifications(self):
         event = self.create_event()
@@ -226,10 +299,9 @@ class NotificationFlowTests(TestCase):
         self.assertEqual(Notification.objects.count(), 0)
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_duplicate_successful_webhooks_do_not_duplicate_payment_confirmed_notifications(self):
         event = self.create_event()
@@ -270,10 +342,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_withdrawal_submission_creates_organizer_and_staff_notifications(self):
         event = self.create_event()
@@ -283,6 +354,7 @@ class NotificationFlowTests(TestCase):
             nominee=nominee,
             amount=Decimal('20.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=8,
             voter_email='earned@example.com',
             gateway_reference='earned-ref',
@@ -302,22 +374,26 @@ class NotificationFlowTests(TestCase):
         post_payment_ledger_transaction(attempt)
 
         self.client.login(email=self.organizer.email, password='strong-pass-123')
+        cache.set(f'withdrawal_otp_{self.organizer.pk}', '654321', 600)
         with patch('notifications.adapters.requests.post') as mocked_sms:
             mocked_sms.return_value.status_code = 201
             mocked_sms.return_value.json.return_value = {
                 'responseCode': '0000',
                 'data': {'status': 'accepted', 'messageId': 'withdrawal-sms-1'},
             }
-            response = self.client.post(
-                reverse('dashboard:withdrawals'),
-                data={
-                    'amount': '10.00',
-                    'payout_name': 'Ada Organizer',
-                    'bank_name': 'GCB',
-                    'bank_account_number': '1234567890',
-                },
-                follow=True,
-            )
+            with patch('payments.services.get_paystack_banks', return_value=[{'code': 'MTN', 'name': 'MTN Mobile Money'}]):
+                response = self.client.post(
+                    reverse('dashboard:withdrawals'),
+                    data={
+                        'amount': '10.00',
+                        'payout_type': 'mobile_money',
+                        'bank_code': 'MTN',
+                        'payout_name': 'Ada Organizer',
+                        'bank_account_number': '0241234567',
+                        'otp': '654321',
+                    },
+                    follow=True,
+                )
 
         withdrawal = WithdrawalRequest.objects.get()
         self.assertEqual(response.status_code, 200)
@@ -345,10 +421,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_admin_withdrawal_status_transitions_create_matching_notifications(self):
         event = self.create_event()
@@ -358,6 +433,7 @@ class NotificationFlowTests(TestCase):
             nominee=nominee,
             amount=Decimal('20.00'),
             currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
             vote_quantity=8,
             voter_email='earned@example.com',
             gateway_reference='status-earned-ref',
@@ -422,10 +498,9 @@ class NotificationFlowTests(TestCase):
             )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_event_publish_and_close_create_notifications(self):
         now = timezone.now()
@@ -468,10 +543,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_event_reminder_scan_creates_only_one_notification_per_window(self):
         now = timezone.now()
@@ -563,6 +637,39 @@ class NotificationFlowTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(notification.provider, 'django-email')
 
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
+    )
+    def test_queue_sms_notification_auto_detects_arkesel_provider(self):
+        with patch('notifications.services.dispatch_notification') as mocked_dispatch:
+            notification = queue_sms_notification(
+                event_type=Notification.EventType.EVENT_PUBLISHED,
+                recipient_phone='+233241234567',
+                recipient_name='Owner',
+                dedupe_parts=('auto-arkesel',),
+            )
+
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.channel, Notification.Channel.SMS)
+        self.assertEqual(notification.provider, 'arkesel')
+        mocked_dispatch.assert_called_once_with(notification.pk)
+
+    def test_queue_notification_defaults_to_django_email_without_brevo_key(self):
+        with patch('notifications.services.dispatch_notification') as mocked_dispatch:
+            notification = queue_notification(
+                event_type=Notification.EventType.EVENT_PUBLISHED,
+                recipient_email='owner@example.com',
+                recipient_name='Owner',
+                dedupe_parts=('email-fallback',),
+            )
+
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.channel, Notification.Channel.EMAIL)
+        self.assertEqual(notification.provider, 'django-email')
+        mocked_dispatch.assert_called_once_with(notification.pk)
+
     def test_send_notification_marks_row_failed_on_error(self):
         notification = Notification.objects.create(
             event_type=Notification.EventType.EVENT_PUBLISHED,
@@ -582,6 +689,37 @@ class NotificationFlowTests(TestCase):
         notification.refresh_from_db()
         self.assertEqual(notification.status, Notification.Status.FAILED)
         self.assertIn('SMTP unavailable', notification.failure_reason)
+
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
+    )
+    def test_send_notification_prefers_stored_sms_provider_over_current_settings(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.SMS,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_phone='+233241234567',
+            recipient_name='Owner',
+            subject='Published',
+            body_text='Your event is live.',
+            dedupe_key='sms-provider-precedence',
+            provider='arkesel',
+        )
+
+        with patch('notifications.adapters.requests.post') as mocked_post:
+            mocked_post.return_value.status_code = 201
+            mocked_post.return_value.json.return_value = {
+                'status': 'success',
+                'data': {'messageId': 'arkesel-456'},
+            }
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.SENT)
+        self.assertEqual(notification.provider, 'arkesel')
+        self.assertEqual(notification.provider_message_id, 'arkesel-456')
+        self.assertIn('arkesel', mocked_post.call_args.args[0])
 
     def test_send_notification_marks_row_failed_when_backend_reports_zero_deliveries(self):
         notification = Notification.objects.create(
@@ -677,10 +815,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_sms_send_marks_row_sent_with_provider_metadata(self):
         notification = Notification.objects.create(
@@ -691,28 +828,100 @@ class NotificationFlowTests(TestCase):
             subject='Published',
             body_text='Your event is live.',
             dedupe_key='sms-send-success',
-            provider='hubtel',
+            provider='arkesel',
         )
 
         with patch('notifications.adapters.requests.post') as mocked_post:
             mocked_post.return_value.status_code = 201
             mocked_post.return_value.json.return_value = {
-                'responseCode': '0000',
-                'data': {'status': 'accepted', 'messageId': 'hubtel-123'},
+                'status': 'success',
+                'data': [
+                    {'recipient': '233241234567', 'id': 'arkesel-123'},
+                ],
             }
             send_notification(notification.pk)
 
         notification.refresh_from_db()
         self.assertEqual(notification.status, Notification.Status.SENT)
-        self.assertEqual(notification.provider, 'hubtel')
-        self.assertEqual(notification.provider_message_id, 'hubtel-123')
-        self.assertEqual(notification.provider_status, 'accepted')
+        self.assertEqual(notification.provider, 'arkesel')
+        self.assertEqual(notification.provider_message_id, 'arkesel-123')
+        self.assertEqual(notification.provider_status, 'success')
+        self.assertEqual(
+            mocked_post.call_args.kwargs['json']['recipients'],
+            ['+233241234567'],
+        )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
+    )
+    def test_sms_send_falls_back_to_v1_when_v2_returns_invalid_key(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.SMS,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_phone='+233241234567',
+            recipient_name='Owner',
+            subject='Published',
+            body_text='Your event is live.',
+            dedupe_key='arkesel-fallback-test',
+            provider='arkesel',
+        )
+
+        v2_response = mock.Mock()
+        v2_response.status_code = 401
+        v2_response.json.return_value = {'status': 'error', 'code': 401, 'message': 'Invalid key'}
+
+        v1_response = mock.Mock()
+        v1_response.status_code = 200
+        v1_response.json.return_value = {'code': 'OK', 'message': 'Successfully Sent', 'id': 'legacy-123'}
+
+        with patch('notifications.adapters.requests.post', side_effect=[v2_response, v1_response]) as mocked_post:
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.SENT)
+        self.assertEqual(notification.provider_message_id, 'legacy-123')
+        self.assertEqual(mocked_post.call_count, 2)
+        first_call = mocked_post.call_args_list[0]
+        second_call = mocked_post.call_args_list[1]
+        self.assertIn('/api/v2/sms/send', first_call.args[0])
+        self.assertIn('/sms/api', second_call.args[0])
+
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
+    )
+    def test_sms_send_handles_list_top_level_response_from_arkesel_v2(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.SMS,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_phone='+233241234567',
+            recipient_name='Owner',
+            subject='Published',
+            body_text='Your event is live.',
+            dedupe_key='arkesel-list-response-test',
+            provider='arkesel',
+        )
+
+        response_obj = mock.Mock()
+        response_obj.status_code = 201
+        response_obj.json.return_value = [
+            {'recipient': '233241234567', 'id': 'arkesel-top-list-1'},
+        ]
+
+        with patch('notifications.adapters.requests.post', return_value=response_obj):
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.SENT)
+        self.assertEqual(notification.provider_message_id, 'arkesel-top-list-1')
+        self.assertEqual(notification.provider_status, 'success')
+
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
     )
     def test_sms_send_marks_row_failed_without_breaking_email(self):
         notification = Notification.objects.create(
@@ -723,27 +932,27 @@ class NotificationFlowTests(TestCase):
             subject='Published',
             body_text='Your event is live.',
             dedupe_key='sms-send-failure',
-            provider='hubtel',
+            provider='arkesel',
         )
 
         with patch('notifications.adapters.requests.post') as mocked_post:
             mocked_post.return_value.status_code = 400
             mocked_post.return_value.json.return_value = {
-                'responseCode': '4001',
-                'message': 'Invalid sender',
+                'status': 'error',
+                'code': 101,
+                'message': 'Invalid API Key',
             }
             send_notification(notification.pk)
 
         notification.refresh_from_db()
         self.assertEqual(notification.status, Notification.Status.FAILED)
-        self.assertEqual(notification.provider_error_code, '4001')
-        self.assertIn('Invalid sender', notification.failure_reason)
+        self.assertEqual(notification.provider_error_code, '101')
+        self.assertIn('Invalid API Key', notification.failure_reason)
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_queue_notification_keeps_email_and_sms_dedupe_separate(self):
         event = self.create_event()
@@ -753,8 +962,10 @@ class NotificationFlowTests(TestCase):
         with patch('notifications.adapters.requests.post') as mocked_post:
             mocked_post.return_value.status_code = 201
             mocked_post.return_value.json.return_value = {
-                'responseCode': '0000',
-                'data': {'status': 'accepted', 'messageId': 'mixed-1'},
+                'status': 'success',
+                'code': 1000,
+                'message': 'SMS sent successfully',
+                'message_id': 'mixed-1',
             }
             self.client.post(
                 reverse('payments:paystack_webhook'),
@@ -772,10 +983,9 @@ class NotificationFlowTests(TestCase):
         )
 
     @override_settings(
-        SMS_PROVIDER='hubtel',
-        HUBTEL_CLIENT_ID='client-id',
-        HUBTEL_CLIENT_SECRET='client-secret',
-        HUBTEL_SMS_FROM='VoteCentral',
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
     )
     def test_sms_notifications_skip_when_phone_is_invalid(self):
         event = self.create_event()
@@ -803,3 +1013,175 @@ class NotificationFlowTests(TestCase):
             ).exists()
         )
         mocked_post.assert_not_called()
+
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+        ARKESEL_SMS_FROM='Vootely',
+    )
+    def test_arkesel_sms_adapter_success(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.SMS,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_phone='+233241234567',
+            recipient_name='Test Organizer',
+            subject='Published',
+            body_text='Your event is live.',
+            dedupe_key='arkesel-success-test',
+            provider='arkesel',
+        )
+        with patch('notifications.adapters.requests.post') as mocked_post:
+            mocked_post.return_value.status_code = 200
+            mocked_post.return_value.json.return_value = {
+                'status': 'success',
+                'code': 1000,
+                'message': 'SMS sent successfully',
+                'message_id': 'arkesel-msg-999',
+            }
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.SENT)
+        self.assertEqual(notification.provider, 'arkesel')
+        self.assertEqual(notification.provider_message_id, 'arkesel-msg-999')
+        self.assertEqual(notification.provider_status, 'success')
+
+    @override_settings(
+        SMS_PROVIDER='arkesel',
+        ARKESEL_API_KEY='arkesel-key-123',
+    )
+    def test_arkesel_sms_adapter_failure(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.SMS,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_phone='+233241234567',
+            recipient_name='Test Organizer',
+            subject='Published',
+            body_text='Your event is live.',
+            dedupe_key='arkesel-fail-test',
+            provider='arkesel',
+        )
+        with patch('notifications.adapters.requests.post') as mocked_post:
+            mocked_post.return_value.status_code = 400
+            mocked_post.return_value.json.return_value = {
+                'status': 'error',
+                'code': 101,
+                'message': 'Invalid API Key',
+            }
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.FAILED)
+        self.assertEqual(notification.provider_error_code, '101')
+        self.assertIn('Invalid API Key', notification.failure_reason)
+
+    @override_settings(
+        EMAIL_PROVIDER='brevo',
+        BREVO_API_KEY='brevo-api-key-xyz',
+        DEFAULT_FROM_EMAIL='Vootely <no-reply@vootely.com>',
+    )
+    def test_brevo_email_adapter_success(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.EMAIL,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_email='organizer@example.com',
+            recipient_name='Test Organizer',
+            subject='Welcome to Vootely',
+            body_text='Welcome!',
+            body_html='<p>Welcome!</p>',
+            dedupe_key='brevo-success-test',
+            provider='brevo',
+        )
+        with patch('notifications.adapters.requests.post') as mocked_post:
+            mocked_post.return_value.status_code = 201
+            mocked_post.return_value.json.return_value = {
+                'messageId': 'brevo-msg-888',
+            }
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.SENT)
+        self.assertEqual(notification.provider, 'brevo')
+        self.assertEqual(notification.provider_message_id, 'brevo-msg-888')
+
+    @override_settings(
+        EMAIL_PROVIDER='brevo',
+        BREVO_API_KEY='brevo-api-key-xyz',
+        DEFAULT_FROM_EMAIL='Vootely <no-reply@vootely.com>',
+    )
+    def test_brevo_email_adapter_failure(self):
+        notification = Notification.objects.create(
+            channel=Notification.Channel.EMAIL,
+            event_type=Notification.EventType.EVENT_PUBLISHED,
+            recipient_email='organizer@example.com',
+            recipient_name='Test Organizer',
+            subject='Welcome to Vootely',
+            body_text='Welcome!',
+            dedupe_key='brevo-fail-test',
+            provider='brevo',
+        )
+        with patch('notifications.adapters.requests.post') as mocked_post:
+            mocked_post.return_value.status_code = 400
+            mocked_post.return_value.json.return_value = {
+                'code': 'invalid_parameter',
+                'message': 'domain not configured',
+            }
+            send_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.status, Notification.Status.FAILED)
+        self.assertEqual(notification.provider_error_code, 'invalid_parameter')
+        self.assertIn('domain not configured', notification.failure_reason)
+
+    @mock.patch('notifications.services.sms_channel_ready', return_value=True)
+    def test_voter_turnout_reminders_queues_notifications(self, mock_sms_ready):
+        from .services import queue_voter_turnout_reminders
+        from elections.models import ElectionCredential, ElectionVoter
+        
+        # Create a secure election ending in 12 hours
+        now = timezone.now()
+        event = Event.objects.create(
+            owner=self.organizer,
+            title='SRC Election',
+            description='Secure campus election',
+            kind=Event.Kind.SECURE_ELECTION,
+            currency='GHS',
+            start_at=now - timedelta(hours=1),
+            end_at=now + timedelta(hours=12),
+            is_public=True,
+            status=Event.Status.OPEN,
+        )
+
+        voter = ElectionVoter.objects.create(
+            event=event,
+            external_id='V001',
+            name='Voter 1',
+            email='voter1@example.com',
+            phone='0241234567',
+            status=ElectionVoter.Status.ELIGIBLE,
+        )
+
+        ElectionCredential.objects.create(
+            event=event,
+            voter=voter,
+            token_hash='some_token_hash_abc',
+            status=ElectionCredential.Status.ISSUED,
+        )
+
+        # Scan for reminders
+        created_ids = queue_voter_turnout_reminders(reference_time=now)
+
+        # Assert notifications exist
+        self.assertEqual(len(created_ids), 2)  # 1 Email + 1 SMS
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.VOTER_TURNOUT_REMINDER,
+                recipient_email='voter1@example.com',
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.VOTER_TURNOUT_REMINDER,
+                recipient_phone='+233241234567',
+            ).exists()
+        )

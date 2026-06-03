@@ -6,7 +6,7 @@ from celery import shared_task
 
 from .adapters import NotificationDeliveryError
 from .models import Notification
-from .services import notifications_ready_for_retry, queue_event_reminders, send_notification_now
+from .services import notifications_ready_for_retry, queue_event_reminders, send_notification_now, queue_voter_turnout_reminders
 
 
 @shared_task(name='notifications.send_notification')
@@ -71,3 +71,8 @@ def retry_failed_notifications():
 @shared_task(name='notifications.scan_event_reminders')
 def scan_event_reminders():
     return queue_event_reminders()
+
+
+@shared_task(name='notifications.scan_voter_turnout_reminders')
+def scan_voter_turnout_reminders():
+    return queue_voter_turnout_reminders()

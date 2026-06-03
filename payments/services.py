@@ -207,7 +207,7 @@ def resolve_payment_status_by_reference(reference):
         )
     except PaymentAttempt.DoesNotExist:
         return payment_reference_not_found(
-            'We could not find a VoteCentral payment using that reference.'
+            'We could not find a Vootely payment using that reference.'
         )
 
     payment_status = build_public_payment_status(payment_attempt)
@@ -221,6 +221,10 @@ def payment_status_redirect_url(payment_attempt):
     if event_has_public_payment_context(payment_attempt.event):
         return f'{payment_attempt.nominee.get_absolute_url()}?payment_reference={payment_attempt.gateway_reference}'
     return reverse('payments:status_detail', args=[payment_attempt.gateway_reference])
+
+
+def payment_attempt_has_commission(payment_attempt):
+    return payment_attempt.platform_commission_percent is not None
 
 
 def verify_and_process_paystack_payment(reference):
@@ -383,6 +387,18 @@ def handle_paystack_webhook(payload):
         queue_payment_failed(attempt)
         return attempt
 
+    if not payment_attempt_has_commission(attempt):
+        attempt = mark_payment_attempt_unsuccessful(
+            attempt,
+            gateway_status=gateway_status or 'commission_unset',
+            failure_reason='This event is not ready to accept votes yet.',
+            webhook_payload=payload,
+        )
+        from notifications.services import queue_payment_failed
+
+        queue_payment_failed(attempt)
+        return attempt
+
     if not attempt.event.accepts_votes():
         attempt = mark_payment_attempt_unsuccessful(
             attempt,
@@ -477,14 +493,16 @@ def resolve_paystack_account(account_number, bank_code):
     if not settings.PAYSTACK_SECRET_KEY:
         raise RuntimeError('PAYSTACK_SECRET_KEY is not configured.')
 
-    response = requests.get(
-        'https://api.paystack.co/bank/resolve',
-        params={'account_number': account_number, 'bank_code': bank_code},
-        headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'},
-        timeout=10,
-    )
-    body = response.json()
-    print(f"DEBUG: Paystack Resolve Response: {body}")
+    try:
+        response = requests.get(
+            'https://api.paystack.co/bank/resolve',
+            params={'account_number': account_number, 'bank_code': bank_code},
+            headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'},
+            timeout=10,
+        )
+        body = response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise ValidationError('Could not verify the payout account right now. Please try again.') from exc
     if not body.get('status'):
         raise ValidationError(body.get('message') or 'Could not resolve account.')
     return body.get('data')

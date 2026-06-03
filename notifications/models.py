@@ -24,8 +24,21 @@ class Notification(models.Model):
         WITHDRAWAL_REVIEW_REQUIRED = 'withdrawal_review_required', 'Withdrawal Review Required'
         EVENT_PUBLISHED = 'event_published', 'Event Published'
         EVENT_CLOSED = 'event_closed', 'Event Closed'
+        EVENT_COMMISSION_SETUP_REQUIRED = 'event_commission_setup_required', 'Event Commission Setup Required'
         EVENT_STARTING_SOON = 'event_starting_soon', 'Event Starting Soon'
         EVENT_ENDING_SOON = 'event_ending_soon', 'Event Ending Soon'
+        ORGANIZER_WELCOME = 'organizer_welcome', 'Welcome Organizer'
+        NOMINEE_GOES_LIVE = 'nominee_goes_live', 'Nominee Goes Live'
+        NOMINEE_EVENT_CLOSED = 'nominee_event_closed', 'Nominee Event Closed'
+        NOMINATION_SUBMITTED = 'nomination_submitted', 'Nomination Submitted'
+        NOMINATION_APPROVED = 'nomination_approved', 'Nomination Approved'
+        NOMINATION_REJECTED = 'nomination_rejected', 'Nomination Rejected'
+        CANDIDATE_CONFIRMED = 'candidate_confirmed', 'Candidate Confirmed'
+        CANDIDATE_ELECTION_CLOSED = 'candidate_election_closed', 'Candidate Election Closed'
+        VOTER_CREDENTIALS = 'voter_credentials', 'Voter Credentials'
+        VOTER_ELECTION_CLOSED = 'voter_election_closed', 'Voter Election Closed'
+        VOTER_BALLOT_CAST = 'voter_ballot_cast', 'Voter Ballot Cast'
+        VOTER_TURNOUT_REMINDER = 'voter_turnout_reminder', 'Voter Turnout Reminder'
 
     channel = models.CharField(
         max_length=16,

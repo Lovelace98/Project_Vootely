@@ -1,4 +1,6 @@
-from django.core.validators import MinValueValidator
+from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -35,6 +37,16 @@ class PaymentAttempt(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='GHS')
+    platform_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('100.00')),
+        ],
+        null=True,
+        blank=True,
+    )
     vote_quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     voter_name = models.CharField(max_length=120, blank=True)
     voter_email = models.EmailField(blank=True)

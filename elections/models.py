@@ -111,6 +111,8 @@ class ElectionCandidate(models.Model):
     slug = models.SlugField(max_length=180, blank=True)
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to='elections/candidates/', blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=32, blank=True)
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

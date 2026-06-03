@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from django.contrib import messages
@@ -21,6 +22,10 @@ from events.performance import (
     dashboard_revenue_summary_context,
     withdrawal_summary_fast,
 )
+from votecentral.rate_limits import is_rate_limited
+
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardRevenueView(LoginRequiredMixin, TemplateView):
@@ -30,10 +35,6 @@ class DashboardRevenueView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(dashboard_revenue_summary_context(self.request.user))
         context.update(dashboard_revenue_lists_context(self.request.user, self.request.GET))
-
-        # Dynamic currency and commission rate for templates
-        from django.conf import settings as app_settings
-        context['commission_rate'] = getattr(app_settings, 'PLATFORM_COMMISSION_PERCENT', 10)
         return context
 
 
@@ -70,7 +71,7 @@ class DashboardWithdrawalsView(LoginRequiredMixin, TemplateView):
             queue_withdrawal_requested_notifications(withdrawal)
             messages.success(
                 request,
-                'Withdrawal request submitted. VoteCentral staff will review it before payout.',
+                'Withdrawal request submitted. Vootely staff will review it before payout.',
             )
             return redirect('dashboard:withdrawals')
         return self.render_to_response(self.get_context_data(form=form))
@@ -88,6 +89,11 @@ class DashboardWithdrawalsView(LoginRequiredMixin, TemplateView):
 
 class ResolveAccountView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
+        if is_rate_limited(request, 'withdrawal-account-resolve', 30, 300, scope='user'):
+            return HttpResponse(
+                '<p class="text-xs text-vc-danger font-medium">Too many verification requests. Please wait a few minutes.</p>',
+                status=429,
+            )
         account_number = request.GET.get('bank_account_number')
         bank_code = request.GET.get('bank_code')
         if not account_number or not bank_code:
@@ -126,6 +132,12 @@ class BankListPartialView(LoginRequiredMixin, View):
 
 class RequestOTPView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        if is_rate_limited(request, 'withdrawal-otp-request', 5, 600, scope='user'):
+            return HttpResponse(
+                '<p class="text-xs text-vc-danger font-medium">Too many code requests. Please wait 10 minutes before trying again.</p>',
+                status=429,
+            )
+
         import random
         from django.core.cache import cache
         from django.core.mail import send_mail
@@ -135,16 +147,20 @@ class RequestOTPView(LoginRequiredMixin, View):
         
         try:
             send_mail(
-                'Security Code: VoteCentral Withdrawal',
+                'Security Code: Vootely Withdrawal',
                 f'Your withdrawal security code is: {otp}. It will expire in 10 minutes. If you did not request this, please change your password immediately.',
-                'security@votecentral.com',
+                'security@vootely.com',
                 [request.user.email],
                 fail_silently=False,
             )
             return HttpResponse('<p class="text-xs text-vc-success font-medium">✓ Code sent to your email</p>')
         except Exception as e:
-            # Fallback for dev/no email configured
-            return HttpResponse(f'<p class="text-xs text-vc-warning font-medium">⚠ Sent (Dev): {otp}</p>')
+            cache.delete(f'withdrawal_otp_{request.user.pk}')
+            logger.warning('Failed to send withdrawal OTP for user %s: %s', request.user.pk, e)
+            return HttpResponse(
+                '<p class="text-xs text-vc-danger font-medium">Unable to send a security code right now. Please try again shortly.</p>',
+                status=503,
+            )
 
 
 from django.views.generic import TemplateView

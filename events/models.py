@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.urls import reverse
@@ -68,6 +68,25 @@ class Event(models.Model):
         null=True,
         blank=True,
     )
+    platform_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('100.00')),
+        ],
+        null=True,
+        blank=True,
+        help_text='Commission percentage retained by Vootely for this paid competition.',
+    )
+    platform_commission_set_at = models.DateTimeField(null=True, blank=True)
+    platform_commission_set_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='configured_event_commissions',
+        null=True,
+        blank=True,
+    )
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
     status = models.CharField(
@@ -77,6 +96,9 @@ class Event(models.Model):
     )
     is_public = models.BooleanField(default=True)
     show_leaderboard = models.BooleanField(default=True)
+    allow_public_nominations = models.BooleanField(default=False)
+    nomination_start_at = models.DateTimeField(null=True, blank=True)
+    nomination_end_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -96,6 +118,27 @@ class Event(models.Model):
     def clean(self):
         if self.start_at and self.end_at and self.end_at <= self.start_at:
             raise ValidationError('End date must be after the start date.')
+        if self.kind != self.Kind.PAID_COMPETITION and (
+            self.platform_commission_percent is not None
+            or self.platform_commission_set_at
+            or self.platform_commission_set_by_id
+        ):
+            raise ValidationError('Platform commission only applies to paid competitions.')
+        if self.kind != self.Kind.PAID_COMPETITION and self.allow_public_nominations:
+            raise ValidationError('Public nominations are only available for paid competitions.')
+        if self.allow_public_nominations:
+            if not self.nomination_start_at or not self.nomination_end_at:
+                raise ValidationError('Provide a nomination start and end time when public nominations are enabled.')
+            if self.nomination_end_at <= self.nomination_start_at:
+                raise ValidationError('Nomination end date must be after the nomination start date.')
+        elif self.nomination_start_at or self.nomination_end_at:
+            raise ValidationError('Enable public nominations before setting a nomination window.')
+        if self.pk and self.commission_is_locked():
+            previous_commission = (
+                Event.objects.filter(pk=self.pk).values_list('platform_commission_percent', flat=True).first()
+            )
+            if previous_commission != self.platform_commission_percent:
+                raise ValidationError('Platform commission cannot change after the first successful paid vote.')
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -113,7 +156,43 @@ class Event(models.Model):
         return (
             self.status == self.Status.PUBLISHED
             and self.is_public
+            and self.has_platform_commission()
             and self.start_at <= now <= self.end_at
+        )
+
+    def has_platform_commission(self):
+        return self.kind == self.Kind.PAID_COMPETITION and self.platform_commission_percent is not None
+
+    def commission_rate_decimal(self):
+        if not self.has_platform_commission():
+            return Decimal('0.00')
+        return (self.platform_commission_percent / Decimal('100')).quantize(Decimal('0.0001'))
+
+    def commission_is_locked(self):
+        if not self.pk or self.kind != self.Kind.PAID_COMPETITION:
+            return False
+        return self.payment_attempts.filter(status=self.payment_attempts.model.Status.PAID).exists()
+
+    def has_valid_nomination_window(self):
+        return bool(
+            self.allow_public_nominations
+            and self.nomination_start_at
+            and self.nomination_end_at
+            and self.nomination_end_at > self.nomination_start_at
+        )
+
+    def accepts_nominations(self, now=None):
+        now = now or timezone.now()
+        return (
+            self.kind == self.Kind.PAID_COMPETITION
+            and self.is_public
+            and self.has_valid_nomination_window()
+            and self.status not in {
+                self.Status.CLOSED,
+                self.Status.ARCHIVED,
+                self.Status.CANCELLED,
+            }
+            and self.nomination_start_at <= now <= self.nomination_end_at
         )
 
     def public_state(self, now=None):
@@ -135,9 +214,16 @@ class Event(models.Model):
             return (False, errors)
         if not self.vote_price or self.vote_price <= 0:
             errors.append('Set a positive vote price.')
+        if not self.has_platform_commission():
+            errors.append('Platform commission must be set by Vootely admin before publish.')
         if not self.start_at or not self.end_at or self.end_at <= self.start_at:
             errors.append('Provide a valid voting window.')
-        if not self.nominees.filter(is_active=True).exists():
+        if not self.competition_categories.filter(is_active=True).exists():
+            errors.append('Add at least one active category.')
+        if self.allow_public_nominations:
+            if not self.has_valid_nomination_window():
+                errors.append('Provide a valid nomination window.')
+        elif not self.nominees.filter(is_active=True).exists():
             errors.append('Add at least one active nominee.')
         return (len(errors) == 0, errors)
 
@@ -164,3 +250,27 @@ class Event(models.Model):
 
     def get_dashboard_url(self):
         return reverse('dashboard:event_detail', args=[self.slug])
+
+
+class ContactInquiry(models.Model):
+    class HeardAboutUs(models.TextChoices):
+        SOCIAL_MEDIA = 'social_media', 'Social media'
+        FRIEND_REFERRAL = 'friend_referral', 'Friend referral'
+        CAMPUS_EVENT = 'campus_event', 'Campus event'
+        ORGANIZATION_REFERRAL = 'organization_referral', 'Organization referral'
+        GOOGLE_SEARCH = 'google_search', 'Google search'
+        WHATSAPP = 'whatsapp', 'WhatsApp'
+        OTHER = 'other', 'Other'
+
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=32)
+    heard_about_us = models.CharField(max_length=32, choices=HeardAboutUs.choices)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f'{self.name} ({self.email})'

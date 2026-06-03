@@ -31,7 +31,7 @@ def get_platform_account():
         owner=None,
         defaults={
             'code': 'platform',
-            'name': 'VoteCentral Platform',
+            'name': 'Vootely Platform',
         },
     )
     return account
@@ -146,7 +146,13 @@ def post_payment_ledger_transaction(payment_attempt):
     organizer_account = get_organizer_account(payment_attempt.event.owner)
     platform_account = get_platform_account()
     gross = quantize_amount(payment_attempt.amount)
-    commission = quantize_amount(gross * Decimal(settings.PLATFORM_COMMISSION_RATE))
+    if payment_attempt.platform_commission_percent is None:
+        raise ValidationError('Payment attempt is missing a platform commission snapshot.')
+
+    commission_rate = (
+        Decimal(payment_attempt.platform_commission_percent) / Decimal('100')
+    ).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+    commission = quantize_amount(gross * commission_rate)
     organizer_share = quantize_amount(gross - commission)
 
     transaction_row = LedgerTransaction.objects.create(
@@ -160,6 +166,10 @@ def post_payment_ledger_transaction(payment_attempt):
             'voter_name': payment_attempt.voter_name,
             'voter_email': payment_attempt.voter_email,
             'voter_phone': payment_attempt.voter_phone,
+            'commission_percent': str(payment_attempt.platform_commission_percent),
+            'commission_amount': str(commission),
+            'organizer_share_amount': str(organizer_share),
+            'gross_amount': str(gross),
         },
     )
     LedgerEntry.objects.bulk_create(

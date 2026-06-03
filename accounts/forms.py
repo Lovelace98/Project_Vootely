@@ -48,18 +48,23 @@ class UserProfileForm(forms.ModelForm):
 class NotificationSettingsForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['phone_number', 'sms_opt_in']
+        fields = ['phone_number', 'sms_opt_in', 'email_opt_in', 'marketing_opt_in']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['phone_number'].required = False
         self.fields['phone_number'].widget.attrs['placeholder'] = '+233241234567'
-        for field in self.fields.values():
-            field.widget.attrs['class'] = (
-                'w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 '
-                'text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none '
-                'dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white'
-            )
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = (
+                    'h-5 w-5 rounded border-vc-dark-200 text-vc-blue focus:ring-vc-blue cursor-pointer'
+                )
+            else:
+                field.widget.attrs['class'] = (
+                    'w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 '
+                    'text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none '
+                    'dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white'
+                )
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number', '')
@@ -100,7 +105,7 @@ class CustomSignupForm(SignupForm):
             ('word_of_mouth', 'Word of Mouth'),
             ('other', 'Other'),
         ],
-        label="How did you hear about VoteCentral?",
+        label="How did you hear about Vootely?",
     )
     referral_source_other = forms.CharField(
         required=False,

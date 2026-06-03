@@ -19,3 +19,31 @@ def ensure_user_wallet(sender, instance, created, **kwargs):
             'name': instance.email,
         },
     )
+
+
+from allauth.account.signals import email_confirmed
+
+@receiver(email_confirmed)
+def send_welcome_email(sender, request, email_address, **kwargs):
+    user = email_address.user
+    from notifications.services import queue_notification, create_in_app_notification
+    from notifications.models import Notification
+    
+    # Queue welcome email
+    queue_notification(
+        channel=Notification.Channel.EMAIL,
+        event_type=Notification.EventType.ORGANIZER_WELCOME,
+        recipient_email=user.email,
+        recipient_name=user.get_full_name() or user.email,
+        dedupe_parts=(user.pk, 'welcome'),
+    )
+    
+    # Create welcome in-app notification / audit log
+    create_in_app_notification(
+        user=user,
+        title="Welcome to Vootely!",
+        message="Thank you for confirming your email. You can now create paid competitions and secure elections in your organizer dashboard!",
+        link="/dashboard/",
+        level="success",
+    )
+

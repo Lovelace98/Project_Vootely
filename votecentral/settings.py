@@ -5,6 +5,10 @@ from urllib.parse import urlparse
 
 import dj_database_url
 import environ
+from django.core.management.utils import get_random_secret_key
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,8 +32,14 @@ if raw_debug and raw_debug.lower() not in {
     os.environ.pop('DEBUG')
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env('SECRET_KEY', default='votecentral-dev-secret-key')
 DEBUG = env.bool('DEBUG', default=False)
+SECRET_KEY = env(
+    'SECRET_KEY',
+    default=(
+        os.environ.get('DJANGO_RUNTIME_SECRET_KEY')
+        or get_random_secret_key()
+    ),
+)
 TIME_ZONE = env('TIME_ZONE', default='Africa/Accra')
 USE_I18N = True
 USE_TZ = True
@@ -52,8 +62,28 @@ if DEBUG:
         if local_origin not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(local_origin)
 
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000 if not DEBUG else 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
+    'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+    default=not DEBUG,
+)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=not DEBUG)
+USE_X_FORWARDED_PROTO = env.bool('USE_X_FORWARDED_PROTO', default=False)
+if USE_X_FORWARDED_PROTO:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
+X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
+
 INSTALLED_APPS = [
     'daphne',
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,6 +108,108 @@ INSTALLED_APPS = [
     'wallets',
     'notifications',
 ]
+
+UNFOLD = {
+    'SITE_TITLE': 'Vootely Admin',
+    'SITE_HEADER': 'Vootely',
+    'SITE_SUBHEADER': 'Platform operations',
+    'SITE_URL': '/',
+    'SITE_LOGO': {
+        'light': lambda request: static('images/vootely_logo_light.png'),
+        'dark': lambda request: static('images/vootely_logo_dark.png'),
+    },
+    'SITE_FAVICONS': [
+        {
+            'rel': 'icon',
+            'sizes': '32x32',
+            'type': 'image/png',
+            'href': lambda request: static('images/favicon.png'),
+        },
+    ],
+    'SITE_SYMBOL': 'how_to_vote',
+    'BORDER_RADIUS': '6px',
+    'DASHBOARD_CALLBACK': 'votecentral.admin_dashboard.dashboard_callback',
+    'ENVIRONMENT': 'votecentral.admin_dashboard.environment_callback',
+    'SHOW_BACK_BUTTON': True,
+    'SHOW_VIEW_ON_SITE': True,
+    'COMMAND': {
+        'search_models': True,
+    },
+    'SIDEBAR': {
+        'show_search': True,
+        'command_search': True,
+        'show_all_applications': False,
+        'navigation': [
+            {
+                'title': _('Overview'),
+                'separator': True,
+                'items': [
+                    {
+                        'title': _('Dashboard'),
+                        'icon': 'dashboard',
+                        'link': reverse_lazy('admin:index'),
+                    },
+                ],
+            },
+            {
+                'title': _('Platform'),
+                'separator': True,
+                'collapsible': True,
+                'items': [
+                    {'title': _('Users'), 'icon': 'group', 'link': reverse_lazy('admin:accounts_user_changelist')},
+                    {'title': _('Events'), 'icon': 'event', 'link': reverse_lazy('admin:events_event_changelist')},
+                    {'title': _('Contact Inquiries'), 'icon': 'contact_mail', 'link': reverse_lazy('admin:events_contactinquiry_changelist')},
+                ],
+            },
+            {
+                'title': _('Paid Voting'),
+                'separator': True,
+                'collapsible': True,
+                'items': [
+                    {'title': _('Nominees'), 'icon': 'workspace_premium', 'link': reverse_lazy('admin:nominees_nominee_changelist')},
+                    {'title': _('Payment Attempts'), 'icon': 'payments', 'link': reverse_lazy('admin:payments_paymentattempt_changelist')},
+                    {'title': _('Vote Purchases'), 'icon': 'how_to_vote', 'link': reverse_lazy('admin:votes_votepurchase_changelist')},
+                ],
+            },
+            {
+                'title': _('Secure Elections'),
+                'separator': True,
+                'collapsible': True,
+                'items': [
+                    {'title': _('Configs'), 'icon': 'tune', 'link': reverse_lazy('admin:elections_electionconfig_changelist')},
+                    {'title': _('Positions'), 'icon': 'ballot', 'link': reverse_lazy('admin:elections_electionposition_changelist')},
+                    {'title': _('Candidates'), 'icon': 'badge', 'link': reverse_lazy('admin:elections_electioncandidate_changelist')},
+                    {'title': _('Voters'), 'icon': 'person_check', 'link': reverse_lazy('admin:elections_electionvoter_changelist')},
+                    {'title': _('Credentials'), 'icon': 'vpn_key', 'link': reverse_lazy('admin:elections_electioncredential_changelist')},
+                    {'title': _('Ballots'), 'icon': 'fact_check', 'link': reverse_lazy('admin:elections_ballot_changelist')},
+                    {'title': _('Tallies'), 'icon': 'leaderboard', 'link': reverse_lazy('admin:elections_electiontallysnapshot_changelist')},
+                    {'title': _('Audit Logs'), 'icon': 'history', 'link': reverse_lazy('admin:elections_electionauditlog_changelist')},
+                    {'title': _('Invoices'), 'icon': 'receipt_long', 'link': reverse_lazy('admin:elections_electioninvoice_changelist')},
+                ],
+            },
+            {
+                'title': _('Finance'),
+                'separator': True,
+                'collapsible': True,
+                'items': [
+                    {'title': _('Wallet Accounts'), 'icon': 'account_balance_wallet', 'link': reverse_lazy('admin:wallets_walletaccount_changelist')},
+                    {'title': _('Ledger Transactions'), 'icon': 'account_balance', 'link': reverse_lazy('admin:wallets_ledgertransaction_changelist')},
+                    {'title': _('Ledger Entries'), 'icon': 'list_alt', 'link': reverse_lazy('admin:wallets_ledgerentry_changelist')},
+                    {'title': _('Withdrawals'), 'icon': 'request_quote', 'link': reverse_lazy('admin:wallets_withdrawalrequest_changelist')},
+                ],
+            },
+            {
+                'title': _('Messaging'),
+                'separator': True,
+                'collapsible': True,
+                'items': [
+                    {'title': _('Notifications'), 'icon': 'mark_email_unread', 'link': reverse_lazy('admin:notifications_notification_changelist')},
+                    {'title': _('In-App Notifications'), 'icon': 'notifications', 'link': reverse_lazy('admin:notifications_inappnotification_changelist')},
+                ],
+            },
+        ],
+    },
+}
 
 SITE_ID = 1
 
@@ -125,6 +257,16 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
+
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    DATABASES['default']['OPTIONS'] = {
+        'timeout': 20,  # Wait up to 20 seconds for the lock to clear
+        'init_command': (
+            'PRAGMA journal_mode=WAL;'
+            'PRAGMA synchronous=NORMAL;'
+            'PRAGMA busy_timeout=20000;'
+        ),
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -223,12 +365,20 @@ ACCOUNT_FORMS = {
 }
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
+SUPPORT_EMAIL = env('SUPPORT_EMAIL', default='lovesdesigns1@gmail.com')
+SUPPORT_PHONE = env('SUPPORT_PHONE', default='+233 548988503')
+
 EMAIL_BACKEND = env(
     'EMAIL_BACKEND',
-    default='votecentral.email_backend.ReadableConsoleEmailBackend',
+    default=(
+        'votecentral.email_backend.ReadableConsoleEmailBackend'
+        if DEBUG
+        else 'django.core.mail.backends.smtp.EmailBackend'
+    ),
 )
 EMAIL_HOST = env('EMAIL_HOST', default='localhost')
 EMAIL_PORT = env.int('EMAIL_PORT', default=25)
@@ -236,12 +386,12 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
 EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='VoteCentral <no-reply@localhost>')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Vootely <no-reply@localhost>')
 SERVER_EMAIL = env('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
-NOTIFICATION_ADMIN_EMAILS = env.list('NOTIFICATION_ADMIN_EMAILS', default=[])
+NOTIFICATION_ADMIN_EMAILS = env.list('NOTIFICATION_ADMIN_EMAILS', default=['lovesdesigns1@gmail.com'])
 NOTIFICATION_REMINDER_LEAD_HOURS = env.int('NOTIFICATION_REMINDER_LEAD_HOURS', default=24)
 NOTIFICATION_RETRY_LIMIT = env.int('NOTIFICATION_RETRY_LIMIT', default=3)
-SMS_PROVIDER = env('SMS_PROVIDER', default='').strip().lower()
+SMS_PROVIDER = env('SMS_PROVIDER', default='arkesel').strip().lower()
 HUBTEL_SMS_BASE_URL = env(
     'HUBTEL_SMS_BASE_URL',
     default='https://smsc.hubtel.com/v1/messages',
@@ -250,6 +400,15 @@ HUBTEL_CLIENT_ID = env('HUBTEL_CLIENT_ID', default='')
 HUBTEL_CLIENT_SECRET = env('HUBTEL_CLIENT_SECRET', default='')
 HUBTEL_SMS_FROM = env('HUBTEL_SMS_FROM', default='')
 HUBTEL_TIMEOUT_SECONDS = env.int('HUBTEL_TIMEOUT_SECONDS', default=15)
+
+ARKESEL_API_KEY = env('ARKESEL_API_KEY', default='')
+ARKESEL_SMS_FROM = env('ARKESEL_SMS_FROM', default='Vootely')
+ARKESEL_SMS_BASE_URL = env('ARKESEL_SMS_BASE_URL', default='https://sms.arkesel.com/api/v2/sms/send')
+
+EMAIL_PROVIDER = env('EMAIL_PROVIDER', default='').strip().lower()
+BREVO_API_KEY = env('BREVO_API_KEY', default='')
+BREVO_API_URL = env('BREVO_API_URL', default='https://api.brevo.com/v3/smtp/email')
+
 
 TAILWIND_CLI_PATH = BASE_DIR / 'bin' / 'tailwindcss'
 TAILWIND_CLI_SRC_CSS = 'css/src.css'
