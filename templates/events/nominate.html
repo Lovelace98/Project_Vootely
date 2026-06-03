@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Nominate Yourself | {{ event.title }}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl space-y-6 vc-animate-in">
+    <div class="vc-card p-8">
+        <span class="vc-badge {% if nominations_open %}vc-badge-blue{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %}">
+            {% if nominations_open %}Nominations Open{% else %}Nominations Closed{% endif %}
+        </span>
+        <h1 class="mt-4 text-3xl font-bold text-vc-dark">Nominate yourself for {{ event.title }}</h1>
+        {% if event.status == 'closed' %}
+            <p class="mt-3 text-vc-dark-400">
+                The event you are submitting a nomination for is closed, so new nominations are no longer being accepted.
+            </p>
+        {% else %}
+            <p class="mt-3 text-vc-dark-400">
+                Choose a category, share your profile, and the organizer will review your submission before approving it as a public nominee.
+            </p>
+        {% endif %}
+        {% if event.allow_public_nominations and event.nomination_start_at and event.nomination_end_at %}
+            <p class="mt-3 text-sm text-vc-dark-400">
+                Nomination window: {{ event.nomination_start_at|date:"M j, Y g:i A" }} to {{ event.nomination_end_at|date:"M j, Y g:i A" }}.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="vc-card p-8">
+        {% if nominations_open %}
+            <form method="post" enctype="multipart/form-data" class="space-y-5">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger">
+                        {{ form.non_field_errors|join:", " }}
+                    </div>
+                {% endif %}
+                {% for field in form %}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="mt-1 text-xs text-vc-dark-300">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg">
+                    Submit nomination
+                </button>
+            </form>
+        {% elif event.status == 'closed' %}
+            <div class="vc-empty">
+                The event you are submitting a nomination for is closed. Please contact the organizer if you believe this is unexpected.
+            </div>
+        {% else %}
+            <div class="vc-empty">
+                Nominations are not open for this event right now.
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Withdrawal Rejected{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fef2f2; color: #b91c1c;">Rejected</span>
+<h2 class="h1">Withdrawal Request Rejected</h2>
+<p>Unfortunately, your withdrawal request has been rejected.</p>
+
+<div class="card" style="border-left: 4px solid #ef4444; border-color: #ef4444;">
+    <div class="meta-row">
+        <p class="meta-label">Amount</p>
+        <p class="meta-val">{{ withdrawal_currency }} {{ withdrawal_amount }}</p>
+    </div>
+    {% if review_notes %}
+    <div class="meta-row">
+        <p class="meta-label">Reason</p>
+        <p class="meta-val" style="font-weight: 400; font-size: 14px;">{{ review_notes }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ withdrawal_dashboard_url }}" class="btn btn-blue">View Withdrawal Details</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">The funds have been returned to your wallet balance. You may submit a new request after addressing the issue above. If you need help, please contact support.</p>
+{% endblock %}

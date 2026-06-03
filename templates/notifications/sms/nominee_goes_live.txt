@@ -1,0 +1,1 @@
+Hello {{ nominee_name }}, you are live in {{ event_title }}! Share your voting link with friends to get votes: {{ vote_url }}

@@ -1,0 +1,27 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Friendly Reminder: Cast Your Ballot!{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fee2e2; color: #ef4444;">Reminder: Voting Closes Soon</span>
+<h2 class="h1">Hello {{ voter_name }},</h2>
+<p>This is a friendly reminder that you have not yet cast your ballot in the secure election: <strong>"{{ event_title }}"</strong>.</p>
+
+<p>The secure voting window will close soon on **{{ event_end_at|date:"l, jS F Y H:i" }}**.</p>
+
+<div class="card" style="border-left: 4px solid #ef4444;">
+    <div class="meta-row">
+        <p class="meta-label">Access Token</p>
+        <p class="meta-val" style="font-family: monospace; font-size: 16px; color: #1e3a8a;">{{ credential_token }}</p>
+    </div>
+</div>
+
+<p>Cast your ballot directly and securely by clicking the button below:</p>
+
+<div style="text-align: center;">
+    <a href="{{ vote_url }}" class="btn btn-blue" style="background-color: #ef4444; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">Cast Your Ballot Now</a>
+</div>
+
+<p style="font-size: 12px; color: #64748b;">If the button above does not work, copy and paste the following secure link into your browser:<br>
+<a href="{{ vote_url }}" style="color: #3b82f6; text-decoration: none;">{{ vote_url }}</a></p>
+{% endblock %}

@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Create Organizer Account | VoteCentral{% endblock %}
-{% block meta_description %}Create your VoteCentral organizer account to launch paid competitions, add nominees, and track revenue.{% endblock %}
+{% block title %}Create Organizer Account | Vootely{% endblock %}
+{% block meta_description %}Create your Vootely organizer account to launch paid competitions, add nominees, and track revenue.{% endblock %}
 
 {% block body %}
 {% include 'includes/navbar.html' %}
@@ -16,7 +17,7 @@
         <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 lg:gap-20 items-center">
             <!-- Left Side: Copy -->
             <div class="md:col-span-5 text-vc-dark py-4">
-                <p class="text-xs font-bold tracking-[0.2em] text-vc-blue uppercase">VOTECENTRAL</p>
+                <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="h-6 w-auto mb-4">
                 <h1 class="mt-4 text-4xl lg:text-5xl font-extrabold text-vc-dark leading-tight tracking-tight">
                     Premium, Secure and Seamless
                 </h1>

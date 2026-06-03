@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy | Vootely{% endblock %}
+{% block meta_description %}Vootely Privacy Policy. Read about how we collect, process, and protect your data in compliance with Ghana's Data Protection Act, 2012.{% endblock %}
+
+{% block content %}
+<div class="vc-card p-6 md:p-12 vc-animate-in relative overflow-hidden bg-gradient-to-br from-white via-vc-surface-raised to-vc-blue-50/20">
+    <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-vc-blue-100/20 blur-3xl pointer-events-none"></div>
+    
+    <div class="mx-auto max-w-5xl">
+        <!-- Header -->
+        <div class="border-b border-vc-dark-100/50 pb-8 mb-8">
+            <span class="vc-badge vc-badge-blue mb-3">Legal &amp; Trust</span>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-vc-dark">
+                Privacy <span class="text-vc-blue">Policy</span>
+            </h1>
+            <p class="mt-2 text-sm text-vc-dark-400 font-medium">
+                Effective Date: June 1, 2026 · Version 1.0 · Compliant with DPA Act 843 (Ghana)
+            </p>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" x-data="{ activeSection: 'introduction' }">
+            
+            <!-- Quick Navigation Sidebar (Sticky) -->
+            <aside class="lg:col-span-4 sticky top-24 bg-vc-surface rounded-2xl p-6 border border-vc-dark-100/50 space-y-2 hidden lg:block">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400 mb-4 px-2">Table of Contents</p>
+                <a href="#introduction" @click="activeSection = 'introduction'" :class="activeSection === 'introduction' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'introduction'"></span>
+                    1. Introduction
+                </a>
+                <a href="#contact" @click="activeSection = 'contact'" :class="activeSection === 'contact' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'contact'"></span>
+                    2. Who We Are &amp; Contact
+                </a>
+                <a href="#data-collection" @click="activeSection = 'data-collection'" :class="activeSection === 'data-collection' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'data-collection'"></span>
+                    3. What Personal Data We Collect
+                </a>
+                <a href="#legal-basis" @click="activeSection = 'legal-basis'" :class="activeSection === 'legal-basis' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'legal-basis'"></span>
+                    4. Why We Collect Data
+                </a>
+                <a href="#data-sharing" @click="activeSection = 'data-sharing'" :class="activeSection === 'data-sharing' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'data-sharing'"></span>
+                    5. How We Share Your Data
+                </a>
+                <a href="#data-retention" @click="activeSection = 'data-retention'" :class="activeSection === 'data-retention' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'data-retention'"></span>
+                    6. How Long We Keep Your Data
+                </a>
+                <a href="#data-protection" @click="activeSection = 'data-protection'" :class="activeSection === 'data-protection' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'data-protection'"></span>
+                    7. How We Protect Your Data
+                </a>
+                <a href="#rights" @click="activeSection = 'rights'" :class="activeSection === 'rights' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'rights'"></span>
+                    8. Your Rights Under Act 843
+                </a>
+                <a href="#breaches" @click="activeSection = 'breaches'" :class="activeSection === 'breaches' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'breaches'"></span>
+                    9. Data Breach Notifications
+                </a>
+                <a href="#legal-basis-governing" @click="activeSection = 'legal-basis-governing'" :class="activeSection === 'legal-basis-governing' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'legal-basis-governing'"></span>
+                    10. Governing Law
+                </a>
+            </aside>
+
+            <!-- Scrollable Content -->
+            <article class="lg:col-span-8 space-y-10 text-vc-dark-600 leading-relaxed font-normal text-sm md:text-base">
+                
+                <!-- 1. Introduction -->
+                <section id="introduction" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">1. Introduction</h2>
+                    <p>
+                        Vootely ("Vootely", "we", "us", "our") operates the Vootely Paid-Competition Platform, a digital voting and competition management system accessible at our website. We are committed to protecting the personal data of every individual who interacts with our platform, whether as an event organizer, a voter, a nominee, or a visitor to our website.
+                    </p>
+                    <p>
+                        This Privacy Policy explains what personal data we collect, why we collect it, how we use it, who we share it with, how we protect it, and what rights you have over your data. It applies to all users of the Vootely platform and website.
+                    </p>
+                    <p>
+                        By registering for or using our platform (including purchasing votes), you acknowledge that you have read and understood this Privacy Policy. If you do not agree with how we handle your personal data, please do not use the platform.
+                    </p>
+                    <p class="font-semibold text-vc-dark">
+                        This Privacy Policy complies with the Data Protection Act 2012 (Act 843) of Ghana.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 2. Who We Are -->
+                <section id="contact" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">2. Who We Are — Contact Details</h2>
+                    <p>
+                        Vootely Digital Platforms is the data controller responsible for your personal data.
+                    </p>
+                    <div class="bg-vc-surface border border-vc-dark-100/50 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="block text-xs font-bold text-vc-dark-400 uppercase tracking-wider">Legal Name</span>
+                            <span class="font-semibold text-vc-dark">Vootely Digital Platforms</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-vc-dark-400 uppercase tracking-wider">Trading Name</span>
+                            <span class="font-semibold text-vc-dark">Vootely</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-vc-dark-400 uppercase tracking-wider">Email Address</span>
+                            <a href="mailto:lovesdesigns1@gmail.com" class="font-semibold text-vc-blue hover:underline">lovesdesigns1@gmail.com</a>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-vc-dark-400 uppercase tracking-wider">Phone / WhatsApp</span>
+                            <a href="tel:+233548988503" class="font-semibold text-vc-dark hover:text-vc-blue">+233 548988503</a>
+                        </div>
+                        <div class="md:col-span-2">
+                            <span class="block text-xs font-bold text-vc-dark-400 uppercase tracking-wider">Developer &amp; Support website</span>
+                            <a href="https://www.lovesdesigns.org" target="_blank" class="font-semibold text-vc-blue hover:underline">www.lovesdesigns.org</a>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 3. What Personal Data We Collect -->
+                <section id="data-collection" class="scroll-mt-24 space-y-4">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">3. What Personal Data We Collect</h2>
+                    
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">3.1 Data collected from Organizers</h3>
+                        <p>When an organizer registers an account on the Vootely platform, we collect:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Full name of the account owner.</li>
+                            <li>Email address and phone number.</li>
+                            <li>Organizer type (Student, Company/Organization, Individual).</li>
+                            <li>Referral source.</li>
+                            <li>Account credentials (passwords are stored in encrypted form and never readable by Vootely staff).</li>
+                            <li>Avatar image and custom branding assets if uploaded by the organizer.</li>
+                            <li>Financial/Billing information (such as bank name, account number, and account holder name) solely to process ledger-backed revenue withdrawals.</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">3.2 Data collected from Voters (Guest Checkout)</h3>
+                        <p>Vootely operates a guest-first voting flow where voters do not need to create accounts. When a voter purchases votes for a nominee, we collect:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Voter's full name.</li>
+                            <li>Voter's email address.</li>
+                            <li>Voter's phone number (used for Paystack checkout and Hubtel-backed payment/vote confirmations).</li>
+                            <li>Vote details (event name, chosen nominee, purchase quantity, amount paid).</li>
+                            <li>Payment details (handled securely by our licensed payment partner, Paystack — we do not store credit card numbers or Mobile Money PINs on our servers).</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">3.3 Data collected from Nominees</h3>
+                        <p>Organizers upload details of nominees for their competitions. This data includes:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Nominee's name and bio.</li>
+                            <li>Nominee's photo.</li>
+                            <li>Nominee's assigned vote code and 4-digit USSD shortcode.</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">3.4 Technical and usage data</h3>
+                        <p>When you visit the Vootely website, we automatically collect IP addresses, device types, browser types, page interaction logs, and error diagnostics for platform security and performance audit tracks.</p>
+                    </div>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 4. Why We Collect Your Data -->
+                <section id="legal-basis" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">4. Why We Collect Your Data — Legal Basis</h2>
+                    <p>
+                        We collect and process personal data only for specific, legitimate purposes in accordance with the Data Protection Act 2012 (Act 843).
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-[550px] w-full text-left border-collapse border border-vc-dark-100/50 rounded-2xl text-xs md:text-sm">
+                            <thead>
+                                <tr class="bg-vc-surface text-vc-dark-600 font-bold border-b border-vc-dark-100/50">
+                                    <th class="p-3 whitespace-nowrap">Purpose</th>
+                                    <th class="p-3 whitespace-nowrap">Data Used</th>
+                                    <th class="p-3 whitespace-nowrap">Legal Basis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-vc-dark-100/50">
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Providing voting services</td>
+                                    <td class="p-3">Organizer details, voter purchases, nominee profiles</td>
+                                    <td class="p-3 whitespace-nowrap">Contract performance</td>
+                                </tr>
+                                <tr class="border-b border-vc-dark-100/50">
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Processing payment checkouts</td>
+                                    <td class="p-3">Voter name, email, phone number, GHS amount</td>
+                                    <td class="p-3 whitespace-nowrap">Contract performance</td>
+                                </tr>
+                                <tr class="border-b border-vc-dark-100/50">
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Sending transaction confirmations</td>
+                                    <td class="p-3">Phone number, email</td>
+                                    <td class="p-3 whitespace-nowrap">Contract performance / Consent</td>
+                                </tr>
+                                <tr class="border-b border-vc-dark-100/50">
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Organizer payout withdrawals</td>
+                                    <td class="p-3">Organizer bank name, account number, wallet ledgers</td>
+                                    <td class="p-3 whitespace-nowrap">Contract performance</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Anti-fraud &amp; Platform audits</td>
+                                    <td class="p-3">IP logs, transaction activity ledgers</td>
+                                    <td class="p-3 whitespace-nowrap">Legitimate interest / Legal duty</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 5. How We Share Your Data -->
+                <section id="data-sharing" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">5. How We Share Your Data</h2>
+                    <p>
+                        Vootely does not sell, rent, or trade your personal data to any third party for commercial purposes. We share personal data only in the following limited circumstances:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>
+                            <strong class="text-vc-dark">With Organizers:</strong> Organizers can view reports on their active competitions. This includes lists of successful vote purchases (voter name, email, phone number, votes purchased, and transaction timestamps) to ensure auditing transparency.
+                        </li>
+                        <li>
+                            <strong class="text-vc-dark">With SMS Service Providers:</strong> We share voter and organizer phone numbers with our licensed SMS delivery provider (Hubtel) solely to send transactional confirmations, vote receipts, and withdrawal updates.
+                        </li>
+                        <li>
+                            <strong class="text-vc-dark">With Payment Processors:</strong> Payment details are shared securely with Paystack for the sole purpose of executing the checkout process. Vootely never stores or has access to full card details or Mobile Money PINs.
+                        </li>
+                        <li>
+                            <strong class="text-vc-dark">With Regulators &amp; Law Enforcement:</strong> We disclose personal data where required by Ghanaian law, a valid court order, or regulatory commissions.
+                        </li>
+                    </ul>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 6. How Long We Keep Your Data -->
+                <section id="data-retention" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">6. How Long We Keep Your Data</h2>
+                    <p>
+                        We retain personal data only for as long as necessary for the purposes described in this policy or as required by Ghanaian law:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong class="text-vc-dark">Organizer Account Profile:</strong> Retained for the duration of the organizer's active profile plus 2 years after account closure.</li>
+                        <li><strong class="text-vc-dark">Voter Transaction Records:</strong> Retained for 7 years for legal, tax, and regulatory compliance (e.g. under the Revenue Administration Act 2016).</li>
+                        <li><strong class="text-vc-dark">SMS Delivery Logs:</strong> 5 years for telecom regulatory compliance audits.</li>
+                        <li><strong class="text-vc-dark">Technical Audit Logs:</strong> 12 months, then permanently deleted.</li>
+                    </ul>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 7. How We Protect Your Data -->
+                <section id="data-protection" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">7. How We Protect Your Data</h2>
+                    <p>
+                        Vootely implements strict technical and organizational security measures to protect personal data against unauthorized access, accidental loss, destruction, or disclosure, in accordance with the Cybersecurity Act 2020 (Act 1038) and the Data Protection Act 2012 (Act 843):
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Encryption of all data in transit using HTTPS/TLS protocols.</li>
+                        <li>Encryption of sensitive database records at rest.</li>
+                        <li>Secure password hashing using PBKDF2 with a SHA256 signature.</li>
+                        <li>Role-based access controls for internal administration.</li>
+                        <li>Full audit logging of all wallet transactions and payout requests.</li>
+                    </ul>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 8. Your Rights Under Ghana's Data Protection Act 2012 -->
+                <section id="rights" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">8. Your Rights Under Ghana's Data Protection Act 2012 (Act 843)</h2>
+                    <p>
+                        You have the following rights in relation to your personal data held by Vootely:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong class="text-vc-dark">Right of access:</strong> Request a copy of the personal data we hold about you.</li>
+                        <li><strong class="text-vc-dark">Right to correction:</strong> Request that inaccurate, incomplete, or outdated data be updated.</li>
+                        <li><strong class="text-vc-dark">Right to erasure:</strong> Request deletion of personal data we are not legally obligated to retain.</li>
+                        <li><strong class="text-vc-dark">Right to lodge a complaint:</strong> If you are dissatisfied with how we handle your data, you may lodge a complaint with the Data Protection Commission of Ghana at dataprotection.org.gh.</li>
+                    </ul>
+                    <p>
+                        To exercise these rights, contact us at <a href="mailto:lovesdesigns1@gmail.com" class="text-vc-blue hover:underline font-semibold">lovesdesigns1@gmail.com</a>. We will respond to all verified requests within 21 days.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 9. Data Breach Notification -->
+                <section id="breaches" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">9. Data Breach Notification</h2>
+                    <p>
+                        In the event of a personal data breach that is likely to result in a risk to the rights and freedoms of individuals, Vootely will notify the Data Protection Commission within 72 hours, inform affected individuals without undue delay where there is high risk, and maintain detailed logs for regulatory audits.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 10. Governing Law -->
+                <section id="legal-basis-governing" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">10. Governing Law</h2>
+                    <p>
+                        This Privacy Policy is governed by the laws of the Republic of Ghana, including the Data Protection Act 2012 (Act 843), the Electronic Transactions Act 2008 (Act 772), and the Cybersecurity Act 2020 (Act 1038).
+                    </p>
+                </section>
+
+            </article>
+        </div>
+    </div>
+</div>
+{% endblock %}

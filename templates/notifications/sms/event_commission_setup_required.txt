@@ -1,0 +1,1 @@
+Vootely admin alert: "{{ event_title }}" was created and needs a commission set in admin before it can go live. Open: {{ event_admin_url }}

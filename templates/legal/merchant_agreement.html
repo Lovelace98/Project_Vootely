@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Organizer Agreement | Vootely{% endblock %}
+{% block meta_description %}Vootely Organizer Service Agreement and Data Processing Addendum. Read about organizer wallets, platform commission, and payouts in Ghana.{% endblock %}
+
+{% block content %}
+<div class="vc-card p-6 md:p-12 vc-animate-in relative overflow-hidden bg-gradient-to-br from-white via-vc-surface-raised to-vc-blue-50/20">
+    <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-vc-blue-100/20 blur-3xl pointer-events-none"></div>
+    
+    <div class="mx-auto max-w-5xl">
+        <!-- Header -->
+        <div class="border-b border-vc-dark-100/50 pb-8 mb-8">
+            <span class="vc-badge vc-badge-blue mb-3">B2B Agreement</span>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-vc-dark">
+                Organizer <span class="text-vc-blue">Agreement</span>
+            </h1>
+            <p class="mt-2 text-sm text-vc-dark-400 font-medium">
+                Effective Date: June 1, 2026 · Version 1.0 · Platform Partnership &amp; DPA
+            </p>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" x-data="{ activeSection: 'parties' }">
+            
+            <!-- Quick Navigation Sidebar (Sticky) -->
+            <aside class="lg:col-span-4 sticky top-24 bg-vc-surface rounded-2xl p-6 border border-vc-dark-100/50 space-y-2 hidden lg:block">
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400 mb-4 px-2">Table of Contents</p>
+                <a href="#parties" @click="activeSection = 'parties'" :class="activeSection === 'parties' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'parties'"></span>
+                    1. The Parties
+                </a>
+                <a href="#definitions" @click="activeSection = 'definitions'" :class="activeSection === 'definitions' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'definitions'"></span>
+                    2. Definitions
+                </a>
+                <a href="#services" @click="activeSection = 'services'" :class="activeSection === 'services' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'services'"></span>
+                    3. Scope of Services
+                </a>
+                <a href="#dpa" @click="activeSection = 'dpa'" :class="activeSection === 'dpa' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'dpa'"></span>
+                    4. Data Processing Addendum
+                </a>
+                <a href="#financials" @click="activeSection = 'financials'" :class="activeSection === 'financials' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'financials'"></span>
+                    5. Commissions &amp; Payouts
+                </a>
+                <a href="#fraud" @click="activeSection = 'fraud'" :class="activeSection === 'fraud' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'fraud'"></span>
+                    6. Fraud Prevention
+                </a>
+                <a href="#termination" @click="activeSection = 'termination'" :class="activeSection === 'termination' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'termination'"></span>
+                    7. Suspension &amp; Closure
+                </a>
+                <a href="#governing" @click="activeSection = 'governing'" :class="activeSection === 'governing' ? 'text-vc-blue bg-white shadow-sm font-semibold' : 'text-vc-dark-500 hover:text-vc-blue hover:bg-white/50'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vc-blue" x-show="activeSection === 'governing'"></span>
+                    8. Governing Law
+                </a>
+            </aside>
+
+            <!-- Scrollable Content -->
+            <article class="lg:col-span-8 space-y-10 text-vc-dark-600 leading-relaxed font-normal text-sm md:text-base">
+                
+                <!-- 1. The Parties -->
+                <section id="parties" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">1. The Parties</h2>
+                    <p>
+                        This Organizer Service Agreement ("Agreement") is entered into between:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong class="text-vc-dark">Party 1 — Service Provider:</strong> Vootely Digital Platforms, operated in Ghana, with support email <a href="mailto:lovesdesigns1@gmail.com" class="text-vc-blue hover:underline">lovesdesigns1@gmail.com</a> ("Vootely").</li>
+                        <li><strong class="text-vc-dark">Party 2 — Organizer:</strong> The business, entity, or individual identified in the registration form submitted on the Platform ("Organizer").</li>
+                    </ul>
+                    <p>
+                        By registering on the Vootely Platform, clicking 'I Agree' during sign-up, or using the Platform in any capacity, the Organizer agrees to be bound by the terms of this Agreement.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 2. Definitions -->
+                <section id="definitions" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">2. Definitions</h2>
+                    <dl class="space-y-2.5">
+                        <dt class="font-bold text-vc-dark">"Platform"</dt>
+                        <dd class="pl-4">The Vootely Paid-Competition Platform, including the organizer dashboard, public event microsites, leaderboards, and related services.</dd>
+                        
+                        <dt class="font-bold text-vc-dark">"Voter Data"</dt>
+                        <dd class="pl-4">All personal data relating to guest voters that is processed through the Platform during vote purchases, including names, email addresses, phone numbers, and transaction logs.</dd>
+                        
+                        <dt class="font-bold text-vc-dark">"Data Controller"</dt>
+                        <dd class="pl-4">The entity that determines the purposes and means of processing personal data. Under this Agreement, the Organizer is the Data Controller of Voter Data.</dd>
+                        
+                        <dt class="font-bold text-vc-dark">"Data Processor"</dt>
+                        <dd class="pl-4">The entity that processes personal data on behalf of the Data Controller. Under this Agreement, Vootely acts as the Data Processor of Voter Data.</dd>
+                        
+                        <dt class="font-bold text-vc-dark">"Commission Rate"</dt>
+                        <dd class="pl-4">The platform commission percentage agreed for a specific paid competition event and deducted by Vootely from the gross amount of vote purchases.</dd>
+                    </dl>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 3. Scope of Services -->
+                <section id="services" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">3. Scope of Services</h2>
+                    <p>
+                        Vootely agrees to provide the Organizer with access to the Platform for the purpose of hosting, publishing, and managing paid voting competitions in Ghana. Vootely will use commercially reasonable efforts to maintain Platform availability of 99.9% uptime, excluding planned maintenance.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 4. Data Processing Addendum -->
+                <section id="dpa" class="scroll-mt-24 space-y-4">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">4. Data Processing Addendum (DPA)</h2>
+                    <p>
+                        The Organizer is the Data Controller of all Voter Data collected and processed through the Platform for their specific competitions. Vootely acts as the Data Processor, processing Voter Data solely on the documented instructions of the Organizer for the purpose of delivering the voting services. This relationship complies with the <strong class="text-vc-dark">Data Protection Act 2012 (Act 843)</strong> of Ghana.
+                    </p>
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">4.1 Organizer Obligations</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Comply with Act 843 in all publicity and nominee data uploads.</li>
+                            <li>Ensure all nominees have explicitly consented to their names, bios, and photos being published on public event microsites.</li>
+                            <li>Promptly handle all data subject rights requests received from nominees or voters.</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">4.2 Vootely Obligations</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Process Voter Data only on the instructions of the Organizer.</li>
+                            <li>Ensure all personnel who access database records are bound by confidentiality.</li>
+                            <li>Implement technical security measures in accordance with the Cybersecurity Act 2020 (Act 1038).</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 5. Commissions and Payouts -->
+                <section id="financials" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">5. Commissions &amp; Payout Payouts</h2>
+                    <p>
+                        Vootely operates an automated wallet and ledger-backed payout system:
+                    </p>
+                    <div class="bg-vc-surface border border-vc-dark-100/50 rounded-2xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-vc-dark-100/50 pb-3">
+                            <span class="font-bold text-vc-dark">Platform Commission Rate</span>
+                            <span class="text-lg font-extrabold text-vc-blue">Negotiated per event before publish</span>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-vc-dark-100/50 pb-3">
+                            <span class="font-bold text-vc-dark">Net Organizer Revenue Credited</span>
+                            <span class="text-lg font-extrabold text-vc-orange">Gross purchases less the agreed event commission</span>
+                        </div>
+                        <div class="text-xs text-vc-dark-500 leading-normal">
+                            <strong>Ledger Posting Flow:</strong> Every voter purchase dynamically posts balanced ledger entries. Payout requests can be submitted by the Organizer and are reviewed by Platform Admins before bank/mobile-money settlement.
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 6. Fraud Prevention -->
+                <section id="fraud" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">6. Fraud Prevention</h2>
+                    <p>
+                        The Organizer agrees to take all reasonable steps to prevent fraudulent voting, cooperating with Vootely administrators to investigate suspicious transaction volumes. Vootely reserves the right to suspend any competition and freeze organizer wallets if credible evidence of fraud or unauthorized card usage is identified.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 7. Suspension and Termination -->
+                <section id="termination" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">7. Suspension and Termination</h2>
+                    <p>
+                        Either Party may terminate this Agreement on 30 days' written notice. Vootely may suspend or terminate this Agreement immediately without prior notice if the Organizer commits a material breach, engages in fraudulent behaviors, or violates the Cyber Security regulations of Ghana.
+                    </p>
+                </section>
+
+                <hr class="border-vc-dark-100/50">
+
+                <!-- 8. Governing Law -->
+                <section id="governing" class="scroll-mt-24 space-y-3">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">8. Governing Law &amp; Dispute Resolution</h2>
+                    <p>
+                        This Agreement is governed by the laws of the Republic of Ghana. Any dispute arising out of this Agreement that cannot be resolved amicably within 30 days shall be subject to the exclusive jurisdiction of the courts of Ghana.
+                    </p>
+                    
+                    <div class="mt-8 pt-6 border-t border-vc-dark-100/50 text-xs font-semibold text-vc-dark-400 space-y-1">
+                        <p>For questions or support contact Vootely support partner:</p>
+                        <p class="text-vc-dark">Developer Support: Love's Designs (<a href="https://www.lovesdesigns.org" target="_blank" class="text-vc-blue hover:underline">www.lovesdesigns.org</a>)</p>
+                        <p class="text-vc-dark">Email: <a href="mailto:lovesdesigns1@gmail.com" class="text-vc-blue hover:underline">lovesdesigns1@gmail.com</a></p>
+                        <p class="text-vc-dark">Phone: +233 548988503</p>
+                    </div>
+                </section>
+
+            </article>
+        </div>
+    </div>
+</div>
+{% endblock %}

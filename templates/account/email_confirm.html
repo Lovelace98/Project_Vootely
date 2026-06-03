@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Confirm Email Address | VoteCentral{% endblock %}
+{% block title %}Confirm Email Address | Vootely{% endblock %}
 
 {% block body %}
 {% include 'includes/navbar.html' %}
@@ -15,7 +16,7 @@
         <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 lg:gap-20 items-center">
             <!-- Left Side: Copy -->
             <div class="md:col-span-5 text-vc-dark py-4">
-                <p class="text-xs font-bold tracking-[0.2em] text-vc-blue uppercase">VOTECENTRAL</p>
+                <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="h-6 w-auto mb-4">
                 <h1 class="mt-4 text-4xl lg:text-5xl font-extrabold text-vc-dark leading-tight tracking-tight">
                     Premium, Secure and Seamless
                 </h1>
@@ -65,7 +66,7 @@
             </span>
             <a href="#" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
             <a href="#" class="hover:text-vc-blue hover:underline transition-all">Plans</a>
-            <a href="mailto:{{ support_email|default:'support@votecentral.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+            <a href="mailto:{{ support_email|default:'lovesdesigns1@gmail.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
         </div>
     </div>
 </div>

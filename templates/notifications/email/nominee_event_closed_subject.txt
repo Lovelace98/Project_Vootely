@@ -1,0 +1,1 @@
+Voting has ended for {{ event_title }}! Here are your final results

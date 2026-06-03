@@ -1,0 +1,1 @@
+Hello {{ voter_name }}, your ballot for {{ event_title }} has been cast successfully! Your receipt is {{ credential_token }}. Once published, verify your ballot here: {{ vote_url }}

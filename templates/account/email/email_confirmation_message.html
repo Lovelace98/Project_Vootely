@@ -1,0 +1,29 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Verify your email address — Vootely{% endblock %}
+
+{% block email_content %}
+<span class="badge">Email Verification</span>
+<h2 class="h1">Hello {{ user.first_name|default:"there" }},</h2>
+<p>Welcome to <strong>Vootely</strong>! We are thrilled to have you join our platform.</p>
+
+<p>To activate your organizer account and start launching premium, paid voting competitions with real-time leaderboards, please verify your email address by clicking the button below:</p>
+
+<div style="text-align: center;">
+    <a href="{{ activate_url }}" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #f97316; color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; margin: 24px 0;">Verify Email Address</a>
+</div>
+
+<div class="card">
+    <div class="meta-row">
+        <p class="meta-label">What's next?</p>
+        <p class="meta-val" style="font-weight: normal; font-size: 14px; color: #475569;">Once verified, you will be instantly logged in and redirected straight to your dashboard where you can create your first event.</p>
+    </div>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">If the button doesn't work, copy and paste this link into your browser:</p>
+<p style="font-size: 12px; color: #94a3b8; word-break: break-all;">{{ activate_url }}</p>
+
+<p style="margin-top: 24px;">Welcome aboard,<br><strong>The Vootely Team</strong><br>
+<a href="mailto:lovesdesigns1@gmail.com" style="color: #3b82f6; text-decoration: none; font-size: 13px;">lovesdesigns1@gmail.com</a> &middot;
+<a href="tel:+233548988503" style="color: #3b82f6; text-decoration: none; font-size: 13px;">+233 548988503</a></p>
+{% endblock %}

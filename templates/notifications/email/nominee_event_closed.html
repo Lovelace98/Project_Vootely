@@ -1,0 +1,26 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Competition Closed - {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fef2f2; color: #b91c1c;">Competition Ended</span>
+<h2 class="h1">{{ event_title }} Has Ended</h2>
+<p>The paid competition <strong>"{{ event_title }}"</strong> has officially closed. Thank you for participating!</p>
+
+<div class="card">
+    <div class="meta-row">
+        <p class="meta-label">Nominee</p>
+        <p class="meta-val">{{ nominee_name }}</p>
+    </div>
+    <div class="meta-row">
+        <p class="meta-label">Total Votes Received</p>
+        <p class="meta-val" style="color: #047857;">{{ nominee_votes }}</p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ event_public_url }}" class="btn btn-blue">View Final Results</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">Thank you for being a part of this competition. We hope to see you again in future events!</p>
+{% endblock %}

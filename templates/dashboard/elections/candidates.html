@@ -12,16 +12,20 @@
     editPosition: '', 
     editName: '', 
     editBio: '', 
+    editEmail: '',
+    editPhone: '',
     editDisplayOrder: 0, 
     editIsActive: true, 
     deleteName: '',
-    openEditModal(id, positionId, name, bio, displayOrder, isActive) {
+    openEditModal(id, positionId, name, bio, displayOrder, isActive, email, phone) {
         this.actionUrl = '{% url "dashboard:election_candidates" event.slug %}' + id + '/edit/';
         this.editPosition = positionId;
         this.editName = name;
         this.editBio = bio;
         this.editDisplayOrder = displayOrder;
         this.editIsActive = isActive;
+        this.editEmail = email;
+        this.editPhone = phone;
         this.editOpen = true;
     },
     openDeleteModal(id, name) {
@@ -35,7 +39,30 @@
             <h1 class="vc-section-title">Add candidate</h1>
             <form method="post" enctype="multipart/form-data" class="mt-6 space-y-4">
                 {% csrf_token %}
-                {{ form.as_p }}
+                {% if form.non_field_errors %}
+                    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
+                        {{ form.non_field_errors|join:", " }}
+                    </div>
+                {% endif %}
+                {% for field in form %}
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-vc-dark-100/30 p-4">
+                            <div class="pt-0.5">{{ field }}</div>
+                            <div>
+                                <label class="block text-sm font-semibold text-vc-dark" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {% if field.help_text %}<p class="mt-0.5 text-xs text-vc-dark-300">{{ field.help_text }}</p>{% endif %}
+                                {% if field.errors %}<p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>{% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<p class="mt-1 text-xs text-vc-dark-300">{{ field.help_text }}</p>{% endif %}
+                            {% if field.errors %}<p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>{% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
                 <button class="vc-btn vc-btn-accent">Add candidate</button>
             </form>
         </div>
@@ -64,7 +91,7 @@
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <button type="button" 
-                                                @click="openEditModal('{{ candidate.id }}', '{{ position.id }}', '{{ candidate.name|escapejs }}', '{{ candidate.bio|escapejs }}', '{{ candidate.display_order }}', {{ candidate.is_active|yesno:'true,false' }})" 
+                                                @click="openEditModal('{{ candidate.id }}', '{{ position.id }}', '{{ candidate.name|escapejs }}', '{{ candidate.bio|escapejs }}', '{{ candidate.display_order }}', {{ candidate.is_active|yesno:'true,false' }}, '{{ candidate.email|escapejs }}', '{{ candidate.phone|escapejs }}')" 
                                                 class="p-1.5 text-vc-dark-400 hover:text-vc-blue rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
                                                 title="Edit Candidate">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
@@ -141,6 +168,18 @@
                       <div>
                           <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-vc-dark-400" for="edit-candidate-bio">Biography</label>
                           <textarea name="bio" id="edit-candidate-bio" x-model="editBio" rows="3" class="w-full"></textarea>
+                      </div>
+
+                      <!-- Email input -->
+                      <div>
+                          <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-vc-dark-400" for="edit-candidate-email">Email Address</label>
+                          <input type="email" name="email" id="edit-candidate-email" x-model="editEmail" class="w-full">
+                      </div>
+
+                      <!-- Phone input -->
+                      <div>
+                          <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-vc-dark-400" for="edit-candidate-phone">Phone Number</label>
+                          <input type="text" name="phone" id="edit-candidate-phone" x-model="editPhone" class="w-full">
                       </div>
 
                       <!-- Photo input -->

@@ -1,6 +1,6 @@
 {% extends 'dashboard_base.html' %}
 
-{% block title %}Organizer Dashboard | VoteCentral{% endblock %}
+{% block title %}Organizer Dashboard | Vootely{% endblock %}
 {% block nav_dashboard %}active{% endblock %}
 
 {% block dashboard_header_text %}
@@ -135,7 +135,7 @@
     <!-- Charts Grid Row (Money Flow & Vote Distribution) -->
     <div class="grid gap-6 lg:grid-cols-3">
         <!-- Money Flow Chart (Wide) -->
-        <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-1 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50">
+        <div class="lg:col-span-2 bg-white rounded-[2rem] p-5 sm:p-8 vc-animate-in vc-stagger-1 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 min-w-0">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
                 <div>
                     <h2 class="text-lg font-bold text-vc-dark">Money flow</h2>
@@ -158,13 +158,13 @@
                     </form>
                 </div>
             </div>
-            <div class="relative h-[280px] w-full">
+            <div class="relative h-[280px] w-full overflow-hidden">
                 <canvas id="moneyFlowChart" style="max-height: 280px !important;"></canvas>
             </div>
         </div>
 
         <!-- Budget / Vote Share Chart (Narrow) -->
-        <div class="bg-white rounded-[2rem] p-8 vc-animate-in vc-stagger-2 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 justify-between">
+        <div class="bg-white rounded-[2rem] p-5 sm:p-8 vc-animate-in vc-stagger-2 flex flex-col h-[420px] shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 justify-between min-w-0">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h2 class="text-lg font-bold text-vc-dark">Vote share</h2>
@@ -175,7 +175,7 @@
                 </a>
             </div>
             
-            <div class="relative h-[180px] w-full flex items-center justify-center my-4">
+            <div class="relative h-[180px] w-full flex items-center justify-center my-4 overflow-hidden">
                 {% if top_nominees_list %}
                     <canvas id="voteShareChart" style="max-height: 180px !important;"></canvas>
                     <div class="absolute flex flex-col items-center justify-center">

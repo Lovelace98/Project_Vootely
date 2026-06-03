@@ -1,6 +1,6 @@
 Hello,
 
-Your VoteCentral withdrawal request was not approved.
+Your Vootely withdrawal request was not approved.
 
 Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 {% if review_notes %}Review notes: {{ review_notes }}
@@ -8,4 +8,4 @@ Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 Review your withdrawal history here:
 {{ withdrawal_dashboard_url }}
 
-VoteCentral
+Vootely

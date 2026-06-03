@@ -10,13 +10,20 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}VoteCentral — premium paid competitions with real-time leaderboards, Paystack checkout, and organizer revenue tracking.{% endblock %}">
-    <title>{% block title %}VoteCentral{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Vootely — premium paid competitions with real-time leaderboards, Paystack checkout, and organizer revenue tracking.{% endblock %}">
+    <title>{% block title %}Vootely{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
@@ -24,11 +31,11 @@
 
     {% block extra_css %}{% endblock %}
 </head>
-<body class="min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col">
+<body class="{% block body_class %}min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col{% endblock %}">
     {% block body %}
     {% include 'includes/navbar.html' %}
 
-    <main class="flex-grow w-full mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main class="{% block main_class %}flex-grow w-full mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8{% endblock %}">
         {% if messages %}
             <div class="mb-6 space-y-3">
                 {% for message in messages %}
@@ -50,7 +57,7 @@
             <div class="mx-auto max-w-3xl text-center">
                 <p class="vc-badge vc-badge-blue mb-4">Phase 1 — Paid Competitions</p>
                 <h1 class="mb-4 text-5xl font-bold tracking-tight text-vc-dark sm:text-6xl">
-                    Vote<span class="text-vc-blue">Central</span>
+                    Voo<span class="text-vc-blue">tely</span>
                 </h1>
                 <p class="mx-auto mb-8 max-w-2xl text-lg text-vc-dark-400">
                     Build premium paid competitions with nominee pages, Paystack checkout, leaderboard refreshes, and organizer revenue tracking.

@@ -1,0 +1,20 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Withdrawal Approved{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #ecfdf5; color: #047857;">✅ Approved</span>
+<h2 class="h1">Withdrawal Approved!</h2>
+<p>Great news! Your withdrawal request has been approved and will be processed shortly.</p>
+
+<div class="card" style="border-left: 4px solid #10b981; border-color: #10b981;">
+    <div class="meta-row">
+        <p class="meta-label">Amount</p>
+        <p class="meta-val" style="color: #047857;">{{ withdrawal_currency }} {{ withdrawal_amount }}</p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ withdrawal_dashboard_url }}" class="btn">View Withdrawal Status</a>
+</div>
+{% endblock %}

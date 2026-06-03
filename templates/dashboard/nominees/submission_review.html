@@ -1,0 +1,57 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Review Nomination | Vootely{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="mx-auto max-w-3xl vc-animate-in">
+    <div class="vc-card p-8">
+        <p class="vc-section-label">{{ event.title }}</p>
+        <h1 class="mt-1 vc-section-title">Review nomination</h1>
+        <p class="mt-2 vc-section-subtitle">
+            Submitted {{ submission.created_at|date:"M j, Y g:i A" }} for {{ submission.category.name }}.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-5">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger">
+                    {{ form.non_field_errors|join:", " }}
+                </div>
+            {% endif %}
+            {% for field in form %}
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="flex items-start gap-3 rounded-xl border border-vc-dark-100/30 p-4 hover:bg-vc-surface transition-colors">
+                        <div class="pt-0.5">{{ field }}</div>
+                        <div>
+                            <label class="block text-sm font-semibold text-vc-dark" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.errors %}
+                                <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" name="action" value="approve" class="vc-btn vc-btn-accent vc-btn-lg">
+                    {% if submission.status == 'approved' %}Update approved nominee{% else %}Approve nomination{% endif %}
+                </button>
+                {% if submission.status != 'approved' %}
+                    <button type="submit" name="action" value="reject" class="vc-btn vc-btn-danger vc-btn-lg">
+                        Reject nomination
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

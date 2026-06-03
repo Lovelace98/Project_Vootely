@@ -1,0 +1,8 @@
+A new paid competition event has been created on Vootely and needs a commission before it can go live.
+
+Event: {{ event_title }}
+Organizer: {{ event_owner_email }}
+Dashboard: {{ event_dashboard_url }}
+Admin console: {{ event_admin_url }}
+
+Open the admin console and set the event commission to make this competition publish-ready.

@@ -1,6 +1,6 @@
 {% extends 'dashboard_base.html' %}
 
-{% block title %}Revenue &amp; Earnings | VoteCentral{% endblock %}
+{% block title %}Revenue &amp; Earnings | Vootely{% endblock %}
 {% block nav_revenue %}active{% endblock %}
 
 {% block dashboard_content %}
@@ -93,7 +93,9 @@
                             <p class="mt-1 text-sm font-extrabold text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ row.net_earnings|floatformat:2 }}</p>
                         </div>
                         <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">
-                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">Commission ({{ commission_rate }}%)</p>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-vc-dark-400">
+                                Commission{% if row.platform_commission_percent is not None %} ({{ row.platform_commission_percent|floatformat:2 }}%){% endif %}
+                            </p>
                             <p class="mt-1 text-sm font-extrabold text-vc-dark dark:text-white">{{ default_currency }} {{ row.platform_commission|floatformat:2 }}</p>
                         </div>
                         <div class="bg-vc-surface dark:bg-vc-dark-50 rounded-2xl p-4">

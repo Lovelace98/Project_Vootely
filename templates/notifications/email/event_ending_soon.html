@@ -1,0 +1,22 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Event Ending Soon - {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fffbeb; color: #b45309;">⏰ Ending Soon</span>
+<h2 class="h1">Your Event Ends Soon!</h2>
+<p>This is a friendly reminder that your event <strong>"{{ event_title }}"</strong> is ending soon.</p>
+
+<div class="card" style="border-left: 4px solid #f59e0b; border-color: #f59e0b;">
+    <div class="meta-row">
+        <p class="meta-label">Ends At</p>
+        <p class="meta-val">{{ event_end_at }}</p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ event_dashboard_url }}" class="btn btn-blue">Go to Dashboard</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">Ensure you have everything prepared for when the event closes.</p>
+{% endblock %}

@@ -1,0 +1,17 @@
+Hello,
+
+Welcome to Vootely! Your organizer account has been successfully created and your email has been confirmed.
+
+Vootely allows you to:
+- Create premium paid-voting competitions and collect payments securely through Paystack.
+- Set up secure, cryptographically verifiable elections with private voter credentials.
+- Inspect real-time analytical dashboards and manage nominees, positions, and rosters.
+- Withdraw your earnings securely at any time into your bank account or mobile wallet.
+
+Start creating your first event right now in your dashboard:
+{{ public_app_url }}/dashboard/
+
+If you have any questions or need support, reach out to us at {{ support_email }} or call {{ support_phone }}.
+
+Best regards,
+The Vootely Team

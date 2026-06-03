@@ -1,0 +1,22 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Withdrawal Review Required{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fffbeb; color: #b45309;">⚠️ Action Required</span>
+<h2 class="h1">Withdrawal Request Pending Review</h2>
+<p>A new withdrawal request has been submitted and requires your review.</p>
+
+<div class="card" style="border-left: 4px solid #f59e0b; border-color: #f59e0b;">
+    <div class="meta-row">
+        <p class="meta-label">Amount</p>
+        <p class="meta-val">{{ withdrawal_currency }} {{ withdrawal_amount }}</p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ withdrawal_admin_url }}" class="btn btn-blue">Review Withdrawal</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">Please review this request in the admin dashboard at your earliest convenience.</p>
+{% endblock %}

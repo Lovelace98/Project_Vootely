@@ -1,0 +1,10 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Commission Setup Required{% endblock %}
+
+{% block email_body %}
+<p>A new paid competition event has been created on Vootely and needs a commission before it can go live.</p>
+<p><strong>Event:</strong> {{ event_title }}<br><strong>Organizer:</strong> {{ event_owner_email }}</p>
+<p><a href="{{ event_admin_url }}" class="btn">Open Admin Console</a></p>
+<p style="margin-top: 16px;">You can also review the organizer-facing dashboard here: <a href="{{ event_dashboard_url }}">{{ event_dashboard_url }}</a></p>
+{% endblock %}

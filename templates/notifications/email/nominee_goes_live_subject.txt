@@ -1,0 +1,1 @@
+You are live on Vootely! Vote for {{ nominee_name }} in {{ event_title }}

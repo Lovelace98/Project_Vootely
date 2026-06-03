@@ -1,0 +1,10 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Nomination Update{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fee2e2; color: #b91c1c;">Not Approved</span>
+<h2 class="h1">Hello {{ nomination_submission.name }},</h2>
+<p>Your nomination for <strong>{{ category_name }}</strong> in <strong>{{ event_title }}</strong> was not approved this time.</p>
+<p>If nominations are still open, you can submit a fresh entry.</p>
+{% endblock %}

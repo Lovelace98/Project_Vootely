@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ event.title }} | VoteCentral{% endblock %}
-{% block meta_description %}Vote for nominees in {{ event.title }} on VoteCentral. {{ event.currency }} {{ event.vote_price|floatformat:2 }} per vote with secure Paystack checkout.{% endblock %}
+{% block title %}{{ event.title }} | Vootely{% endblock %}
+{% block meta_description %}Vote for nominees in {{ event.title }} on Vootely. {{ event.currency }} {{ event.vote_price|floatformat:2 }} per vote with secure Paystack checkout.{% endblock %}
 
 {% block content %}
 <section class="space-y-8 vc-animate-in">
@@ -22,6 +22,13 @@
                     <span class="vc-badge vc-badge-neutral">Starts {{ event.start_at|date:"M j, Y g:i A" }}</span>
                     <span class="vc-badge vc-badge-neutral">Ends {{ event.end_at|date:"M j, Y g:i A" }}</span>
                 </div>
+                {% if nominations_open %}
+                    <div class="mt-5">
+                        <a href="{{ nomination_url }}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                            Submit your nomination
+                        </a>
+                    </div>
+                {% endif %}
             </div>
             <div class="rounded-xl bg-vc-surface p-5 border border-vc-dark-100/30">
                 <h2 class="text-lg font-semibold text-vc-dark">Leaderboard</h2>
@@ -39,36 +46,56 @@
     </div>
 
     <!-- Nominees Grid -->
-    {% if nominees %}
+    {% if category_sections %}
         <div>
-            <h2 class="mb-4 text-lg font-semibold text-vc-dark">Nominees</h2>
-            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {% for nominee in nominees %}
-                    <article class="vc-card vc-card-interactive overflow-hidden vc-animate-in vc-stagger-{{ forloop.counter }}">
-                        <div class="aspect-[4/3] overflow-hidden bg-vc-surface">
-                            {% if nominee.photo %}
-                                <img src="{{ nominee.photo.url }}" alt="{{ nominee.name }}" class="h-full w-full object-cover transition-transform duration-300 hover:scale-105">
-                            {% else %}
-                                <div class="flex h-full items-center justify-center text-sm text-vc-dark-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                </div>
+            <h2 class="mb-4 text-lg font-semibold text-vc-dark">Nominees by category</h2>
+            <div class="space-y-8">
+                {% for section in category_sections %}
+                    <div>
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-vc-dark">{{ section.category.name }}</h3>
+                            {% if section.category.description %}
+                                <p class="mt-1 text-sm text-vc-dark-400">{{ section.category.description }}</p>
                             {% endif %}
                         </div>
-                        <div class="p-5">
-                            <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">Code {{ nominee.code }}</p>
-                            <h3 class="mt-1 text-lg font-bold text-vc-dark">{{ nominee.name }}</h3>
-                            <p class="mt-2 text-sm text-vc-dark-400 line-clamp-2">{{ nominee.bio|default:"No nominee bio yet."|truncatewords:24 }}</p>
-                            <a href="{{ nominee.get_absolute_url }}" class="vc-btn vc-btn-accent vc-btn-sm mt-4">
-                                Vote for {{ nominee.name }}
-                            </a>
-                        </div>
-                    </article>
+                        {% if section.nominees %}
+                            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                                {% for nominee in section.nominees %}
+                                    <article class="vc-card vc-card-interactive overflow-hidden vc-animate-in vc-stagger-{{ forloop.counter }}">
+                                        <div class="aspect-[4/3] overflow-hidden bg-vc-surface">
+                                            {% if nominee.photo %}
+                                                <img src="{{ nominee.photo.url }}" alt="{{ nominee.name }}" class="h-full w-full object-cover transition-transform duration-300 hover:scale-105">
+                                            {% else %}
+                                                <div class="flex h-full items-center justify-center text-sm text-vc-dark-300">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="p-5">
+                                            <p class="text-xs font-medium uppercase tracking-wider text-vc-dark-300">{{ section.category.name }} · Code {{ nominee.code }}</p>
+                                            <h3 class="mt-1 text-lg font-bold text-vc-dark">{{ nominee.name }}</h3>
+                                            <p class="mt-2 text-sm text-vc-dark-400 line-clamp-2">{{ nominee.bio|default:"No nominee bio yet."|truncatewords:24 }}</p>
+                                            <a href="{{ nominee.get_absolute_url }}" class="vc-btn vc-btn-accent vc-btn-sm mt-4">
+                                                Vote for {{ nominee.name }}
+                                            </a>
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="vc-empty">
+                                No approved nominees yet for {{ section.category.name }}.
+                                {% if nominations_open %}<a href="{{ nomination_url }}" class="font-semibold text-vc-blue hover:underline">Submit a nomination</a>.{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endfor %}
             </div>
         </div>
     {% else %}
         <div class="vc-empty">
-            Nominees will appear here once the organizer adds them.
+            No categories or approved nominees are visible yet.
+            {% if nominations_open %}<a href="{{ nomination_url }}" class="font-semibold text-vc-blue hover:underline">Submit your nomination</a>.{% endif %}
         </div>
     {% endif %}
 </section>

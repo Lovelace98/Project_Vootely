@@ -1,0 +1,9 @@
+Hello {{ candidate_name }},
+
+You have been successfully registered as an active candidate for the position of "{{ position.title }}" in the upcoming secure election: "{{ event_title }}".
+
+We wish you the best of luck in your campaign! You can view the election detail page here:
+{{ event_public_url }}
+
+Best regards,
+The Vootely Team

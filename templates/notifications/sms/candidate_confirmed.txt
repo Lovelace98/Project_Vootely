@@ -1,0 +1,1 @@
+Hello {{ candidate_name }}, you are registered as a candidate for {{ position.title }} in the election {{ event_title }}! View details: {{ event_public_url }}

@@ -1,0 +1,15 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Event Closed - {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fef2f2; color: #b91c1c;">Event Closed</span>
+<h2 class="h1">Your Event Has Closed</h2>
+<p>Your event <strong>"{{ event_title }}"</strong> has been closed. Voting and participation have concluded.</p>
+
+<div style="text-align: center;">
+    <a href="{{ event_dashboard_url }}" class="btn btn-blue">View Dashboard &amp; Results</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">You can review final results and process payouts from your organizer dashboard.</p>
+{% endblock %}

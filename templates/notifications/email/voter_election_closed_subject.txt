@@ -1,0 +1,1 @@
+Verified Results Published: {{ event_title }}

@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}
+    {% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_("Vootely Admin") }}
+{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .vc-admin-shell { display: flex; flex-direction: column; gap: 24px; }
+    .vc-admin-header { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; justify-content: space-between; }
+    .vc-admin-title { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700; color: var(--color-font-important-light, #0f172a); }
+    .dark .vc-admin-title { color: var(--color-font-important-dark, #f8fafc); }
+    .vc-admin-subtitle { margin: 6px 0 0; color: var(--color-font-subtle-light, #64748b); }
+    .dark .vc-admin-subtitle { color: var(--color-font-subtle-dark, #94a3b8); }
+    .vc-admin-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .vc-admin-select, .vc-admin-button { min-height: 38px; border: 1px solid #d1d5db; border-radius: 6px; padding: 0 12px; background: #fff; color: #111827; }
+    .dark .vc-admin-select { border-color: #334155; background: #020617; color: #e2e8f0; }
+    .vc-admin-button { border-color: #2563eb; background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
+    .vc-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+    .vc-kpi-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fff; }
+    .dark .vc-kpi-card { border-color: #1f2937; background: #0f172a; }
+    .vc-kpi-label { color: #64748b; font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+    .dark .vc-kpi-label { color: #94a3b8; }
+    .vc-kpi-value { margin-top: 8px; color: #0f172a; font-size: 26px; font-weight: 800; line-height: 1.1; }
+    .dark .vc-kpi-value { color: #f8fafc; }
+    .vc-kpi-hint { margin-top: 6px; color: #64748b; font-size: 12px; }
+    .dark .vc-kpi-hint { color: #94a3b8; }
+    .vc-panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .vc-panel { border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; overflow: hidden; }
+    .dark .vc-panel { border-color: #1f2937; background: #0f172a; }
+    .vc-panel h2 { margin: 0; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; font-size: 15px; font-weight: 700; }
+    .dark .vc-panel h2 { border-color: #1f2937; color: #f8fafc; }
+    .vc-list { margin: 0; padding: 0; list-style: none; }
+    .vc-row { display: flex; gap: 12px; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
+    .vc-row:last-child { border-bottom: 0; }
+    .dark .vc-row { border-color: #1e293b; }
+    .vc-row-main { min-width: 0; }
+    .vc-row-label { color: #0f172a; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dark .vc-row-label { color: #f8fafc; }
+    .vc-row-desc { margin-top: 3px; color: #64748b; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dark .vc-row-desc { color: #94a3b8; }
+    .vc-pill { align-self: start; border-radius: 999px; background: #f1f5f9; color: #334155; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .vc-empty { padding: 16px; color: #64748b; font-size: 13px; }
+</style>
+
+<div class="vc-admin-shell">
+    <div class="vc-admin-header">
+        <div>
+            <h1 class="vc-admin-title">Vootely Operations</h1>
+            <p class="vc-admin-subtitle">Platform health, election readiness, revenue, withdrawals, and delivery queues.</p>
+        </div>
+        <form class="vc-admin-filters" method="get">
+            <select class="vc-admin-select" name="timeframe" aria-label="Dashboard timeframe">
+                {% for value, label in timeframe_options %}
+                    <option value="{{ value }}"{% if admin_timeframe == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select class="vc-admin-select" name="kind" aria-label="Event kind">
+                {% for value, label in kind_options %}
+                    <option value="{{ value }}"{% if admin_kind == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button class="vc-admin-button" type="submit">Apply</button>
+        </form>
+    </div>
+
+    <section class="vc-kpi-grid" aria-label="Platform metrics">
+        {% for card in kpi_cards %}
+            <article class="vc-kpi-card">
+                <div class="vc-kpi-label">{{ card.label }}</div>
+                <div class="vc-kpi-value">{{ card.value }}</div>
+                <div class="vc-kpi-hint">{{ card.hint }}</div>
+            </article>
+        {% endfor %}
+    </section>
+
+    <section class="vc-panel-grid" aria-label="Operational queues">
+        {% include "admin/partials/_ops_panel.html" with title="Recent payments" items=recent_payments %}
+        {% include "admin/partials/_ops_panel.html" with title="Withdrawals needing review" items=withdrawal_queue %}
+        {% include "admin/partials/_ops_panel.html" with title="Secure elections needing action" items=election_queue %}
+        {% include "admin/partials/_ops_panel.html" with title="Failed notifications" items=failed_notifications %}
+        {% include "admin/partials/_ops_panel.html" with title="Ledger imbalance alerts" items=ledger_alerts %}
+    </section>
+</div>
+{% endblock %}

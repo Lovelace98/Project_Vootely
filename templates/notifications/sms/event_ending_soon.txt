@@ -1,1 +1,1 @@
-VoteCentral reminder: {{ event_title }} ends on {{ event_end_at|date:"M j, g:i A" }}.
+Vootely reminder: {{ event_title }} ends on {{ event_end_at|date:"M j, g:i A" }}.

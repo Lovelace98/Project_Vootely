@@ -8,4 +8,4 @@ Public page:
 Organizer dashboard:
 {{ event_dashboard_url }}
 
-VoteCentral
+Vootely

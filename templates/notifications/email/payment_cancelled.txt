@@ -9,4 +9,4 @@ Reference: {{ payment_reference }}
 You can return to the payment status page here:
 {{ payment_status_url }}
 
-VoteCentral
+Vootely

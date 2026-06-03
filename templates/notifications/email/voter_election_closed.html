@@ -1,0 +1,17 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Election Results Certified & Published!{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #ecfdf5; color: #047857;">Results Published</span>
+<h2 class="h1">Hello {{ voter_name }},</h2>
+<p>The official verified results for the secure election <strong>"{{ event_title }}"</strong> have been certified and published by the organizer!</p>
+
+<p>You can check the certified tallies, seat allocations, and securely verify your anonymous ballot receipt code on the public results page now:</p>
+
+<div style="text-align: center;">
+    <a href="{{ event_public_url }}" class="btn btn-blue">View Certified Tallies</a>
+</div>
+
+<p>Thank you for participating and making your voice count securely with Vootely!</p>
+{% endblock %}

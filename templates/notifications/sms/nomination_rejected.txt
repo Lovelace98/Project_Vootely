@@ -1,0 +1,1 @@
+Vootely: your nomination for {{ category_name }} in {{ event_title }} was not approved. You can submit again if nominations remain open.

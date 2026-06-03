@@ -1,0 +1,13 @@
+Hello {{ nominee_name }},
+
+Great news! The competition "{{ event_title }}" is now officially LIVE on Vootely, and voting is open!
+
+You have been nominated! To start getting votes, share your public voting page with your family, friends, and followers on social media and WhatsApp.
+
+Your direct voting link is:
+{{ vote_url }}
+
+Let the voting begin, and we wish you the very best of luck!
+
+Best regards,
+The Vootely Team

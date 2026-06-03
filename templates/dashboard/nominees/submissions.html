@@ -1,0 +1,73 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Nomination Queue | Vootely{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in">
+    <div class="vc-card p-6 dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="vc-section-label">{{ event.title }}</p>
+                <h1 class="mt-1 vc-section-title">Nomination queue</h1>
+                <p class="mt-2 vc-section-subtitle">Review self-nominations for each category.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {% for tab in status_tabs %}
+                    <a
+                        href="?status={{ tab.value }}"
+                        class="border font-semibold transition"
+                        style="
+                            display: inline-flex !important;
+                            flex: 0 0 auto !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            width: auto !important;
+                            min-width: 0 !important;
+                            height: 2.3rem !important;
+                            min-height: 2.3rem !important;
+                            padding: 0 0.95rem !important;
+                            white-space: nowrap !important;
+                            font-size: 0.8rem;
+                            line-height: 1;
+                            border-radius: 9999px !important;
+                            {% if selected_status == tab.value %}
+                                border-color: rgba(254, 104, 7, 0.28);
+                                background: rgba(254, 104, 7, 0.10);
+                                color: var(--color-vc-orange);
+                            {% else %}
+                                border-color: rgba(229, 231, 235, 1);
+                                background: rgba(255, 255, 255, 1);
+                                color: var(--color-vc-dark-500);
+                            {% endif %}
+                        "
+                    >
+                        <span>{{ tab.label }}</span>
+                        <span style="margin-left:0.42rem; font-size:0.68rem; font-weight:700; opacity:0.7;">({{ tab.count }})</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="vc-card p-6 dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="space-y-3">
+            {% for submission in submissions %}
+                <a href="{% url 'dashboard:nomination_review' event.slug submission.pk %}" class="vc-status-row dark:border-vc-dark-600 hover:bg-vc-surface transition-colors">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-vc-dark dark:text-white">{{ submission.name }}</p>
+                        <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ submission.category.name }} · {{ submission.email|default:submission.phone_number|default:"No contact provided" }}</p>
+                    </div>
+                    <span class="vc-badge {% if submission.status == 'approved' %}vc-badge-success{% elif submission.status == 'rejected' %}vc-badge-danger{% else %}vc-badge-warning{% endif %}">
+                        {{ submission.get_status_display }}
+                    </span>
+                </a>
+            {% empty %}
+                <div class="vc-empty">
+                    No {{ selected_status }} submissions right now.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -5,4 +5,4 @@ Your event "{{ event_title }}" has been closed.
 Organizer dashboard:
 {{ event_dashboard_url }}
 
-VoteCentral
+Vootely

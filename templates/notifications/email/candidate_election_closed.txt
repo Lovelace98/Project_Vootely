@@ -1,0 +1,11 @@
+Hello {{ candidate_name }},
+
+Voting has officially ended for "{{ event_title }}".
+
+The verified results are now available (if published by the organizer). You can check the final tally, seat counts, and audited ballot confirmations here:
+{{ event_public_url }}
+
+Thank you for choosing Vootely for your secure election.
+
+Best regards,
+The Vootely Team

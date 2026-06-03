@@ -1,3 +1,4 @@
+{% load static %}
 <footer class="border-t border-vc-dark-100/50 bg-white dark:bg-vc-surface-raised dark:border-vc-dark-100/10 mt-auto">
     <!-- Main Footer Links Grid -->
     <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -5,7 +6,10 @@
             
             <!-- Column 1: Brand & Tagline -->
             <div class="md:col-span-5 space-y-4">
-                <span class="text-xl font-black tracking-[0.2em] text-vc-blue">VOOTELY</span>
+                <a href="{% url 'events:landing' %}" class="flex items-center">
+                    <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-8 w-auto block dark:hidden">
+                    <img src="{% static 'images/vootely_logo_dark.png' %}" alt="Vootely Logo" class="h-8 w-auto hidden dark:block">
+                </a>
                 <p class="text-sm text-vc-dark-400 font-medium leading-relaxed max-w-sm">
                     Premium paid competitions with real-time leaderboards, seamless Paystack payments, and ledger-backed organizer wallets.
                 </p>

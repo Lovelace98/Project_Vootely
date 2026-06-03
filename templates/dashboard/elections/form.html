@@ -1,6 +1,6 @@
 {% extends 'dashboard_base.html' %}
 
-{% block title %}{% if object %}Edit {{ object.title }}{% else %}Create Secure Election{% endif %} | VoteCentral{% endblock %}
+{% block title %}{% if object %}Edit {{ object.title }}{% else %}Create Secure Election{% endif %} | Vootely{% endblock %}
 {% block nav_my_events %}active{% endblock %}
 
 {% block dashboard_content %}
@@ -10,6 +10,11 @@
         <h1 class="mt-1 vc-section-title">{% if object %}Edit election{% else %}Create a secure election{% endif %}</h1>
         <form method="post" enctype="multipart/form-data" class="mt-8 space-y-5">
             {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
+                    {{ form.non_field_errors|join:", " }}
+                </div>
+            {% endif %}
             {% for field in form %}
                 {% if field.field.widget.input_type == 'checkbox' %}
                     <div class="flex items-start gap-3 rounded-xl border border-vc-dark-100/30 p-4">

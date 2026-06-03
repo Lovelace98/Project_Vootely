@@ -1,0 +1,27 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Ballot Successfully Cast!{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #ecfdf5; color: #047857;">Vote Cast Successfully</span>
+<h2 class="h1">Hello {{ voter_name }},</h2>
+<p>Your ballot for secure election <strong>"{{ event_title }}"</strong> has been successfully cast and securely recorded!</p>
+
+<p>To guarantee that your ballot remains completely anonymous yet fully auditable, Vootely has generated a secure, anonymous ballot **receipt code** for you:</p>
+
+<div class="card" style="border-left: 4px solid #10b981; background-color: #f0fdf4; border-color: #10b981;">
+    <div class="meta-row">
+        <p class="meta-label">Anonymous Ballot Receipt Code</p>
+        <p class="meta-val" style="font-family: monospace; font-size: 18px; color: #0f766e; letter-spacing: 0.05em;">{{ credential_token }}</p>
+    </div>
+</div>
+
+<p><strong>How to Verify Your Vote:</strong><br>
+Once the organizer officially publishes the final election results, you can visit the public results page, search for your receipt code, and verify that your specific choices were securely and accurately tallied into the results:</p>
+
+<div style="text-align: center;">
+    <a href="{{ vote_url }}" class="btn btn-blue">Verify Ballot Receipt</a>
+</div>
+
+<p style="font-size: 12px; color: #64748b;">Keep your receipt code safe. It is your cryptographic guarantee of a fair and transparent election.</p>
+{% endblock %}

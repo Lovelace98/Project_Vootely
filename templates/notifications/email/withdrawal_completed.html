@@ -1,0 +1,26 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Withdrawal Completed{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #ecfdf5; color: #047857;">✅ Completed</span>
+<h2 class="h1">Withdrawal Successful!</h2>
+<p>Your withdrawal has been completed and the funds have been sent to your account.</p>
+
+<div class="card" style="border-left: 4px solid #10b981; border-color: #10b981;">
+    <div class="meta-row">
+        <p class="meta-label">Amount</p>
+        <p class="meta-val" style="color: #047857;">{{ withdrawal_currency }} {{ withdrawal_amount }}</p>
+    </div>
+    {% if payout_reference %}
+    <div class="meta-row">
+        <p class="meta-label">Payout Reference</p>
+        <p class="meta-val" style="font-family: monospace; font-size: 13px;">{{ payout_reference }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ revenue_dashboard_url }}" class="btn">View Revenue Dashboard</a>
+</div>
+{% endblock %}

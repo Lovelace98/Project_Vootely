@@ -6,4 +6,4 @@ Start time: {{ event_start_at }}
 Organizer dashboard:
 {{ event_dashboard_url }}
 
-VoteCentral
+Vootely

@@ -1,0 +1,26 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Candidate Registration Confirmed{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #eff6ff; color: #1d4ed8;">Candidate Active</span>
+<h2 class="h1">Hello {{ candidate_name }},</h2>
+<p>You have been successfully registered as an active candidate in the upcoming secure election: <strong>"{{ event_title }}"</strong>.</p>
+
+<div class="card">
+    <div class="meta-row">
+        <p class="meta-label">Candidate Name</p>
+        <p class="meta-val">{{ candidate_name }}</p>
+    </div>
+    <div class="meta-row" style="margin-top: 12px;">
+        <p class="meta-label">Position / Seat</p>
+        <p class="meta-val">{{ position.title }}</p>
+    </div>
+</div>
+
+<p>We wish you the absolute best of luck in your campaign! You can view the secure election detail and updates page here:</p>
+
+<div style="text-align: center;">
+    <a href="{{ event_public_url }}" class="btn btn-blue">View Election Details</a>
+</div>
+{% endblock %}

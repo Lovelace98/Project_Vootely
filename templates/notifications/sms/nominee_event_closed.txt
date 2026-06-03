@@ -1,0 +1,1 @@
+Hello {{ nominee_name }}, voting has ended for {{ event_title }}. You gained a total of {{ nominee_votes }} votes! View full results here: {{ event_public_url }}

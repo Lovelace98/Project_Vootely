@@ -7,4 +7,4 @@ Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 Open the admin review page:
 {{ withdrawal_admin_url }}
 
-VoteCentral
+Vootely

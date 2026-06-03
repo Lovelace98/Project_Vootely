@@ -1,6 +1,6 @@
 Hello,
 
-Your VoteCentral withdrawal has been marked as completed.
+Your Vootely withdrawal has been marked as completed.
 
 Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 {% if payout_reference %}Payout reference: {{ payout_reference }}
@@ -8,4 +8,4 @@ Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 Track this request here:
 {{ withdrawal_dashboard_url }}
 
-VoteCentral
+Vootely

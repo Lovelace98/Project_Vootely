@@ -1,6 +1,6 @@
 {% extends 'dashboard_base.html' %}
 
-{% block title %}{{ event.title }} Dashboard | VoteCentral{% endblock %}
+{% block title %}{{ event.title }} Dashboard | Vootely{% endblock %}
 {% block nav_my_events %}active{% endblock %}
 
 {% block dashboard_content %}
@@ -22,6 +22,12 @@
             <a href="{% url 'dashboard:nominee_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Nominee
+            </a>
+            <a href="{% url 'dashboard:category_create' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">
+                Add Category
+            </a>
+            <a href="{% url 'dashboard:nomination_queue' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">
+                Review Nominations
             </a>
             {% if event.status == 'draft' %}
                 {% if publish_ready %}
@@ -60,7 +66,7 @@
     {% endif %}
 
     <!-- KPI Stats -->
-    <div class="grid gap-4 sm:grid-cols-3 vc-animate-in vc-stagger-2">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 vc-animate-in vc-stagger-2">
         <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
             <p class="vc-stat-label">Confirmed Votes</p>
             <p class="vc-stat-value dark:text-white">{{ summary.total_votes }}</p>
@@ -72,6 +78,22 @@
         <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
             <p class="vc-stat-label">Nominees</p>
             <p class="vc-stat-value dark:text-white">{{ nominees|length }}</p>
+        </div>
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <p class="vc-stat-label">Platform Commission</p>
+            {% if event.platform_commission_percent is not None %}
+                <p class="vc-stat-value dark:text-white">{{ event.platform_commission_percent|floatformat:2 }}%</p>
+                <p class="mt-2 text-xs text-vc-dark-400 dark:text-slate-400">
+                    {% if commission_locked %}
+                        Locked after first successful paid vote.
+                    {% else %}
+                        Configured by Vootely admin.
+                    {% endif %}
+                </p>
+            {% else %}
+                <p class="vc-stat-value text-vc-orange dark:text-vc-orange-100">Pending</p>
+                <p class="mt-2 text-xs text-vc-dark-400 dark:text-slate-400">Waiting for Vootely admin to set the event commission.</p>
+            {% endif %}
         </div>
     </div>
 
@@ -102,22 +124,75 @@
         </div>
     </div>
 
-    <!-- Three-column layout -->
+    {% if event.allow_public_nominations %}
+        <div class="vc-card p-5 vc-animate-in vc-stagger-4 dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Public nomination link</h2>
+                    <p class="mt-1 text-sm text-vc-dark-400 dark:text-slate-400">
+                        Open from {{ event.nomination_start_at|date:"M j, Y g:i A" }} to {{ event.nomination_end_at|date:"M j, Y g:i A" }}.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2" x-data="{ copied: false }">
+                    <a href="{{ nomination_url }}" target="_blank" class="vc-btn vc-btn-outline-blue vc-btn-sm">Open nomination page</a>
+                    <button
+                        type="button"
+                        class="vc-btn vc-btn-outline vc-btn-sm"
+                        @click="navigator.clipboard.writeText('{{ nomination_url|escapejs }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                    >
+                        <span x-text="copied ? 'Copied' : 'Copy URL'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Top Three-column layout -->
     <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[380px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex items-center justify-between shrink-0">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Categories</h2>
+                <a href="{% url 'dashboard:category_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                    Add category
+                </a>
+            </div>
+            <div class="mt-5 space-y-3 overflow-y-auto flex-1 pr-1">
+                {% for category in categories %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-vc-dark dark:text-white">{{ category.name }}</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ category.nominees.count }} nominee{{ category.nominees.count|pluralize }}{% if not category.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'dashboard:category_edit' event.slug category.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>
+                            <form method="post" action="{% url 'dashboard:category_delete' event.slug category.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="vc-btn vc-btn-danger vc-btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">
+                        Add categories to group nominees and enable self-nominations.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <!-- Nominees -->
-        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
-            <div class="flex items-center justify-between">
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[380px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex items-center justify-between shrink-0">
                 <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Nominees</h2>
                 <a href="{% url 'dashboard:nominee_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
                     Add nominee
                 </a>
             </div>
-            <div class="mt-5 space-y-3">
+            <div class="mt-5 space-y-3 overflow-y-auto flex-1 pr-1">
                 {% for nominee in nominees %}
                     <div class="vc-status-row dark:border-vc-dark-600">
                         <div class="min-w-0">
                             <p class="font-semibold text-vc-dark dark:text-white">{{ nominee.name }}</p>
-                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">Code {{ nominee.code }}{% if not nominee.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ nominee.category.name }} · Code {{ nominee.code }}{% if not nominee.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
                         </div>
                         <div class="flex gap-2">
                             <a href="{% url 'dashboard:nominee_edit' event.slug nominee.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>
@@ -135,25 +210,64 @@
             </div>
         </div>
 
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[380px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex items-center justify-between shrink-0">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Nomination Queue</h2>
+                <a href="{% url 'dashboard:nomination_queue' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                    Open queue
+                </a>
+            </div>
+            <div class="mt-5 space-y-3 overflow-y-auto flex-1 pr-1">
+                <div class="vc-status-row dark:border-vc-dark-600">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">Pending</p>
+                        <p class="text-sm text-vc-dark-400 dark:text-slate-400">Needs organizer review.</p>
+                    </div>
+                    <span class="vc-badge vc-badge-warning">{{ submission_counts.pending }}</span>
+                </div>
+                <div class="vc-status-row dark:border-vc-dark-600">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">Approved</p>
+                        <p class="text-sm text-vc-dark-400 dark:text-slate-400">Converted into nominees.</p>
+                    </div>
+                    <span class="vc-badge vc-badge-success">{{ submission_counts.approved }}</span>
+                </div>
+                <div class="vc-status-row dark:border-vc-dark-600">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">Rejected</p>
+                        <p class="text-sm text-vc-dark-400 dark:text-slate-400">Kept for audit history.</p>
+                    </div>
+                    <span class="vc-badge vc-badge-danger">{{ submission_counts.rejected }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Two-column layout -->
+    <div class="grid gap-6 lg:grid-cols-2 mt-6">
         <!-- Leaderboard -->
-        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
-            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Leaderboard</h2>
-            <div class="mt-5">
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[300px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white shrink-0">Leaderboard</h2>
+            <div class="mt-5 overflow-y-auto flex-1 pr-1">
                 {% include 'events/_leaderboard.html' %}
             </div>
             {% if event.status == 'published' %}
-                <a href="{{ event.get_absolute_url }}" class="vc-btn vc-btn-outline-blue vc-btn-sm mt-5 w-full flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-                    View public page
-                </a>
+                <div class="pt-4 shrink-0">
+                    <a href="{{ event.get_absolute_url }}" class="vc-btn vc-btn-outline-blue vc-btn-sm w-full flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                        View public page
+                    </a>
+                </div>
             {% endif %}
         </div>
 
         <!-- Latest Payments -->
-        <div class="vc-card p-6 vc-animate-in vc-stagger-4 h-fit dark:bg-vc-surface-raised dark:border-vc-dark-600">
-            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Latest Payments</h2>
-            <p class="mt-1 text-sm text-vc-dark-400 dark:text-slate-400">Paid = votes counted. Pending = not yet. Failed = no votes.</p>
-            <div class="mt-5 space-y-3">
+        <div class="vc-card p-6 vc-animate-in vc-stagger-4 h-[300px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="shrink-0">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Latest Payments</h2>
+                <p class="mt-1 text-sm text-vc-dark-400 dark:text-slate-400">Paid = votes counted. Pending = not yet. Failed = no votes.</p>
+            </div>
+            <div class="mt-5 space-y-3 overflow-y-auto flex-1 pr-1">
                 {% for payment in latest_payments %}
                     <div class="vc-status-row dark:border-vc-dark-600">
                         <div class="min-w-0">

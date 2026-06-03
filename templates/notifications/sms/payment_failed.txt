@@ -1,1 +1,1 @@
-VoteCentral: your payment for {{ nominee_name }} in {{ event_title }} was not successful. No votes were added. You can try again.
+Vootely: your payment for {{ nominee_name }} in {{ event_title }} was not successful. No votes were added. You can try again.

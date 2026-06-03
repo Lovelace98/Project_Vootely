@@ -1,0 +1,1 @@
+You have been registered as a Candidate in {{ event_title }}

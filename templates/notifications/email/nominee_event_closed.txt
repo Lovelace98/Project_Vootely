@@ -1,0 +1,16 @@
+Hello {{ nominee_name }},
+
+Voting has officially closed for the competition "{{ event_title }}".
+
+We want to congratulate you on your nomination and thank you for being a part of this journey!
+
+Here is your final tally:
+- Total Votes Gained: {{ nominee_votes }} votes
+
+You can check the full verified final results and leaderboard on our public page (if released by the organizer):
+{{ event_public_url }}
+
+Thank you for choosing Vootely. We hope to see you in more competitions soon!
+
+Best regards,
+The Vootely Team

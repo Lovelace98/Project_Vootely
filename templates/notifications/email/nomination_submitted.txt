@@ -1,0 +1,10 @@
+Hello,
+
+A new self-nomination has been submitted for "{{ event_title }}".
+
+Nominee: {{ nomination_submission.name }}
+Category: {{ category_name }}
+Email: {{ nomination_submission.email|default:"Not provided" }}
+Phone: {{ nomination_submission.phone_number|default:"Not provided" }}
+
+Review it from your Vootely dashboard.

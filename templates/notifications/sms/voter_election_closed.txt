@@ -1,0 +1,1 @@
+The official results for "{{ event_title }}" are out! Verify your anonymous ballot tally on the public results page: {{ event_public_url }}

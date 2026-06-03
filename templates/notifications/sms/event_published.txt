@@ -1,1 +1,1 @@
-VoteCentral: {{ event_title }} is now published and open to voters.
+Vootely: {{ event_title }} is now published and open to voters.

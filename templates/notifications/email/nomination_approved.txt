@@ -1,0 +1,12 @@
+Hello {{ nomination_submission.name }},
+
+Your nomination for "{{ category_name }}" in "{{ event_title }}" has been approved.
+
+You are now live on Vootely as an official nominee.
+{% if vote_url %}
+Share your public voting page:
+{{ vote_url }}
+{% endif %}
+
+Best regards,
+The Vootely Team

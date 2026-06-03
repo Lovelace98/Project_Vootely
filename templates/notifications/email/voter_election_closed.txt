@@ -1,0 +1,11 @@
+Hello {{ voter_name }},
+
+The official verified results for the secure election "{{ event_title }}" have been certified and published by the organizer.
+
+You can check the certified tallies, seat allocations, and securely verify your anonymous ballot receipt code on the public results page here:
+{{ event_public_url }}
+
+Thank you for participating and making your voice count securely with Vootely!
+
+Best regards,
+The Vootely Team

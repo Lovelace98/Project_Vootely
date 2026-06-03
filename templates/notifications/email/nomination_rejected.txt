@@ -1,0 +1,8 @@
+Hello {{ nomination_submission.name }},
+
+Your nomination for "{{ category_name }}" in "{{ event_title }}" was not approved this time.
+
+You may submit a fresh nomination if the organizer reopens or keeps nominations active.
+
+Best regards,
+The Vootely Team

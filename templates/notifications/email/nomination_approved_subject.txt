@@ -1,0 +1,1 @@
+Your nomination for {{ event_title }} has been approved

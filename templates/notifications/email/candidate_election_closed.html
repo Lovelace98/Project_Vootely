@@ -1,0 +1,28 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Election Results Published - {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #eff6ff; color: #1d4ed8;">📊 Results Published</span>
+<h2 class="h1">Election Results Are In!</h2>
+<p>The results for the secure election <strong>"{{ event_title }}"</strong> have been officially published.</p>
+
+<div class="card">
+    <div class="meta-row">
+        <p class="meta-label">Candidate</p>
+        <p class="meta-val">{{ candidate_name }}</p>
+    </div>
+    {% if position %}
+    <div class="meta-row">
+        <p class="meta-label">Position</p>
+        <p class="meta-val">{{ position.title }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ event_public_url }}" class="btn btn-blue">View Election Results</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">Thank you for participating in this election. The published results are final and verifiable.</p>
+{% endblock %}

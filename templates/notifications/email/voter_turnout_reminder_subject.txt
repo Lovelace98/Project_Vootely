@@ -1,0 +1,1 @@
+Urgent Reminder: Cast your ballot in {{ event_title }}

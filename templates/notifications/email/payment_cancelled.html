@@ -1,0 +1,30 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Payment Cancelled - {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fffbeb; color: #b45309;">Payment Cancelled</span>
+<h2 class="h1">Payment Was Cancelled</h2>
+<p>Your payment for <strong>"{{ event_title }}"</strong> has been cancelled. No votes were added and no charges were applied.</p>
+
+<div class="card" style="border-left: 4px solid #f59e0b; border-color: #f59e0b;">
+    <div class="meta-row">
+        <p class="meta-label">Nominee</p>
+        <p class="meta-val">{{ nominee_name }}</p>
+    </div>
+    <div class="meta-row">
+        <p class="meta-label">Attempted Votes</p>
+        <p class="meta-val">{{ vote_quantity }}</p>
+    </div>
+    <div class="meta-row">
+        <p class="meta-label">Reference</p>
+        <p class="meta-val" style="font-family: monospace; font-size: 13px;">{{ payment_reference }}</p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ event_public_url }}" class="btn">Return to Event</a>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">You can start a new vote purchase from the event page anytime.</p>
+{% endblock %}

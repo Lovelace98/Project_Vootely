@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Vote for {{ nominee.name }} | VoteCentral{% endblock %}
+{% block title %}Vote for {{ nominee.name }} | Vootely{% endblock %}
 {% block meta_description %}Vote for {{ nominee.name }} in {{ event.title }}. Each vote costs {{ event.currency }} {{ event.vote_price|floatformat:2 }} with secure Paystack checkout.{% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
     <article class="vc-card p-6 sm:p-8">
         <span class="vc-badge {% if state == 'active' %}vc-badge-blue{% elif state == 'upcoming' %}vc-badge-warning{% else %}vc-badge-neutral{% endif %}">{{ state|title }}</span>
         <h1 class="mt-3 text-3xl font-bold text-vc-dark">{{ nominee.name }}</h1>
-        <p class="mt-1 text-sm text-vc-dark-400">{{ event.title }}</p>
+        <p class="mt-1 text-sm text-vc-dark-400">{{ event.title }} · {{ nominee.category.name }}</p>
         <div class="mt-6 aspect-[4/3] overflow-hidden rounded-xl bg-vc-surface">
             {% if nominee.photo %}
                 <img src="{{ nominee.photo.url }}" alt="{{ nominee.name }}" class="h-full w-full object-cover">

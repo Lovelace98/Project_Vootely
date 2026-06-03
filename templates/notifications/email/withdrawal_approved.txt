@@ -1,6 +1,6 @@
 Hello,
 
-Your VoteCentral withdrawal request has been approved and is now reserved for payout.
+Your Vootely withdrawal request has been approved and is now reserved for payout.
 
 Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 {% if review_notes %}Review notes: {{ review_notes }}
@@ -8,4 +8,4 @@ Amount: {{ withdrawal_currency }} {{ withdrawal_amount }}
 Track this request here:
 {{ withdrawal_dashboard_url }}
 
-VoteCentral
+Vootely

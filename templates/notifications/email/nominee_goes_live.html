@@ -1,0 +1,24 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}You Have Been Nominated!{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #fef3c7; color: #d97706;">Nomination Active</span>
+<h2 class="h1">Hello {{ nominee_name }},</h2>
+<p>Great news! The competition <strong>"{{ event_title }}"</strong> is now officially **LIVE** on Vootely, and voting is open!</p>
+
+<p>You have been nominated! To start getting votes, share your public voting page with your family, friends, and followers on WhatsApp, Instagram, and other social channels.</p>
+
+<div class="card" style="border-left: 4px solid #f59e0b;">
+    <p class="meta-label">Nominee Name</p>
+    <p class="meta-val">{{ nominee_name }}</p>
+</div>
+
+<p>Let the voting begin! You can share your direct public voting and payment page using the button below:</p>
+
+<div style="text-align: center;">
+    <a href="{{ vote_url }}" class="btn btn-primary">Share &amp; Get Votes Now</a>
+</div>
+
+<p style="font-size: 12px; color: #64748b;">We wish you the very best of luck in your campaign!</p>
+{% endblock %}

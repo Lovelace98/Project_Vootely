@@ -1,0 +1,13 @@
+Hello {{ voter_name }},
+
+This is a friendly reminder that you have not yet cast your ballot in "{{ event_title }}".
+
+The secure voting window will close soon at {{ event_end_at }}. 
+
+Make your voice count securely! You can cast your ballot directly by visiting your private voting link:
+{{ vote_url }}
+
+If you require your Access Token, it is: {{ credential_token }}
+
+Best regards,
+The Vootely Team

@@ -1,0 +1,1 @@
+Vootely: your nomination for {{ category_name }} in {{ event_title }} has been approved. {% if vote_url %}Share your page: {{ vote_url }}{% endif %}

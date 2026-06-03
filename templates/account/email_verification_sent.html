@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Verify Email Address | VoteCentral{% endblock %}
+{% block title %}Verify Email Address | Vootely{% endblock %}
 
 {% block content %}
 <div class="min-h-[85vh] flex items-center justify-center bg-gradient-to-tr from-vc-blue/10 via-vc-surface to-vc-orange/10 relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8 rounded-3xl shadow-sm vc-animate-in">
@@ -12,7 +13,7 @@
         <!-- Left Side: Copy and Legal Links -->
         <div class="md:col-span-5 flex flex-col justify-between h-full py-8 text-vc-dark">
             <div>
-                <p class="text-xs font-bold tracking-[0.2em] text-vc-blue uppercase">VOTECENTRAL</p>
+                <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="h-6 w-auto mb-4">
                 <h1 class="mt-4 text-4xl font-extrabold text-vc-dark leading-tight tracking-tight">
                     Premium, Secure and Seamless
                 </h1>
@@ -28,7 +29,7 @@
                 </span>
                 <a href="#" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
                 <a href="#" class="hover:text-vc-blue hover:underline transition-all">Plans</a>
-                <a href="mailto:{{ support_email|default:'support@votecentral.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+                <a href="mailto:{{ support_email|default:'lovesdesigns1@gmail.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
             </div>
         </div>
         

@@ -1,0 +1,16 @@
+Hello {{ voter_name }},
+
+Your ballot for "{{ event_title }}" has been successfully cast and securely recorded!
+
+Your unique, anonymous ballot receipt code is:
+{{ credential_token }}
+
+Important Details:
+To guarantee complete trust and auditing, Vootely allows you to verify that your specific ballot was included in the final tallied results. 
+Once the election organizer has officially published the final results, you can visit the results page and search your receipt code to verify that it has been securely tallied:
+{{ vote_url }}
+
+Thank you for participating in this secure election!
+
+Best regards,
+The Vootely Team

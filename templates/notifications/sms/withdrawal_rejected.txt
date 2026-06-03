@@ -1,1 +1,1 @@
-VoteCentral: your withdrawal request for {{ withdrawal_currency }} {{ withdrawal_amount|floatformat:2 }} was rejected{% if review_notes %}. {{ review_notes|truncatechars:70 }}{% endif %}.
+Vootely: your withdrawal request for {{ withdrawal_currency }} {{ withdrawal_amount|floatformat:2 }} was rejected{% if review_notes %}. {{ review_notes|truncatechars:70 }}{% endif %}.

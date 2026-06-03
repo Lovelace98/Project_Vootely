@@ -1,0 +1,18 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}New Nomination Submitted{% endblock %}
+
+{% block email_content %}
+<span class="badge" style="background-color: #dbeafe; color: #1d4ed8;">Review Needed</span>
+<h2 class="h1">A new nomination has been submitted.</h2>
+<p>{{ nomination_submission.name }} submitted a self-nomination for <strong>{{ category_name }}</strong> in <strong>{{ event_title }}</strong>.</p>
+
+<div class="card" style="border-left: 4px solid #2563eb;">
+    <p class="meta-label">Category</p>
+    <p class="meta-val">{{ category_name }}</p>
+    <p class="meta-label">Contact</p>
+    <p class="meta-val">{{ nomination_submission.email|default:"No email" }}{% if nomination_submission.phone_number %} · {{ nomination_submission.phone_number }}{% endif %}</p>
+</div>
+
+<p>Review this submission from your organizer dashboard.</p>
+{% endblock %}
