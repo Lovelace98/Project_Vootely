@@ -14,6 +14,15 @@
     <title>{% block title %}Vootely{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="{% url 'manifest_json' %}">
+    <meta name="theme-color" content="#191bdf">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vootely">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon_512.png' %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -85,6 +94,95 @@
     {% include 'includes/footer.html' %}
     {% include 'includes/payment_modal.html' %}
     {% endblock body %}
+
+    <!-- PWA Install Banner -->
+    <div x-data x-show="$store.pwa && $store.pwa.showBanner" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="opacity-0 translate-y-8"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-8"
+         class="fixed bottom-6 right-6 left-6 md:left-auto md:w-96 z-[100] p-5 rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-vc-surface-raised/95 dark:border-vc-dark-100/10 shadow-2xl backdrop-blur-md flex flex-col gap-4"
+         x-cloak>
+        <div class="flex items-start gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-vc-blue/10 dark:bg-vc-blue/20 text-vc-blue shrink-0">
+                <img src="{% static 'images/favicon.png' %}" alt="Vootely Icon" class="h-9 w-9 rounded-lg">
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-vc-dark dark:text-white">Install Vootely App</h4>
+                <p class="text-xs text-vc-dark-400 dark:text-slate-400 mt-1 leading-normal">
+                    Install Vootely on your home screen for quick access, real-time updates, and a faster experience!
+                </p>
+            </div>
+            <button @click="$store.pwa.dismiss()" class="text-vc-dark-300 hover:text-vc-dark dark:hover:text-white transition-colors" aria-label="Close banner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="flex items-center justify-end gap-3 mt-1">
+            <button @click="$store.pwa.dismiss()" class="px-3.5 py-1.5 text-xs font-semibold text-vc-dark-400 hover:text-vc-dark dark:text-slate-400 dark:hover:text-white transition-colors">
+                Maybe Later
+            </button>
+            <button @click="$store.pwa.install()" class="vc-btn vc-btn-primary vc-btn-sm text-xs px-4 py-2">
+                Install App
+            </button>
+        </div>
+    </div>
+
+    <!-- PWA Store and Service Worker Registration -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('pwa', {
+                deferredPrompt: null,
+                showBanner: false,
+                init() {
+                    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                    if (isStandalone) return;
+
+                    const dismissedTime = localStorage.getItem('pwa-dismissed');
+                    if (dismissedTime) {
+                        const now = new Date().getTime();
+                        // 3 days dismissal duration
+                        if (now - parseInt(dismissedTime) < 3 * 24 * 60 * 60 * 1000) {
+                            return;
+                        }
+                    }
+
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        this.deferredPrompt = e;
+                        this.showBanner = true;
+                    });
+
+                    window.addEventListener('appinstalled', (e) => {
+                        this.showBanner = false;
+                        this.deferredPrompt = null;
+                        console.log('Vootely has been installed.');
+                    });
+                },
+                async install() {
+                    if (!this.deferredPrompt) return;
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    console.log(`User response to install: ${outcome}`);
+                    this.deferredPrompt = null;
+                    this.showBanner = false;
+                },
+                dismiss() {
+                    this.showBanner = false;
+                    localStorage.setItem('pwa-dismissed', new Date().getTime().toString());
+                }
+            });
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{% url "service_worker_js" %}')
+                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
