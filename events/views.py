@@ -1,20 +1,26 @@
 from decimal import Decimal
+from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
-from django.db.models import DecimalField, IntegerField, Q, Sum, Value
+from django.db.models import DecimalField, IntegerField, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from votecentral.mixins import SafeIntegrityMixin
+from votecentral.public_urls import build_public_url
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
+from nominees.models import CompetitionCategory, NominationSubmission, Nominee
 
-from .forms import EventForm
+from .forms import ContactInquiryForm, EventForm
 from .models import Event
 from .performance import build_event_leaderboard, dashboard_home_context
 
@@ -31,13 +37,166 @@ class OrganizerEventMixin(LoginRequiredMixin):
         return self._event
 
 
+class LandingPageContextMixin:
+    template_name = 'events/landing.html'
+
+    reviews = [
+        {
+            'quote': 'Vootely made our annual awards competition far easier to run. Students could buy votes quickly, the leaderboard stayed transparent, and the usual complaints dropped significantly.',
+            'name': 'Financial Lawrence',
+            'title': 'Financial Secretary, Business School, KNUST',
+            'segment': 'Student body',
+        },
+        {
+            'quote': 'We used to struggle to confirm who had actually paid for votes. With Vootely, the process felt organized from the start, and our records stayed accurate without the usual stress.',
+            'name': 'Lovelace Gyamfi',
+            'title': 'Financial Secretary, MELTSA, KNUST',
+            'segment': 'Student body',
+        },
+        {
+            'quote': 'Our members are spread across many regions, so we needed a voting platform we could trust. Vootely gave us a stable system, clean administration, and confidence that every transaction was properly accounted for.',
+            'name': 'Jeffren Kane',
+            'title': 'General Secretary, National Concerned Small Scale Miners Association',
+            'segment': 'Organization',
+        },
+        {
+            'quote': 'We needed a simple but secure way to run internal polls and elections. Vootely kept the experience easy for voters while helping our team stay informed throughout the process.',
+            'name': 'Kofi Asihene',
+            'title': 'Coordinator, Blueprint DNA',
+            'segment': 'Organization',
+        },
+        {
+            'quote': 'For internal voting, reliability matters a lot to us. Vootely gave us peace of mind with a dependable process, strong data integrity, and a platform our team could trust.',
+            'name': 'Isaac Ampomah Duah',
+            'title': 'Manager, Techfortune Ghana',
+            'segment': 'Corporate',
+        },
+    ]
+    faq_items = [
+        {
+            'question': 'What is Vootely used for?',
+            'answer': 'Vootely helps organizers run paid public competitions and secure internal elections from one platform. It covers setup, public voting pages, election access, notifications, and organizer-side reporting.',
+        },
+        {
+            'question': 'What is the difference between paid competitions and secure elections?',
+            'answer': 'Paid competitions are public-facing campaigns where supporters buy votes for nominees. Secure elections are structured ballots for associations, departments, teams, and organizations that need controlled voter access and a more formal process.',
+        },
+        {
+            'question': 'How does paid voting work on Vootely?',
+            'answer': 'Organizers publish an event, nominees receive public voting pages, and supporters pay per vote through Paystack. Votes are counted only after payment confirmation is received.',
+        },
+        {
+            'question': 'How do secure elections work on Vootely?',
+            'answer': 'Organizers set positions and candidates, upload the voter roster, issue voter credentials, and then open the election. Voters use their credential link or token to access the ballot and cast their vote privately.',
+        },
+        {
+            'question': 'Do voters or supporters need to create accounts?',
+            'answer': 'No. Paid-voting supporters can vote as guests, and election voters access the ballot through their credential flow. Organizer accounts are only needed for the teams managing events.',
+        },
+        {
+            'question': 'When do votes count?',
+            'answer': 'For paid competitions, votes count after successful payment confirmation. For secure elections, ballots count once the voter submits a valid ballot while the election is open.',
+        },
+        {
+            'question': 'How do organizer payouts work?',
+            'answer': 'Organizer earnings are tracked in the dashboard after confirmed vote payments. Withdrawal requests are reviewed before payout, and only the organizer net earnings are available to withdraw.',
+        },
+        {
+            'question': 'How do platform fees work for paid competitions?',
+            'answer': 'Paid competitions do not use one fixed public commission. Each event has its own agreed platform commission, and that commission must be set before the event can go live.',
+        },
+        {
+            'question': 'How is pricing handled for secure elections?',
+            'answer': 'Secure elections use custom election pricing based on the election setup and scope. It is flexible, not a flat one-size-fits-all public fee.',
+        },
+        {
+            'question': 'Can Vootely help us prepare and launch the event?',
+            'answer': 'Yes. If you are planning a competition or an election, you can contact Vootely for setup guidance, launch planning, and the right structure for your voting use case.',
+        },
+    ]
+
+    @staticmethod
+    def _format_percent(value):
+        quantized = value.quantize(Decimal('0.1'))
+        if quantized == quantized.to_integral():
+            return str(int(quantized))
+        return format(quantized, 'f').rstrip('0').rstrip('.')
+
+    def get_landing_context(self, **overrides):
+        active_events = Event.objects.active_public().select_related('owner').prefetch_related('nominees')
+        featured_events = list(active_events[:10])
+        whatsapp_phone = ''.join(character for character in settings.SUPPORT_PHONE if character.isdigit())
+        whatsapp_message = "Hello, I'd like to learn more about Vootely for a competition or election."
+
+        context = {
+            'active_events_count': active_events.count(),
+            'featured_events': featured_events,
+            'reviews': self.reviews,
+            'faq_items': self.faq_items,
+            'contact_form': overrides.pop('contact_form', ContactInquiryForm()),
+            'support_email': settings.SUPPORT_EMAIL,
+            'whatsapp_url': f"https://wa.me/{whatsapp_phone}?{urlencode({'text': whatsapp_message})}",
+        }
+        context.update(overrides)
+        return context
+
+
+class LandingPageView(LandingPageContextMixin, TemplateView):
+    template_name = 'events/landing.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_landing_context())
+        return context
+
+
+class LandingContactInquiryCreateView(LandingPageContextMixin, View):
+    template_name = 'events/landing.html'
+
+    def post(self, request, *args, **kwargs):
+        form = ContactInquiryForm(request.POST)
+        if not form.is_valid():
+            context = self.get_landing_context(contact_form=form)
+            return render(request, self.template_name, context, status=200)
+
+        inquiry = form.save()
+        subject = f'Landing inquiry from {inquiry.name}'
+        message = (
+            'A new landing page inquiry has been submitted.\n\n'
+            f'Name: {inquiry.name}\n'
+            f'Email: {inquiry.email}\n'
+            f'Phone number: {inquiry.phone_number}\n'
+            f'Where they heard about us: {inquiry.get_heard_about_us_display()}\n\n'
+            'Message:\n'
+            f'{inquiry.message}\n'
+        )
+
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.SUPPORT_EMAIL],
+                fail_silently=False,
+            )
+        except Exception:
+            messages.warning(
+                request,
+                'Your message has been saved. We could not send the email notification right now, but the inquiry is safely on file.',
+            )
+        else:
+            messages.success(request, 'Your message has been received. We will get back to you soon.')
+
+        return HttpResponseRedirect(f"{reverse('events:landing')}#contact")
+
+
 class HomeView(ListView):
     model = Event
     template_name = 'events/home.html'
     context_object_name = 'events'
 
     def get_queryset(self):
-        return Event.objects.active_public().select_related('owner').prefetch_related('nominees')
+        return Event.objects.active_public().select_related('owner').prefetch_related('nominees', 'competition_categories')
 
 
 class EventDetailView(DetailView):
@@ -50,7 +209,14 @@ class EventDetailView(DetailView):
             kind=Event.Kind.PAID_COMPETITION,
             is_public=True,
             status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
-        ).select_related('owner').prefetch_related('nominees')
+        ).select_related('owner').prefetch_related(
+            Prefetch(
+                'competition_categories',
+                queryset=CompetitionCategory.objects.filter(is_active=True).prefetch_related(
+                    Prefetch('nominees', queryset=Nominee.objects.filter(is_active=True).order_by('display_order', 'name'))
+                ).order_by('display_order', 'name'),
+            )
+        )
 
     def get(self, request, *args, **kwargs):
         try:
@@ -82,7 +248,18 @@ class EventDetailView(DetailView):
             context['leaderboard'] = None
             context['leaderboard_hidden'] = True
         context['state'] = event.public_state()
-        context['nominees'] = event.nominees.filter(is_active=True)
+        category_sections = []
+        for category in event.competition_categories.filter(is_active=True).order_by('display_order', 'name'):
+            nominees = list(category.nominees.filter(is_active=True).order_by('display_order', 'name'))
+            category_sections.append({'category': category, 'nominees': nominees})
+        context['category_sections'] = category_sections
+        context['nominees'] = event.nominees.filter(is_active=True).select_related('category')
+        context['nominations_open'] = event.accepts_nominations()
+        context['nomination_url'] = (
+            build_public_url(reverse('events:nominate', args=[event.slug]))
+            if event.allow_public_nominations
+            else ''
+        )
         return context
 
 
@@ -131,7 +308,12 @@ class DashboardEventCreateView(SafeIntegrityMixin, LoginRequiredMixin, CreateVie
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        if self.object.kind == Event.Kind.PAID_COMPETITION:
+            from notifications.services import queue_event_commission_setup_required
+
+            queue_event_commission_setup_required(self.object)
+        return response
 
     def get_success_url(self):
         return self.object.get_dashboard_url()
@@ -183,7 +365,18 @@ class DashboardEventDetailView(OrganizerEventMixin, DetailView):
                 'summary': totals,
                 'publish_ready': publish_ready,
                 'publish_errors': publish_errors,
-                'nominees': event.nominees.all(),
+                'nominees': event.nominees.select_related('category').all(),
+                'categories': event.competition_categories.prefetch_related('nominees').all(),
+                'submission_counts': {
+                    status: event.nomination_submissions.filter(status=status).count()
+                    for status, _label in NominationSubmission.Status.choices
+                },
+                'nomination_url': (
+                    build_public_url(reverse('events:nominate', args=[event.slug]))
+                    if event.allow_public_nominations
+                    else ''
+                ),
+                'commission_locked': event.commission_is_locked(),
             }
         )
         return context
@@ -259,7 +452,8 @@ class DashboardSearchView(LoginRequiredMixin, View):
             | Q(bio__icontains=query)
             | Q(code__icontains=query)
             | Q(event__title__icontains=query)
-        ).select_related('event')[:6]
+            | Q(category__name__icontains=query)
+        ).select_related('event', 'category')[:6]
 
         election_candidates = ElectionCandidate.objects.filter(
             event__owner=request.user
@@ -353,7 +547,7 @@ class DashboardCompetitionsListView(LoginRequiredMixin, ListView):
         return Event.objects.filter(
             owner=self.request.user,
             kind=Event.Kind.PAID_COMPETITION,
-        ).prefetch_related('nominees').order_by('-start_at')
+        ).prefetch_related('nominees', 'competition_categories').order_by('-start_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

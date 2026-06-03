@@ -1,50 +1,126 @@
-<header x-data="{ mobileNavOpen: false }" class="sticky top-0 z-30 border-b border-vc-dark-100/50 bg-white/80 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <a href="{% url 'events:home' %}" class="text-lg font-bold tracking-[0.15em] text-vc-blue">
-            VOTECENTRAL
-        </a>
-        <nav class="hidden items-center gap-1 sm:flex">
-            <a href="{% url 'events:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
-                Events
-            </a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'dashboard:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
-                    Dashboard
+{% load static %}
+<header
+    x-data="{ mobileNavOpen: false }"
+    @keydown.escape.window="mobileNavOpen = false"
+    @resize.window="if (window.innerWidth >= 1024) mobileNavOpen = false"
+    class="{% if request.resolver_match.namespace == 'events' and request.resolver_match.url_name == 'landing' %}vc-landing-nav{% else %}sticky top-0 z-30 border-b border-vc-dark-100/50 bg-white/80 backdrop-blur-xl{% endif %}"
+>
+    {% if request.resolver_match.namespace == 'events' and request.resolver_match.url_name == 'landing' %}
+        <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+            <div class="vc-landing-nav-shell">
+                <a href="{% url 'events:landing' %}" class="flex items-center gap-3">
+                    <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-8 w-auto">
                 </a>
-                <a href="{% url 'dashboard:revenue' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
-                    Revenue
-                </a>
-                <a href="{% url 'account_logout' %}" class="ml-2 rounded-full border border-vc-dark-200 px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:border-vc-blue hover:text-vc-blue">
-                    Logout
-                </a>
-            {% else %}
-                <a href="{% url 'account_login' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
-                    Login
-                </a>
-                <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm ml-2">
-                    Host an Event
-                </a>
-            {% endif %}
-        </nav>
-        <!-- Mobile menu button -->
-        <button class="flex items-center justify-center rounded-lg p-2 text-vc-dark-400 hover:bg-vc-blue-50 hover:text-vc-blue sm:hidden"
-                @click="mobileNavOpen = !mobileNavOpen"
-                :aria-expanded="mobileNavOpen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-    </div>
-    <!-- Mobile nav dropdown -->
-    <div class="sm:hidden">
-        <div x-show="mobileNavOpen" x-transition class="border-t border-vc-dark-100/50 bg-white px-4 py-4 space-y-1">
-            <a href="{% url 'events:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Events</a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'dashboard:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Dashboard</a>
-                <a href="{% url 'dashboard:revenue' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Revenue</a>
-                <a href="{% url 'account_logout' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Logout</a>
-            {% else %}
-                <a href="{% url 'account_login' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Login</a>
-                <a href="{% url 'account_signup' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-orange hover:bg-vc-orange-50">Host an Event</a>
-            {% endif %}
+
+                <nav class="hidden items-center gap-1 lg:flex">
+                    <a href="#features" class="vc-landing-nav-link">Features</a>
+                    <a href="#how-it-works" class="vc-landing-nav-link">How it works</a>
+                    <a href="#election-support" class="vc-landing-nav-link">Elections</a>
+                    <a href="#faq" class="vc-landing-nav-link">FAQ</a>
+                    <a href="#reviews" class="vc-landing-nav-link">Reviews</a>
+                    <a href="#contact" class="vc-landing-nav-link">Contact</a>
+                </nav>
+
+                <div class="hidden items-center gap-3 lg:flex">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                        Browse Events
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:home' %}" class="vc-btn vc-btn-accent vc-btn-sm">
+                            Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm">
+                            Host an Event
+                        </a>
+                    {% endif %}
+                </div>
+
+                <button
+                    type="button"
+                    class="vc-landing-nav-toggle lg:hidden"
+                    @click="mobileNavOpen = !mobileNavOpen"
+                    :aria-expanded="mobileNavOpen"
+                    aria-label="Toggle navigation"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div
+                x-cloak
+                x-show="mobileNavOpen"
+                x-transition.opacity.scale.origin.top.duration.200ms
+                class="vc-landing-mobile-panel lg:hidden"
+            >
+                <a href="#features" class="vc-landing-mobile-link" @click="mobileNavOpen = false">Features</a>
+                <a href="#how-it-works" class="vc-landing-mobile-link" @click="mobileNavOpen = false">How it works</a>
+                <a href="#election-support" class="vc-landing-mobile-link" @click="mobileNavOpen = false">Elections</a>
+                <a href="#faq" class="vc-landing-mobile-link" @click="mobileNavOpen = false">FAQ</a>
+                <a href="#reviews" class="vc-landing-mobile-link" @click="mobileNavOpen = false">Reviews</a>
+                <a href="#contact" class="vc-landing-mobile-link" @click="mobileNavOpen = false">Contact</a>
+                <div class="mt-4 grid gap-3">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-sm justify-center" @click="mobileNavOpen = false">
+                        Browse Events
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:home' %}" class="vc-btn vc-btn-accent vc-btn-sm justify-center" @click="mobileNavOpen = false">
+                            Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm justify-center" @click="mobileNavOpen = false">
+                            Host an Event
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-    </div>
+    {% else %}
+        <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+            <a href="{% url 'events:landing' %}" class="flex items-center">
+                <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-8 w-auto">
+            </a>
+            <nav class="hidden items-center gap-1 sm:flex">
+                <a href="{% url 'events:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                    Browse Events
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:home' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'dashboard:revenue' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                        Revenue
+                    </a>
+                    <a href="{% url 'account_logout' %}" class="ml-2 rounded-full border border-vc-dark-200 px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:border-vc-blue hover:text-vc-blue">
+                        Logout
+                    </a>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="rounded-full px-4 py-2 text-sm font-medium text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                        Login
+                    </a>
+                    <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm ml-2">
+                        Host an Event
+                    </a>
+                {% endif %}
+            </nav>
+            <button class="flex items-center justify-center rounded-lg p-2 text-vc-dark-400 hover:bg-vc-blue-50 hover:text-vc-blue sm:hidden"
+                    @click="mobileNavOpen = !mobileNavOpen"
+                    :aria-expanded="mobileNavOpen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="sm:hidden">
+            <div x-show="mobileNavOpen" x-transition class="border-t border-vc-dark-100/50 bg-white px-4 py-4 space-y-1">
+                <a href="{% url 'events:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Browse Events</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:home' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Dashboard</a>
+                    <a href="{% url 'dashboard:revenue' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Revenue</a>
+                    <a href="{% url 'account_logout' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Logout</a>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-dark-500 hover:bg-vc-blue-50 hover:text-vc-blue">Login</a>
+                    <a href="{% url 'account_signup' %}" class="block rounded-full px-4 py-2.5 text-sm font-medium text-vc-orange hover:bg-vc-orange-50">Host an Event</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 </header>

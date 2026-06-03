@@ -8,20 +8,14 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from .adapters import get_notification_adapter
+from .adapters import get_notification_adapter, resolve_email_provider, resolve_sms_provider
 from .models import Notification
 from .phone import normalize_phone_number
+from votecentral.public_urls import build_public_url
 
 
 def absolute_url(path):
-    base = getattr(settings, 'PUBLIC_APP_URL', '').rstrip('/')
-    if not path:
-        return base or '/'
-    if path.startswith('http://') or path.startswith('https://'):
-        return path
-    if base:
-        return f'{base}{path}'
-    return path
+    return build_public_url(path)
 
 
 def build_dedupe_key(channel, event_type, *parts):
@@ -62,37 +56,71 @@ def get_staff_notification_recipients():
         if email.strip()
     ]
     if configured:
-        return [{'email': email, 'name': 'VoteCentral Staff'} for email in configured]
+        return [{'email': email, 'name': 'Vootely Staff'} for email in configured]
 
     user_model = get_user_model()
     return [
-        {'email': email, 'name': 'VoteCentral Staff'}
+        {'email': email, 'name': 'Vootely Staff'}
         for email in user_model.objects.filter(is_staff=True)
         .exclude(email='')
         .values_list('email', flat=True)
     ]
 
 
-def get_notification_context(event_type, *, event=None, payment_attempt=None, withdrawal_request=None):
+def get_notification_context(
+    event_type,
+    *,
+    event=None,
+    payment_attempt=None,
+    withdrawal_request=None,
+    voter=None,
+    candidate=None,
+    nominee=None,
+    nomination_submission=None,
+    credential_token=None,
+    vote_url=None,
+):
+    category = None
+    if nomination_submission is not None:
+        category = nomination_submission.category
+    elif nominee is not None:
+        category = nominee.category
+    elif payment_attempt is not None:
+        category = getattr(payment_attempt.nominee, 'category', None)
     return {
         'notification_event_type': event_type,
         'public_app_url': getattr(settings, 'PUBLIC_APP_URL', '').rstrip('/'),
-        'support_email': getattr(settings, 'SERVER_EMAIL', ''),
+        'support_email': getattr(settings, 'SUPPORT_EMAIL', 'lovesdesigns1@gmail.com'),
+        'support_phone': getattr(settings, 'SUPPORT_PHONE', '+233 548988503'),
         'event': event,
         'payment_attempt': payment_attempt,
         'withdrawal_request': withdrawal_request,
+        'voter': voter,
+        'candidate': candidate,
+        'position': candidate.position if candidate else None,
+        'nominee': nominee,
+        'nomination_submission': nomination_submission,
+        'credential_token': credential_token,
+        'vote_url': vote_url,
         'event_title': event.title if event else '',
         'event_start_at': event.start_at if event else None,
         'event_end_at': event.end_at if event else None,
         'event_public_url': absolute_url(event.get_absolute_url()) if event else absolute_url(reverse('events:home')),
         'event_dashboard_url': absolute_url(event.get_dashboard_url()) if event else '',
+        'event_admin_url': absolute_url(reverse('admin:events_event_change', args=[event.pk])) if event else '',
+        'event_owner_email': event.owner.email if event else '',
+        'platform_commission_percent': event.platform_commission_percent if event else None,
         'payment_reference': payment_attempt.gateway_reference if payment_attempt else '',
         'payment_status_url': absolute_url(
             reverse('payments:status_detail', args=[payment_attempt.gateway_reference])
         )
         if payment_attempt
         else '',
-        'nominee_name': payment_attempt.nominee.name if payment_attempt else '',
+        'nominee_name': nominee.name if nominee else (payment_attempt.nominee.name if payment_attempt else ''),
+        'category_name': category.name if category else '',
+        'nominee_votes': getattr(nominee, 'total_votes', 0) if nominee else 0,
+        'candidate_name': candidate.name if candidate else '',
+        'voter_name': voter.name if voter else '',
         'vote_quantity': payment_attempt.vote_quantity if payment_attempt else '',
         'payment_amount': payment_attempt.amount if payment_attempt else '',
         'payment_currency': payment_attempt.currency if payment_attempt else '',
@@ -139,6 +167,12 @@ def queue_notification(
     event=None,
     payment_attempt=None,
     withdrawal_request=None,
+    voter=None,
+    candidate=None,
+    nominee=None,
+    nomination_submission=None,
+    credential_token=None,
+    vote_url=None,
     dedupe_parts=(),
 ):
     if channel == Notification.Channel.EMAIL and not recipient_email:
@@ -151,8 +185,20 @@ def queue_notification(
         event=event,
         payment_attempt=payment_attempt,
         withdrawal_request=withdrawal_request,
+        voter=voter,
+        candidate=candidate,
+        nominee=nominee,
+        nomination_submission=nomination_submission,
+        credential_token=credential_token,
+        vote_url=vote_url,
     )
     subject, body_text, body_html = render_notification_content(channel, event_type, context)
+    
+    if channel == Notification.Channel.SMS:
+        provider = resolve_sms_provider()
+    else:
+        provider = resolve_email_provider()
+
     notification, created = Notification.objects.get_or_create(
         dedupe_key=build_dedupe_key(channel, event_type, *dedupe_parts),
         defaults={
@@ -167,7 +213,7 @@ def queue_notification(
             'subject': subject,
             'body_text': body_text,
             'body_html': body_html,
-            'provider': 'hubtel' if channel == Notification.Channel.SMS else 'django-email',
+            'provider': provider,
         },
     )
     if created:
@@ -176,12 +222,7 @@ def queue_notification(
 
 
 def sms_channel_ready():
-    return bool(
-        getattr(settings, 'SMS_PROVIDER', '').strip().lower() == 'hubtel'
-        and settings.HUBTEL_CLIENT_ID
-        and settings.HUBTEL_CLIENT_SECRET
-        and settings.HUBTEL_SMS_FROM
-    )
+    return bool(resolve_sms_provider())
 
 
 def queue_sms_notification(
@@ -192,6 +233,12 @@ def queue_sms_notification(
     event=None,
     payment_attempt=None,
     withdrawal_request=None,
+    voter=None,
+    candidate=None,
+    nominee=None,
+    nomination_submission=None,
+    credential_token=None,
+    vote_url=None,
     dedupe_parts=(),
 ):
     normalized_phone = normalize_phone_number(recipient_phone)
@@ -205,6 +252,12 @@ def queue_sms_notification(
         event=event,
         payment_attempt=payment_attempt,
         withdrawal_request=withdrawal_request,
+        voter=voter,
+        candidate=candidate,
+        nominee=nominee,
+        nomination_submission=nomination_submission,
+        credential_token=credential_token,
+        vote_url=vote_url,
         dedupe_parts=dedupe_parts,
     )
 
@@ -224,16 +277,17 @@ def queue_organizer_notifications(
     dedupe_parts=(),
 ):
     notifications = []
-    email_notification = queue_notification(
-        event_type=event_type,
-        recipient_email=organizer.email,
-        recipient_name=recipient_name or organizer.email,
-        event=event,
-        withdrawal_request=withdrawal_request,
-        dedupe_parts=dedupe_parts,
-    )
-    if email_notification is not None:
-        notifications.append(email_notification)
+    if getattr(organizer, 'email_opt_in', True):
+        email_notification = queue_notification(
+            event_type=event_type,
+            recipient_email=organizer.email,
+            recipient_name=recipient_name or organizer.email,
+            event=event,
+            withdrawal_request=withdrawal_request,
+            dedupe_parts=dedupe_parts,
+        )
+        if email_notification is not None:
+            notifications.append(email_notification)
 
     if organizer.sms_opt_in:
         sms_notification = queue_sms_notification(
@@ -452,6 +506,32 @@ def queue_event_notification(event, event_type):
             level='success',
             event=event,
         )
+        
+        # Notify active nominees when competition goes live
+        if event.kind == 'paid_competition':
+            for nominee in event.nominees.filter(is_active=True):
+                if nominee.email:
+                    queue_notification(
+                        channel=Notification.Channel.EMAIL,
+                        event_type=Notification.EventType.NOMINEE_GOES_LIVE,
+                        recipient_email=nominee.email,
+                        recipient_name=nominee.name,
+                        event=event,
+                        nominee=nominee,
+                        vote_url=absolute_url(nominee.get_absolute_url()),
+                        dedupe_parts=(event.pk, nominee.pk, 'live_email'),
+                    )
+                if nominee.phone_number:
+                    queue_sms_notification(
+                        event_type=Notification.EventType.NOMINEE_GOES_LIVE,
+                        recipient_phone=nominee.phone_number,
+                        recipient_name=nominee.name,
+                        event=event,
+                        nominee=nominee,
+                        vote_url=absolute_url(nominee.get_absolute_url()),
+                        dedupe_parts=(event.pk, nominee.pk, 'live_sms'),
+                    )
+                    
     elif event_type == Notification.EventType.EVENT_CLOSED:
         marker = 'closed'
         create_in_app_notification(
@@ -462,6 +542,32 @@ def queue_event_notification(event, event_type):
             level='warning',
             event=event,
         )
+        
+        # Notify active nominees with performance summary when competition closes
+        if event.kind == 'paid_competition':
+            from events.performance import build_event_leaderboard
+            leaderboard = build_event_leaderboard(event)
+            for nominee in leaderboard:
+                if nominee.email:
+                    queue_notification(
+                        channel=Notification.Channel.EMAIL,
+                        event_type=Notification.EventType.NOMINEE_EVENT_CLOSED,
+                        recipient_email=nominee.email,
+                        recipient_name=nominee.name,
+                        event=event,
+                        nominee=nominee,
+                        dedupe_parts=(event.pk, nominee.pk, 'closed_email'),
+                    )
+                if nominee.phone_number:
+                    queue_sms_notification(
+                        event_type=Notification.EventType.NOMINEE_EVENT_CLOSED,
+                        recipient_phone=nominee.phone_number,
+                        recipient_name=nominee.name,
+                        event=event,
+                        nominee=nominee,
+                        dedupe_parts=(event.pk, nominee.pk, 'closed_sms'),
+                    )
+                    
     else:
         marker = event.updated_at.isoformat()
 
@@ -472,6 +578,124 @@ def queue_event_notification(event, event_type):
         event=event,
         dedupe_parts=(event.pk, marker),
     )
+
+
+def queue_event_commission_setup_required(event):
+    notifications = []
+    recipient_email = getattr(settings, 'SUPPORT_EMAIL', 'lovesdesigns1@gmail.com')
+    recipient_phone = getattr(settings, 'SUPPORT_PHONE', '+233 548988503')
+
+    email_notification = queue_notification(
+        event_type=Notification.EventType.EVENT_COMMISSION_SETUP_REQUIRED,
+        recipient_email=recipient_email,
+        recipient_name='Vootely Admin',
+        event=event,
+        dedupe_parts=(event.pk, 'commission_setup_email'),
+    )
+    if email_notification is not None:
+        notifications.append(email_notification)
+
+    sms_notification = queue_sms_notification(
+        event_type=Notification.EventType.EVENT_COMMISSION_SETUP_REQUIRED,
+        recipient_phone=recipient_phone,
+        recipient_name='Vootely Admin',
+        event=event,
+        dedupe_parts=(event.pk, 'commission_setup_sms'),
+    )
+    if sms_notification is not None:
+        notifications.append(sms_notification)
+
+    return notifications
+
+
+def queue_nomination_submitted(submission):
+    notifications = []
+
+    email_notification = queue_notification(
+        event_type=Notification.EventType.NOMINATION_SUBMITTED,
+        recipient_email=submission.event.owner.email,
+        recipient_name=submission.event.owner.email,
+        event=submission.event,
+        nomination_submission=submission,
+        dedupe_parts=(submission.pk, 'organizer_email'),
+    )
+    if email_notification is not None:
+        notifications.append(email_notification)
+
+    if submission.event.owner.sms_opt_in:
+        sms_notification = queue_sms_notification(
+            event_type=Notification.EventType.NOMINATION_SUBMITTED,
+            recipient_phone=submission.event.owner.phone_number,
+            recipient_name=submission.event.owner.email,
+            event=submission.event,
+            nomination_submission=submission,
+            dedupe_parts=(submission.pk, 'organizer_sms'),
+        )
+        if sms_notification is not None:
+            notifications.append(sms_notification)
+
+    return notifications
+
+
+def queue_nomination_approved(submission):
+    notifications = []
+    vote_url = absolute_url(submission.approved_nominee.get_absolute_url()) if submission.approved_nominee_id else ''
+
+    email_notification = queue_notification(
+        event_type=Notification.EventType.NOMINATION_APPROVED,
+        recipient_email=submission.email,
+        recipient_name=submission.name,
+        event=submission.event,
+        nominee=submission.approved_nominee,
+        nomination_submission=submission,
+        vote_url=vote_url,
+        dedupe_parts=(submission.pk, 'approved_email'),
+    )
+    if email_notification is not None:
+        notifications.append(email_notification)
+
+    sms_notification = queue_sms_notification(
+        event_type=Notification.EventType.NOMINATION_APPROVED,
+        recipient_phone=submission.phone_number,
+        recipient_name=submission.name,
+        event=submission.event,
+        nominee=submission.approved_nominee,
+        nomination_submission=submission,
+        vote_url=vote_url,
+        dedupe_parts=(submission.pk, 'approved_sms'),
+    )
+    if sms_notification is not None:
+        notifications.append(sms_notification)
+
+    return notifications
+
+
+def queue_nomination_rejected(submission):
+    notifications = []
+
+    email_notification = queue_notification(
+        event_type=Notification.EventType.NOMINATION_REJECTED,
+        recipient_email=submission.email,
+        recipient_name=submission.name,
+        event=submission.event,
+        nomination_submission=submission,
+        dedupe_parts=(submission.pk, 'rejected_email'),
+    )
+    if email_notification is not None:
+        notifications.append(email_notification)
+
+    sms_notification = queue_sms_notification(
+        event_type=Notification.EventType.NOMINATION_REJECTED,
+        recipient_phone=submission.phone_number,
+        recipient_name=submission.name,
+        event=submission.event,
+        nomination_submission=submission,
+        dedupe_parts=(submission.pk, 'rejected_sms'),
+    )
+    if sms_notification is not None:
+        notifications.append(sms_notification)
+
+    return notifications
 
 
 def queue_event_reminders(reference_time=None):
@@ -513,6 +737,66 @@ def queue_event_reminders(reference_time=None):
         )
         created.extend(notification.pk for notification in notifications)
     return created
+
+
+def queue_voter_turnout_reminders(reference_time=None):
+    from events.models import Event
+    from elections.models import ElectionCredential
+    from elections.models import ElectionVoter
+
+    reference_time = reference_time or timezone.now()
+    lead = timedelta(hours=settings.NOTIFICATION_REMINDER_LEAD_HOURS)
+    horizon = reference_time + lead
+
+    # Fetch all open secure elections that end within the lead horizon
+    ending_elections = Event.objects.filter(
+        kind=Event.Kind.SECURE_ELECTION,
+        status=Event.Status.OPEN,
+        end_at__gt=reference_time,
+        end_at__lte=horizon,
+    )
+
+    created_reminders = []
+    for event in ending_elections:
+        # Get all issued credentials (voters who have not yet voted)
+        credentials = ElectionCredential.objects.filter(
+            event=event,
+            status=ElectionCredential.Status.ISSUED,
+        ).select_related('voter')
+
+        for cred in credentials:
+            voter = cred.voter
+            vote_url = absolute_url(reverse('elections:vote', args=[event.slug]))
+
+            if voter.email:
+                email_notification = queue_notification(
+                    channel=Notification.Channel.EMAIL,
+                    event_type=Notification.EventType.VOTER_TURNOUT_REMINDER,
+                    recipient_email=voter.email,
+                    recipient_name=voter.name,
+                    event=event,
+                    voter=voter,
+                    credential_token="[See original credentials email]",
+                    vote_url=vote_url,
+                    dedupe_parts=(event.pk, voter.pk, 'turnout_reminder_email'),
+                )
+                if email_notification:
+                    created_reminders.append(email_notification.pk)
+
+            if voter.phone:
+                sms_notification = queue_sms_notification(
+                    event_type=Notification.EventType.VOTER_TURNOUT_REMINDER,
+                    recipient_phone=voter.phone,
+                    recipient_name=voter.name,
+                    event=event,
+                    voter=voter,
+                    vote_url=vote_url,
+                    dedupe_parts=(event.pk, voter.pk, 'turnout_reminder_sms'),
+                )
+                if sms_notification:
+                    created_reminders.append(sms_notification.pk)
+
+    return created_reminders
 
 
 def notifications_ready_for_retry():

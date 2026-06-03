@@ -19,6 +19,7 @@ from events.models import Event
 from events.performance import build_tally_fast
 from notifications.phone import normalize_phone_number
 from payments.services import amount_to_minor_units, generate_reference
+from votecentral.public_urls import build_public_url
 
 from .models import (
     Ballot,
@@ -369,20 +370,42 @@ def import_roster(event, uploaded_file, *, actor=None, request=None):
 
 def credential_url(event, raw_token):
     path = reverse('elections:vote', args=[event.slug])
-    base = settings.PUBLIC_APP_URL or ''
-    return f'{base}{path}?token={raw_token}'
+    return f'{build_public_url(path)}?token={raw_token}'
 
 
-def send_credential_email(event, voter, raw_token):
-    if not voter.email:
-        return False
-    subject = f'Your voting credential for {event.title}'
-    message = render_to_string(
-        'elections/email/credential.txt',
-        {'event': event, 'voter': voter, 'vote_url': credential_url(event, raw_token), 'token': raw_token},
-    )
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [voter.email], fail_silently=True)
-    return True
+def send_credential_notifications(event, voter, raw_token):
+    from notifications.services import queue_notification, queue_sms_notification
+    from notifications.models import Notification
+    
+    email_queued = False
+    sms_queued = False
+    
+    if voter.email:
+        email_queued = queue_notification(
+            channel=Notification.Channel.EMAIL,
+            event_type=Notification.EventType.VOTER_CREDENTIALS,
+            recipient_email=voter.email,
+            recipient_name=voter.name,
+            event=event,
+            voter=voter,
+            credential_token=raw_token,
+            vote_url=credential_url(event, raw_token),
+            dedupe_parts=(event.pk, voter.pk, 'cred_email'),
+        ) is not None
+        
+    if voter.phone:
+        sms_queued = queue_sms_notification(
+            event_type=Notification.EventType.VOTER_CREDENTIALS,
+            recipient_phone=voter.phone,
+            recipient_name=voter.name,
+            event=event,
+            voter=voter,
+            credential_token=raw_token,
+            vote_url=credential_url(event, raw_token),
+            dedupe_parts=(event.pk, voter.pk, 'cred_sms'),
+        ) is not None
+        
+    return email_queued, sms_queued
 
 
 @transaction.atomic
@@ -420,7 +443,11 @@ def issue_credentials(event, *, actor=None, request=None, email=True):
             issued_at=now,
         )
         audit(event, 'credential_issued', actor=actor, obj=credential, request=request)
-        delivered = send_credential_email(event, voter, raw_token) if email else False
+        
+        email_queued, sms_queued = False, False
+        if email:
+            email_queued, sms_queued = send_credential_notifications(event, voter, raw_token)
+            
         rows.append(
             {
                 'external_id': voter.external_id,
@@ -429,7 +456,7 @@ def issue_credentials(event, *, actor=None, request=None, email=True):
                 'phone': voter.phone,
                 'token': raw_token,
                 'vote_url': credential_url(event, raw_token),
-                'email_sent': delivered,
+                'email_sent': email_queued or sms_queued,
             }
         )
 
@@ -473,7 +500,11 @@ def reissue_credential(voter, *, actor=None, request=None, email=True):
         previous.status = ElectionCredential.Status.REISSUED
         previous.revoked_at = now
         previous.save(update_fields=['status', 'revoked_at'])
-    delivered = send_credential_email(event, voter, raw_token) if email else False
+        
+    email_queued, sms_queued = False, False
+    if email:
+        email_queued, sms_queued = send_credential_notifications(event, voter, raw_token)
+        
     audit(event, 'credential_reissued', actor=actor, obj=credential, request=request)
     return credential, {
         'external_id': voter.external_id,
@@ -482,7 +513,7 @@ def reissue_credential(voter, *, actor=None, request=None, email=True):
         'phone': voter.phone,
         'token': raw_token,
         'vote_url': credential_url(event, raw_token),
-        'email_sent': delivered,
+        'email_sent': email_queued or sms_queued,
     }
 
 
@@ -648,6 +679,40 @@ def cast_ballot(event, raw_token, selections, *, request=None):
     credential.used_at = timezone.now()
     credential.save(update_fields=['status', 'used_at'])
     audit(event, 'ballot_cast', obj=ballot, request=request)
+
+    # Queue secure ballot cast confirmation notifications for the voter
+    voter = credential.voter
+    from notifications.services import queue_notification, queue_sms_notification
+    from notifications.models import Notification
+
+    path = reverse('elections:receipt', args=[event.slug, receipt_code])
+    receipt_url = build_public_url(path)
+
+    if voter.email:
+        queue_notification(
+            channel=Notification.Channel.EMAIL,
+            event_type=Notification.EventType.VOTER_BALLOT_CAST,
+            recipient_email=voter.email,
+            recipient_name=voter.name,
+            event=event,
+            voter=voter,
+            credential_token=receipt_code,
+            vote_url=receipt_url,
+            dedupe_parts=(event.pk, ballot.pk, 'cast_email'),
+        )
+        
+    if voter.phone:
+        queue_sms_notification(
+            event_type=Notification.EventType.VOTER_BALLOT_CAST,
+            recipient_phone=voter.phone,
+            recipient_name=voter.name,
+            event=event,
+            voter=voter,
+            credential_token=receipt_code,
+            vote_url=receipt_url,
+            dedupe_parts=(event.pk, ballot.pk, 'cast_sms'),
+        )
+
     return ballot
 
 
@@ -891,6 +956,56 @@ def publish_election_results(event, *, actor=None, request=None):
     snapshot.published_at = timezone.now()
     snapshot.save(update_fields=['published_at'])
     audit(event, 'results_published', actor=actor, obj=snapshot, request=request)
+
+    # Dispatch alerts to candidates and eligible voters
+    from notifications.services import queue_notification, queue_sms_notification
+    from notifications.models import Notification
+    from elections.models import ElectionVoter
+
+    # Notify candidates
+    for candidate in event.election_candidates.filter(is_active=True):
+        if candidate.email:
+            queue_notification(
+                channel=Notification.Channel.EMAIL,
+                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                recipient_email=candidate.email,
+                recipient_name=candidate.name,
+                event=event,
+                candidate=candidate,
+                dedupe_parts=(event.pk, candidate.pk, 'results_email'),
+            )
+        if candidate.phone:
+            queue_sms_notification(
+                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                recipient_phone=candidate.phone,
+                recipient_name=candidate.name,
+                event=event,
+                candidate=candidate,
+                dedupe_parts=(event.pk, candidate.pk, 'results_sms'),
+            )
+
+    # Notify eligible voters
+    for voter in event.election_voters.filter(status=ElectionVoter.Status.ELIGIBLE):
+        if voter.email:
+            queue_notification(
+                channel=Notification.Channel.EMAIL,
+                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
+                recipient_email=voter.email,
+                recipient_name=voter.name,
+                event=event,
+                voter=voter,
+                dedupe_parts=(event.pk, voter.pk, 'results_email'),
+            )
+        if voter.phone:
+            queue_sms_notification(
+                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
+                recipient_phone=voter.phone,
+                recipient_name=voter.name,
+                event=event,
+                voter=voter,
+                dedupe_parts=(event.pk, voter.pk, 'results_sms'),
+            )
+
     return snapshot
 
 

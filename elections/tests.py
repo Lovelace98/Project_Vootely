@@ -128,6 +128,44 @@ class SecureElectionTests(TestCase):
         self.event.refresh_from_db()
         self.assertEqual(self.event.status, Event.Status.OPEN)
 
+    def test_dashboard_position_create_shows_duplicate_title_error(self):
+        ElectionPosition.objects.create(event=self.event, title='President')
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+
+        response = self.client.post(
+            reverse('dashboard:election_positions', args=[self.event.slug]),
+            data={
+                'title': 'President',
+                'max_choices': 1,
+                'display_order': 0,
+                'is_active': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A position with this title already exists for this election.')
+
+    def test_dashboard_candidate_create_shows_duplicate_name_error(self):
+        position = ElectionPosition.objects.create(event=self.event, title='President')
+        ElectionCandidate.objects.create(event=self.event, position=position, name='Ama Mensah')
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+
+        response = self.client.post(
+            reverse('dashboard:election_candidates', args=[self.event.slug]),
+            data={
+                'position': position.pk,
+                'name': 'Ama Mensah',
+                'bio': 'Duplicate',
+                'email': 'ama2@example.com',
+                'phone': '0240000000',
+                'display_order': 0,
+                'is_active': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A candidate with this name already exists for the selected position.')
+
     def test_roster_import_rejects_duplicate_ids_and_keeps_invalid_contacts_as_warnings(self):
         with self.assertRaises(ValidationError):
             import_roster(self.event, self.roster_file(2, duplicate=True), actor=self.organizer)
@@ -161,6 +199,18 @@ class SecureElectionTests(TestCase):
         credential.save(update_fields=['status'])
         third_export = issue_credentials(self.event, actor=self.organizer, email=False)
         self.assertEqual(third_export.row_count, 0)
+
+    @override_settings(PUBLIC_APP_URL='https://vote.vootely.com')
+    def test_issued_credential_export_uses_public_app_url(self):
+        import_roster(self.event, self.roster_file(1), actor=self.organizer)
+        invoice = generate_invoice(self.event, actor=self.organizer)
+        invoice.mark_paid()
+        self.event.status = Event.Status.PAID
+        self.event.save(update_fields=['status'])
+
+        export = issue_credentials(self.event, actor=self.organizer, email=False)
+
+        self.assertTrue(export.rows[0]['vote_url'].startswith('https://vote.vootely.com/elections/'))
 
     def test_valid_voter_casts_once_and_ballot_has_no_voter_foreign_key(self):
         position, candidate, token = self.add_ballot_setup()
@@ -580,3 +630,64 @@ class SecureElectionTests(TestCase):
         )
         self.assertEqual(self.event.status, Event.Status.DRAFT)
 
+    def test_publish_election_results_sends_notifications(self):
+        from .services import publish_election_results, generate_tally
+        from notifications.models import Notification
+
+        position, candidate, token = self.add_ballot_setup()
+        
+        # Bypass setup block by temporarily setting to DRAFT
+        self.event.status = Event.Status.DRAFT
+        self.event.save(update_fields=['status'])
+
+        candidate.email = 'candidate@example.com'
+        candidate.phone = '0241112223'
+        candidate.save()
+
+        voter = ElectionVoter.objects.get(event=self.event)
+        voter.email = 'voter@example.com'
+        voter.phone = '0242223334'
+        voter.save()
+
+        # Restore status
+        self.event.status = Event.Status.OPEN
+        self.event.save(update_fields=['status'])
+
+        cast_ballot(self.event, token, {str(position.id): str(candidate.id)})
+        
+        self.event.status = Event.Status.CLOSED
+        self.event.save(update_fields=['status'])
+
+        generate_tally(self.event, actor=self.organizer)
+        self.event.status = Event.Status.TALLIED
+        self.event.save(update_fields=['status'])
+
+        # Now call publish_election_results
+        with patch('notifications.tasks.send_notification.delay') as mocked_delay:
+            publish_election_results(self.event, actor=self.organizer)
+
+        # Assert notifications exist
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                recipient_email='candidate@example.com',
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                recipient_phone='+233241112223',  # Normalized phone
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
+                recipient_email='voter@example.com',
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
+                recipient_phone='+233242223334',  # Normalized phone
+            ).exists()
+        )

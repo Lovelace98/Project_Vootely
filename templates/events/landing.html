@@ -1,0 +1,581 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vootely | Paid Competitions and Secure Elections{% endblock %}
+{% block meta_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}
+{% block body_class %}min-h-screen bg-white text-vc-dark antialiased flex flex-col vc-landing-page{% endblock %}
+{% block main_class %}flex-grow w-full{% endblock %}
+
+{% block content %}
+<div
+    x-data="{
+        showScrollTop: false,
+        showWhatsappHint: true,
+        updateScrollTop() {
+            this.showScrollTop = window.scrollY > window.innerHeight * 0.7;
+        },
+        scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }"
+    x-init="updateScrollTop(); setTimeout(() => showWhatsappHint = false, 3600)"
+    @scroll.window="updateScrollTop()"
+>
+    <section class="vc-landing-hero relative overflow-hidden">
+        <div class="vc-landing-grid absolute inset-0"></div>
+        <div class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:px-8 lg:pb-24 lg:pt-36">
+            <div class="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+                <div class="relative z-10">
+                    <span class="vc-landing-pill">
+                        Competitions and elections
+                    </span>
+                    <h1 class="mt-6 max-w-3xl text-5xl font-bold tracking-tight text-vc-dark sm:text-6xl lg:text-7xl">
+                        Run paid competitions and secure elections with one trusted platform.
+                    </h1>
+                    <p class="mt-6 max-w-2xl text-lg leading-8 text-vc-dark-400 sm:text-xl">
+                        Vootely helps student bodies, associations, and organizations launch public competitions, manage secure elections, and keep every voting experience clear from first click to final result.
+                    </p>
+                    <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+                        <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-lg">
+                            Host an Event
+                        </a>
+                        <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">
+                            Browse Events
+                        </a>
+                    </div>
+                </div>
+
+                <div class="relative mx-auto flex w-full max-w-[40rem] items-end justify-center">
+                    <div class="vc-hero-ambient vc-hero-ambient-main"></div>
+
+                    <div class="vc-floating-card vc-floating-card-top-left hidden sm:flex">
+                        <span class="vc-floating-icon bg-vc-blue-50 text-vc-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Browse</p>
+                            <p class="mt-1 text-sm font-bold text-vc-dark">Browse Live Events</p>
+                        </div>
+                    </div>
+
+                    <div class="vc-floating-card vc-floating-card-top-right">
+                        <span class="vc-floating-icon bg-vc-blue-50 text-vc-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h20"></path><path d="M6 16h.01"></path><path d="M10 16h4"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Payments</p>
+                            <p class="mt-1 text-sm font-bold text-vc-dark">Secure Paystack Checkout</p>
+                        </div>
+                    </div>
+
+                    <div class="vc-floating-card vc-floating-card-bottom-left">
+                        <span class="vc-floating-icon bg-vc-blue-50 text-vc-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Results</p>
+                            <p class="mt-1 text-sm font-bold text-vc-dark">Live Leaderboards</p>
+                        </div>
+                    </div>
+
+                    <div class="vc-floating-card vc-floating-card-bottom-right hidden md:flex">
+                        <span class="vc-floating-icon bg-vc-blue-50 text-vc-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"></path></svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Reporting</p>
+                            <p class="mt-1 text-sm font-bold text-vc-dark">Revenue and Results Tracking</p>
+                        </div>
+                    </div>
+
+                    <div class="vc-hero-portrait-wrap">
+                        <img src="{% static 'images/landing-hero-woman-transparent.png' %}" alt="Organizer using Vootely on mobile" class="relative z-10 mx-auto w-full max-w-[28rem] object-contain drop-shadow-[0_30px_45px_rgba(9,8,13,0.16)]">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if featured_events %}
+        <section id="live-events" class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+            <div
+                class="vc-live-events-shell rounded-[2rem] px-6 py-8 sm:px-8 lg:px-10 lg:py-10"
+                x-data="{
+                    activeIndex: 0,
+                    timer: null,
+                    groupSize: 3,
+                    get total() { return {{ featured_events|length }}; },
+                    updateGroupSize() {
+                        if (window.innerWidth < 768) {
+                            this.groupSize = 1;
+                        } else if (window.innerWidth < 1100) {
+                            this.groupSize = 2;
+                        } else {
+                            this.groupSize = 3;
+                        }
+                        if (this.activeIndex > this.maxStart()) {
+                            this.activeIndex = this.maxStart();
+                        }
+                    },
+                    maxStart() {
+                        return Math.max(this.total - this.groupSize, 0);
+                    },
+                    next() {
+                        this.activeIndex = this.activeIndex >= this.maxStart() ? 0 : this.activeIndex + 1;
+                    },
+                    prev() {
+                        this.activeIndex = this.activeIndex <= 0 ? this.maxStart() : this.activeIndex - 1;
+                    },
+                    goTo(index) {
+                        this.activeIndex = Math.min(index, this.maxStart());
+                    },
+                    start() {
+                        this.stop();
+                        this.timer = setInterval(() => this.next(), 4200);
+                    },
+                    stop() {
+                        if (this.timer) clearInterval(this.timer);
+                        this.timer = null;
+                    }
+                }"
+                x-init="updateGroupSize(); start(); window.addEventListener('resize', () => updateGroupSize())"
+                @mouseenter="stop()"
+                @mouseleave="start()"
+            >
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.24em] text-vc-blue">Live now on Vootely</p>
+                        <h2 class="mt-3 text-2xl font-bold tracking-tight text-vc-dark sm:text-3xl">Browse active competitions already collecting votes.</h2>
+                    </div>
+                    <p class="text-sm font-medium text-vc-dark-400">{{ active_events_count }} live competition{{ active_events_count|pluralize }}</p>
+                </div>
+
+                <div class="mt-8 overflow-hidden">
+                    <div
+                        class="flex gap-5 transition-transform duration-700 ease-out"
+                        :style="`transform: translateX(-${activeIndex * (100 / groupSize)}%)`"
+                    >
+                        {% for event in featured_events %}
+                            <a href="{{ event.get_absolute_url }}" class="vc-live-event-card w-full shrink-0 lg:basis-[calc((100%-2.5rem)/3)] md:basis-[calc((100%-1.25rem)/2)]">
+                                <div class="vc-live-event-media">
+                                    {% if event.flyer %}
+                                        <img src="{{ event.flyer.url }}" alt="{{ event.title }} flyer" class="h-full w-full object-cover">
+                                    {% elif event.banner %}
+                                        <img src="{{ event.banner.url }}" alt="{{ event.title }} banner" class="h-full w-full object-cover">
+                                    {% else %}
+                                        <div class="vc-live-event-placeholder">
+                                            <span>Live Event</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="p-5">
+                                    <p class="text-lg font-bold text-vc-dark">{{ event.title }}</p>
+                                    <p class="mt-2 text-sm text-vc-dark-400">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }} live</p>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <template x-for="index in Math.max(total - groupSize + 1, 1)" :key="index">
+                            <button
+                                type="button"
+                                class="h-2.5 rounded-full bg-vc-blue/20 transition-all"
+                                :class="activeIndex === index - 1 ? 'w-8 bg-vc-blue' : 'w-2.5'"
+                                @click="goTo(index - 1); stop(); start();"
+                                :aria-label="`Show live event set ${index}`"
+                            ></button>
+                        </template>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="vc-live-event-nav" @click="prev(); stop(); start();" aria-label="Previous live events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                        </button>
+                        <button type="button" class="vc-live-event-nav" @click="next(); stop(); start();" aria-label="Next live events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-center">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">See all events</a>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
+    <section id="features" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="vc-section-kicker">Features</p>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">One product for public competitions and secure organizational voting.</h2>
+            <p class="mt-4 text-lg text-vc-dark-400">Vootely helps you launch visible campaigns for the public and structured election processes for internal decision-making.</p>
+        </div>
+        <div class="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+            <article class="vc-landing-feature-card">
+                <span class="vc-feature-chip">01</span>
+                <h3 class="mt-4 text-xl font-bold">Paid competitions</h3>
+                <p class="mt-3 text-sm leading-6">Set vote pricing, publish the campaign, and let supporters vote without creating an account.</p>
+            </article>
+            <article class="vc-landing-feature-card">
+                <span class="vc-feature-chip">02</span>
+                <h3 class="mt-4 text-xl font-bold">Nominee pages</h3>
+                <p class="mt-3 text-sm leading-6">Present candidates clearly with photos, bios, voting codes, and direct voting paths.</p>
+            </article>
+            <article class="vc-landing-feature-card">
+                <span class="vc-feature-chip">03</span>
+                <h3 class="mt-4 text-xl font-bold">Secure payment flow</h3>
+                <p class="mt-3 text-sm leading-6">Use Paystack-backed checkout so paid votes only count after payment is confirmed.</p>
+            </article>
+            <article class="vc-landing-feature-card">
+                <span class="vc-feature-chip">04</span>
+                <h3 class="mt-4 text-xl font-bold">Election-ready structure</h3>
+                <p class="mt-3 text-sm leading-6">Run structured ballots for associations, departments, and organizations with cleaner voting control.</p>
+            </article>
+            <article class="vc-landing-feature-card">
+                <span class="vc-feature-chip">05</span>
+                <h3 class="mt-4 text-xl font-bold">Reporting visibility</h3>
+                <p class="mt-3 text-sm leading-6">Track confirmed revenue, live standings, and voting activity from one dashboard.</p>
+            </article>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div class="vc-story-panel grid gap-10 overflow-hidden rounded-[2rem] px-6 py-8 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-12 lg:py-12">
+            <div>
+                <p class="vc-section-kicker">How it works</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">From setup to votes in five clear steps.</h2>
+                <p class="mt-4 text-base leading-7 text-vc-dark-400">Keep the public side simple for voters while your team stays in control of structure, timing, and reporting.</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="vc-step-card">
+                    <span class="vc-step-number">1</span>
+                    <h3 class="mt-4 text-lg font-bold text-vc-dark">Create your event</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Define the title, pricing, dates, and campaign details.</p>
+                </div>
+                <div class="vc-step-card">
+                    <span class="vc-step-number">2</span>
+                    <h3 class="mt-4 text-lg font-bold text-vc-dark">Add nominees or candidates</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Prepare the people, positions, or contestants voters need to see.</p>
+                </div>
+                <div class="vc-step-card">
+                    <span class="vc-step-number">3</span>
+                    <h3 class="mt-4 text-lg font-bold text-vc-dark">Publish the voting page</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Open the experience for supporters, students, members, or internal teams.</p>
+                </div>
+                <div class="vc-step-card">
+                    <span class="vc-step-number">4</span>
+                    <h3 class="mt-4 text-lg font-bold text-vc-dark">Collect votes securely</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Let people vote through the right flow for competitions or structured elections.</p>
+                </div>
+                <div class="vc-step-card sm:col-span-2">
+                    <span class="vc-step-number">5</span>
+                    <h3 class="mt-4 text-lg font-bold text-vc-dark">Track outcomes clearly</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Review results, public momentum, and organizer-side reporting without the usual confusion.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="election-support" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div class="vc-election-panel rounded-[2rem] px-6 py-10 sm:px-8 lg:px-12 lg:py-12">
+            <div class="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+                <div>
+                    <p class="vc-section-kicker vc-section-kicker-light">Election support</p>
+                    <h2 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Built to support internal elections with more structure and confidence.</h2>
+                    <p class="mt-4 text-lg leading-8 text-white/82">When your organization needs more than a public popularity contest, Vootely supports a more deliberate election flow with clearer control over candidates, voters, and outcomes.</p>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <article class="vc-election-card">
+                        <h3 class="text-lg font-bold">Structured ballot positions</h3>
+                        <p class="mt-2 text-sm leading-6">Organize candidates by position so voters see a cleaner and more formal ballot experience.</p>
+                    </article>
+                    <article class="vc-election-card">
+                        <h3 class="text-lg font-bold">Credential-based voter access</h3>
+                        <p class="mt-2 text-sm leading-6">Control who participates and keep election access more intentional for internal use cases.</p>
+                    </article>
+                    <article class="vc-election-card">
+                        <h3 class="text-lg font-bold">Results visibility</h3>
+                        <p class="mt-2 text-sm leading-6">Choose how results are shown while keeping the process understandable for the people involved.</p>
+                    </article>
+                    <article class="vc-election-card">
+                        <h3 class="text-lg font-bold">Trusted process management</h3>
+                        <p class="mt-2 text-sm leading-6">Give departments, associations, and organizations a system that feels more stable and easier to manage.</p>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div>
+                <p class="vc-section-kicker">Why choose Vootely</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">Built for teams that need speed, clarity, and trust in every vote.</h2>
+                <p class="mt-4 text-lg leading-8 text-vc-dark-400">Whether you are running a public contest or a more controlled election, the platform helps organizers move faster without losing visibility.</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <article class="vc-why-card">
+                    <h3 class="text-lg font-bold text-vc-dark">Faster launch</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Go from planning to a live voting page without building a custom system from scratch.</p>
+                </article>
+                <article class="vc-why-card">
+                    <h3 class="text-lg font-bold text-vc-dark">Ghana-ready payments</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Use a payment flow that already fits how many organizers collect paid votes today.</p>
+                </article>
+                <article class="vc-why-card">
+                    <h3 class="text-lg font-bold text-vc-dark">Election credibility</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Handle organizational voting with more structure, better visibility, and stronger confidence in the process.</p>
+                </article>
+                <article class="vc-why-card">
+                    <h3 class="text-lg font-bold text-vc-dark">Clear reporting</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Stay close to results, revenue, and participation without chasing updates across multiple tools.</p>
+                </article>
+                <article class="vc-why-card sm:col-span-2">
+                    <h3 class="text-lg font-bold text-vc-dark">Affordable platform management fee</h3>
+                    <p class="mt-2 text-sm leading-6 text-vc-dark-400">Each paid competition is assigned a negotiated platform commission before it goes live, so organizers know the fee structure clearly before public voting opens.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div>
+                <p class="vc-section-kicker">FAQ</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">Common questions teams ask before choosing a voting platform.</h2>
+                <p class="mt-4 text-lg leading-8 text-vc-dark-400">The answers below explain how Vootely handles public competitions, secure elections, event-specific fees, and organizer payouts.</p>
+            </div>
+            <div class="space-y-3">
+                {% for item in faq_items %}
+                    <article
+                        x-data="{ open: {% if forloop.first %}true{% else %}false{% endif %} }"
+                        class="overflow-hidden rounded-[1.5rem] border border-vc-dark-100/60 bg-white shadow-[0_18px_50px_rgba(9,8,13,0.05)]"
+                    >
+                        <button
+                            type="button"
+                            class="flex w-full items-start justify-between gap-4 px-5 py-5 text-left sm:px-6"
+                            @click="open = !open"
+                            :aria-expanded="open"
+                        >
+                            <span class="text-base font-bold text-vc-dark sm:text-lg">{{ item.question }}</span>
+                            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-vc-blue-50 text-vc-blue">
+                                <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                                <svg x-show="open" x-cloak xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path></svg>
+                            </span>
+                        </button>
+                        <div x-show="open" x-collapse x-cloak class="px-5 pb-5 sm:px-6">
+                            <p class="text-sm leading-7 text-vc-dark-400 sm:text-[15px]">{{ item.answer }}</p>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div
+            class="vc-reviews-shell rounded-[2rem] px-6 py-10 text-white sm:px-8 lg:px-12 lg:py-12"
+            x-data="{
+                activeIndex: 0,
+                timer: null,
+                groupSize: 3,
+                get total() { return {{ reviews|length }}; },
+                updateGroupSize() {
+                    if (window.innerWidth < 768) {
+                        this.groupSize = 1;
+                    } else if (window.innerWidth < 1024) {
+                        this.groupSize = 2;
+                    } else {
+                        this.groupSize = 3;
+                    }
+                    if (this.activeIndex > this.maxStart()) {
+                        this.activeIndex = this.maxStart();
+                    }
+                },
+                maxStart() {
+                    return Math.max(this.total - this.groupSize, 0);
+                },
+                next() {
+                    this.activeIndex = this.activeIndex >= this.maxStart() ? 0 : this.activeIndex + 1;
+                },
+                prev() {
+                    this.activeIndex = this.activeIndex <= 0 ? this.maxStart() : this.activeIndex - 1;
+                },
+                goTo(index) {
+                    this.activeIndex = Math.min(index, this.maxStart());
+                },
+                start() {
+                    this.stop();
+                    this.timer = setInterval(() => this.next(), 4800);
+                },
+                stop() {
+                    if (this.timer) clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }"
+            x-init="updateGroupSize(); start(); window.addEventListener('resize', () => updateGroupSize())"
+            @mouseenter="stop()"
+            @mouseleave="start()"
+        >
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-bold uppercase tracking-[0.24em] text-white/70">Client reviews</p>
+                    <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Trusted by student leaders, associations, and organizations.</h2>
+                </div>
+                <p class="max-w-xl text-sm leading-6 text-white/80">Three reviews stay visible at a time on larger screens, while the rest rotate in quietly so the section feels alive without becoming distracting.</p>
+            </div>
+
+            <div class="mt-8 overflow-hidden">
+                <div
+                    class="flex gap-5 transition-transform duration-700 ease-out"
+                    :style="`transform: translateX(-${activeIndex * (100 / groupSize)}%)`"
+                >
+                    {% for review in reviews %}
+                        <article class="vc-review-card w-full shrink-0 lg:basis-[calc((100%-2.5rem)/3)] md:basis-[calc((100%-1.25rem)/2)]">
+                            <p class="text-sm leading-7 text-white/90">“{{ review.quote }}”</p>
+                            <div class="mt-6">
+                                <p class="text-base font-bold">{{ review.name }}</p>
+                                <p class="text-sm text-white/72">{{ review.title }}</p>
+                                <p class="mt-2 inline-flex rounded-full border border-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">{{ review.segment }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2">
+                    <template x-for="index in Math.max(total - groupSize + 1, 1)" :key="index">
+                        <button
+                            type="button"
+                            class="h-2.5 rounded-full bg-white/30 transition-all"
+                            :class="activeIndex === index - 1 ? 'w-8 bg-white' : 'w-2.5'"
+                            @click="goTo(index - 1); stop(); start();"
+                            :aria-label="`Show review set ${index}`"
+                        ></button>
+                    </template>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" class="vc-review-nav" @click="prev(); stop(); start();" aria-label="Previous reviews">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <button type="button" class="vc-review-nav" @click="next(); stop(); start();" aria-label="Next reviews">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section
+        id="contact"
+        class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
+        {% if contact_form.errors %}
+            x-data
+            x-init="$nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
+        {% endif %}
+    >
+        <div class="vc-contact-shell grid gap-8 rounded-[2rem] px-6 py-10 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-12 lg:py-12">
+            <div>
+                <p class="vc-section-kicker">Contact us</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">Tell us what you want to run.</h2>
+                <p class="mt-4 text-lg leading-8 text-vc-dark-400">If you are planning a paid competition, student election, or internal organizational vote, send the details and we will follow up.</p>
+                <div class="mt-6 space-y-3 text-sm text-vc-dark-400">
+                    <p>Email: <a href="mailto:{{ support_email }}" class="font-semibold text-vc-blue hover:underline">{{ support_email }}</a></p>
+                    <p>WhatsApp: <a href="{{ whatsapp_url }}" target="_blank" rel="noreferrer" class="font-semibold text-vc-blue hover:underline">Message us directly</a></p>
+                </div>
+            </div>
+            <div class="rounded-[1.75rem] border border-vc-dark-100/60 bg-white p-6 shadow-[0_20px_60px_rgba(9,8,13,0.06)] sm:p-8">
+                <form action="{% url 'events:contact_inquiry_submit' %}" method="post" class="space-y-5">
+                    {% csrf_token %}
+                    {% if contact_form.non_field_errors %}
+                        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            {{ contact_form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="{{ contact_form.name.id_for_label }}">Name</label>
+                            <div class="mt-2">{{ contact_form.name }}</div>
+                            {% if contact_form.name.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.name.errors|join:', ' }}</p>{% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ contact_form.email.id_for_label }}">Email</label>
+                            <div class="mt-2">{{ contact_form.email }}</div>
+                            {% if contact_form.email.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.email.errors|join:', ' }}</p>{% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ contact_form.phone_number.id_for_label }}">Phone number</label>
+                            <div class="mt-2">{{ contact_form.phone_number }}</div>
+                            {% if contact_form.phone_number.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.phone_number.errors|join:', ' }}</p>{% endif %}
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="{{ contact_form.heard_about_us.id_for_label }}">Where did you hear about us?</label>
+                            <div class="mt-2">{{ contact_form.heard_about_us }}</div>
+                            {% if contact_form.heard_about_us.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.heard_about_us.errors|join:', ' }}</p>{% endif %}
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="{{ contact_form.message.id_for_label }}">Question or message</label>
+                            <div class="mt-2">{{ contact_form.message }}</div>
+                            {% if contact_form.message.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.message.errors|join:', ' }}</p>{% endif %}
+                        </div>
+                    </div>
+                    <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg w-full sm:w-auto">
+                        Send message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div class="vc-final-cta">
+            <div class="max-w-2xl">
+                <p class="vc-section-kicker">Get started</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">Launch your next competition or election with a page that already feels ready.</h2>
+                <p class="mt-4 text-lg leading-8 text-vc-dark-400">If you need one platform for public campaigns, student voting, or organizational elections, Vootely is built to help you move with more confidence.</p>
+            </div>
+            <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+                <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-lg">Host an Event</a>
+                <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">Browse Events</a>
+            </div>
+        </div>
+    </section>
+
+    <a
+        href="{{ whatsapp_url }}"
+        target="_blank"
+        rel="noreferrer"
+        class="vc-floating-action vc-floating-action-left"
+        aria-label="Chat with Vootely on WhatsApp"
+        @mouseenter="showWhatsappHint = true"
+        @mouseleave="showWhatsappHint = false"
+        @focus="showWhatsappHint = true"
+        @blur="showWhatsappHint = false"
+    >
+        <span
+            class="vc-whatsapp-hint"
+            x-cloak
+            x-show="showWhatsappHint"
+            x-transition.opacity.scale.origin.left.duration.200ms
+        >
+            Need help, send us a message.
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.52 0 .18 5.33.18 11.9c0 2.1.55 4.16 1.59 5.98L0 24l6.31-1.65a11.86 11.86 0 0 0 5.75 1.47h.01c6.54 0 11.87-5.34 11.87-11.9 0-3.17-1.23-6.15-3.42-8.44Zm-8.46 18.3h-.01a9.86 9.86 0 0 1-5.03-1.38l-.36-.21-3.75.98 1-3.64-.24-.37a9.82 9.82 0 0 1-1.52-5.26c0-5.44 4.45-9.87 9.92-9.87 2.65 0 5.15 1.03 7.02 2.91a9.83 9.83 0 0 1 2.89 7c0 5.44-4.45 9.87-9.92 9.87Zm5.41-7.39c-.3-.15-1.79-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.95 1.18-.18.2-.35.22-.65.08-.3-.15-1.28-.47-2.43-1.5a9.05 9.05 0 0 1-1.68-2.08c-.18-.3-.02-.47.13-.62.13-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.68-1.65-.93-2.26-.24-.58-.49-.5-.68-.51h-.58c-.2 0-.52.08-.8.37-.28.3-1.05 1.03-1.05 2.5s1.08 2.89 1.23 3.09c.15.2 2.12 3.25 5.14 4.56.72.31 1.28.5 1.72.64.72.23 1.37.2 1.89.12.58-.09 1.79-.73 2.05-1.44.25-.72.25-1.34.18-1.46-.08-.13-.28-.2-.58-.35Z"/></svg>
+    </a>
+
+    <button
+        type="button"
+        class="vc-floating-action vc-floating-action-right"
+        x-cloak
+        x-show="showScrollTop"
+        x-transition.opacity.scale.duration.200ms
+        @click="scrollToTop()"
+        aria-label="Scroll back to top"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+    </button>
+</div>
+{% endblock %}
