@@ -10,6 +10,7 @@ from .models import LedgerEntry, LedgerTransaction, WalletAccount, WithdrawalReq
 
 
 WITHDRAWAL_RESERVED_STATUSES = (
+    WithdrawalRequest.Status.PENDING,
     WithdrawalRequest.Status.APPROVED,
     WithdrawalRequest.Status.PROCESSING,
     WithdrawalRequest.Status.COMPLETED,

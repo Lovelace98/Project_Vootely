@@ -309,8 +309,11 @@ class DashboardNomineeDeleteView(NomineeEventMixin, View):
     def post(self, request, *args, **kwargs):
         nominee = self.get_nominee()
         event = nominee.event
-        nominee.delete()
-        messages.success(request, 'Nominee deleted.')
+        try:
+            nominee.delete()
+            messages.success(request, 'Nominee deleted.')
+        except ProtectedError:
+            messages.error(request, 'This nominee cannot be deleted because they have associated payments or votes.')
         return HttpResponseRedirect(event.get_dashboard_url())
 
 
@@ -447,7 +450,25 @@ class DashboardNominationReviewView(SafeIntegrityMixin, NomineeEventMixin, Updat
                 nominee.category = form.cleaned_data['category']
                 nominee.name = form.cleaned_data['name']
                 nominee.bio = form.cleaned_data['bio']
-                nominee.photo = form.cleaned_data['photo']
+                photo_file = form.cleaned_data['photo']
+                if photo_file:
+                    from django.db.models.fields.files import FieldFile
+                    from django.core.files.base import ContentFile
+                    import os
+
+                    if isinstance(photo_file, FieldFile) and photo_file.name.startswith('nomination-submissions/'):
+                        if not nominee.photo or nominee.photo.name.startswith('nomination-submissions/'):
+                            try:
+                                photo_file.open('rb')
+                                file_content = photo_file.read()
+                                filename = os.path.basename(photo_file.name)
+                                nominee.photo.save(filename, ContentFile(file_content), save=False)
+                            finally:
+                                photo_file.close()
+                    else:
+                        nominee.photo = photo_file
+                else:
+                    nominee.photo = None
                 nominee.email = form.cleaned_data['email']
                 nominee.phone_number = form.cleaned_data['phone_number']
                 nominee.display_order = form.cleaned_data['display_order']

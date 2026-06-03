@@ -335,6 +335,20 @@ class WithdrawalFlowTests(TestCase):
 
         self.assertEqual(get_available_withdrawal_balance(self.organizer), Decimal('10.00'))
 
+    def test_available_balance_excludes_pending_withdrawals(self):
+        self.create_paid_attempt(amount=Decimal('20.00'))
+        WithdrawalRequest.objects.create(
+            organizer=self.organizer,
+            wallet_account=self.organizer.wallet_account,
+            amount=Decimal('8.00'),
+            currency='GHS',
+            payout_name='Ada Organizer',
+            bank_name='GCB',
+            bank_account_number='1234567890',
+            status=WithdrawalRequest.Status.PENDING,
+        )
+        self.assertEqual(get_available_withdrawal_balance(self.organizer), Decimal('10.00'))
+
     def test_admin_completion_posts_withdrawal_ledger_transaction(self):
         self.create_paid_attempt(amount=Decimal('20.00'))
         withdrawal = WithdrawalRequest.objects.create(

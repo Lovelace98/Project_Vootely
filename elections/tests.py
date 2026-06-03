@@ -147,7 +147,7 @@ class SecureElectionTests(TestCase):
 
     def test_dashboard_candidate_create_shows_duplicate_name_error(self):
         position = ElectionPosition.objects.create(event=self.event, title='President')
-        ElectionCandidate.objects.create(event=self.event, position=position, name='Ama Mensah')
+        ElectionCandidate.objects.create(event=self.event, position=position, name='Ama Mensah', email='ama2@example.com', phone='0240000000')
         self.client.login(email='organizer@example.com', password='strong-pass-123')
 
         response = self.client.post(
@@ -164,7 +164,7 @@ class SecureElectionTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'A candidate with this name already exists for the selected position.')
+        self.assertContains(response, 'A candidate with this name and contact details already exists')
 
     def test_roster_import_rejects_duplicate_ids_and_keeps_invalid_contacts_as_warnings(self):
         with self.assertRaises(ValidationError):
@@ -691,3 +691,108 @@ class SecureElectionTests(TestCase):
                 recipient_phone='+233242223334',  # Normalized phone
             ).exists()
         )
+
+    def test_position_delete_with_votes_protected(self):
+        position, candidate, token = self.add_ballot_setup()
+        cast_ballot(self.event, token, {str(position.id): str(candidate.id)})
+        self.event.status = Event.Status.DRAFT
+        self.event.save(update_fields=['status'])
+
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        response = self.client.post(
+            reverse('dashboard:election_position_delete', args=[self.event.slug, position.pk]),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ElectionPosition.objects.filter(pk=position.pk).exists())
+        self.assertContains(response, 'This position cannot be deleted because voters have already cast selections for it.')
+
+    def test_candidate_delete_with_votes_protected(self):
+        position, candidate, token = self.add_ballot_setup()
+        cast_ballot(self.event, token, {str(position.id): str(candidate.id)})
+        self.event.status = Event.Status.DRAFT
+        self.event.save(update_fields=['status'])
+
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        response = self.client.post(
+            reverse('dashboard:election_candidate_delete', args=[self.event.slug, candidate.pk]),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ElectionCandidate.objects.filter(pk=candidate.pk).exists())
+        self.assertContains(response, 'This candidate cannot be deleted because voters have already cast selections for them.')
+
+    def test_candidate_creation_with_same_name_different_contacts_succeeds(self):
+        position = ElectionPosition.objects.create(event=self.event, title='Secretary')
+        ElectionCandidate.objects.create(
+            event=self.event,
+            position=position,
+            name='Kofi Mensah',
+            email='kofi1@example.com',
+            phone='0241112222',
+        )
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        response = self.client.post(
+            reverse('dashboard:election_candidates', args=[self.event.slug]),
+            data={
+                'position': position.pk,
+                'name': 'Kofi Mensah',
+                'bio': 'Second candidate with same name',
+                'email': 'kofi2@example.com',
+                'phone': '0243334444',
+                'display_order': 0,
+                'is_active': 'on',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ElectionCandidate.objects.filter(position=position, name='Kofi Mensah').count(), 2)
+
+    def test_candidate_creation_with_same_name_matching_email_fails(self):
+        position = ElectionPosition.objects.create(event=self.event, title='Treasurer')
+        ElectionCandidate.objects.create(
+            event=self.event,
+            position=position,
+            name='Kofi Mensah',
+            email='kofi@example.com',
+            phone='0241112222',
+        )
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        response = self.client.post(
+            reverse('dashboard:election_candidates', args=[self.event.slug]),
+            data={
+                'position': position.pk,
+                'name': 'Kofi Mensah',
+                'bio': 'Second candidate',
+                'email': 'kofi@example.com',
+                'phone': '0243334444',
+                'display_order': 0,
+                'is_active': 'on',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A candidate with this name and contact details already exists')
+
+    def test_candidate_creation_with_same_name_both_empty_contacts_fails(self):
+        position = ElectionPosition.objects.create(event=self.event, title='Organizer')
+        ElectionCandidate.objects.create(
+            event=self.event,
+            position=position,
+            name='Kofi Mensah',
+            email='',
+            phone='',
+        )
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        response = self.client.post(
+            reverse('dashboard:election_candidates', args=[self.event.slug]),
+            data={
+                'position': position.pk,
+                'name': 'Kofi Mensah',
+                'bio': 'Second candidate',
+                'email': '',
+                'phone': '',
+                'display_order': 0,
+                'is_active': 'on',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A candidate with this name and contact details already exists')

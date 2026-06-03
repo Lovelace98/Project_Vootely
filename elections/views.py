@@ -3,6 +3,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db.models import ProtectedError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -292,6 +293,8 @@ class DashboardElectionPositionDeleteView(OrganizerElectionMixin, View):
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(request, message)
+        except ProtectedError:
+            messages.error(request, 'This position cannot be deleted because voters have already cast selections for it.')
         return HttpResponseRedirect(reverse('dashboard:election_positions', args=[event.slug]))
 
 
@@ -342,6 +345,8 @@ class DashboardElectionCandidateDeleteView(OrganizerElectionMixin, View):
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(request, message)
+        except ProtectedError:
+            messages.error(request, 'This candidate cannot be deleted because voters have already cast selections for them.')
         return HttpResponseRedirect(reverse('dashboard:election_candidates', args=[event.slug]))
 
 

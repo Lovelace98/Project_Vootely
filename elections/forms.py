@@ -111,13 +111,28 @@ class ElectionCandidateForm(StyledModelForm):
         cleaned_data = super().clean()
         position = cleaned_data.get('position')
         name = (cleaned_data.get('name') or '').strip()
+        email = (cleaned_data.get('email') or '').strip().lower()
+        phone = (cleaned_data.get('phone') or '').strip()
         if position and name:
             duplicate_qs = ElectionCandidate.objects.exclude(pk=self.instance.pk).filter(
                 position=position,
                 name__iexact=name,
             )
-            if duplicate_qs.exists():
-                self.add_error('name', 'A candidate with this name already exists for the selected position.')
+            is_duplicate = False
+            for dup in duplicate_qs:
+                dup_email = dup.email.strip().lower()
+                dup_phone = dup.phone.strip()
+                
+                email_match = email and dup_email and email == dup_email
+                phone_match = phone and dup_phone and phone == dup_phone
+                both_empty = not email and not phone and not dup_email and not dup_phone
+                
+                if email_match or phone_match or both_empty:
+                    is_duplicate = True
+                    break
+            
+            if is_duplicate:
+                self.add_error('name', 'A candidate with this name and contact details already exists for the selected position.')
         return cleaned_data
 
 

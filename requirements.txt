@@ -18,3 +18,5 @@ django-tailwind-cli==4.6.0
 python-dotenv
 requests
 Pillow==12.2.0
+gunicorn==23.0.0
+whitenoise==6.9.0

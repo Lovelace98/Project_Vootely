@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Main Django Application
+  web:
+    build: .
+    image: votecentral-app:latest
+    container_name: votecentral_web
+    restart: always
+    # entrypoint.sh is set in Dockerfile and handles DB checks, migrations, and gunicorn startup.
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    expose:
+      - "8000"
+    env_file: .env
+    depends_on:
+      votecentral_redis_service:
+        condition: service_healthy
+    networks:
+      - votecentral_internal
+      - dokploy-network
+
+  # Celery Worker for background tasks
+  worker:
+    build: .
+    container_name: votecentral_worker
+    restart: always
+    # Override the default entrypoint to bypass web-startup scripts
+    entrypoint: []
+    command: celery -A votecentral worker --loglevel=info
+    volumes:
+      - media_volume:/app/media
+    env_file: .env
+    depends_on:
+      votecentral_redis_service:
+        condition: service_healthy
+    networks:
+      - votecentral_internal
+      - dokploy-network
+
+  # Celery Beat for scheduled tasks
+  beat:
+    build: .
+    container_name: votecentral_beat
+    restart: always
+    # Override the default entrypoint to bypass web-startup scripts
+    entrypoint: []
+    command: celery -A votecentral beat --loglevel=info
+    env_file: .env
+    depends_on:
+      votecentral_redis_service:
+        condition: service_healthy
+    networks:
+      - votecentral_internal
+      - dokploy-network
+
+  # Redis for Celery Broker, Channel Layers, and Caching
+  votecentral_redis_service:
+    image: redis:7-alpine
+    container_name: votecentral_redis
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - votecentral_internal
+
+networks:
+  votecentral_internal:
+    driver: bridge
+  dokploy-network:
+    external: true
+
+volumes:
+  static_volume:
+  media_volume:
+  redis_data:

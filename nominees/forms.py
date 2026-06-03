@@ -40,6 +40,8 @@ class NomineeForm(forms.ModelForm):
         cleaned_data = super().clean()
         category = cleaned_data.get('category')
         name = (cleaned_data.get('name') or '').strip()
+        email = (cleaned_data.get('email') or '').strip().lower()
+        phone_number = (cleaned_data.get('phone_number') or '').strip()
         event = self.event or getattr(self.instance, 'event', None)
         if event and category and name:
             duplicate_qs = Nominee.objects.exclude(pk=self.instance.pk).filter(
@@ -47,8 +49,21 @@ class NomineeForm(forms.ModelForm):
                 category=category,
                 name__iexact=name,
             )
-            if duplicate_qs.exists():
-                self.add_error('name', 'A nominee with this name already exists in the selected category.')
+            is_duplicate = False
+            for dup in duplicate_qs:
+                dup_email = dup.email.strip().lower()
+                dup_phone = dup.phone_number.strip()
+                
+                email_match = email and dup_email and email == dup_email
+                phone_match = phone_number and dup_phone and phone_number == dup_phone
+                both_empty = not email and not phone_number and not dup_email and not dup_phone
+                
+                if email_match or phone_match or both_empty:
+                    is_duplicate = True
+                    break
+            
+            if is_duplicate:
+                self.add_error('name', 'A nominee with this name and contact details already exists in the selected category.')
         return cleaned_data
 
 
@@ -159,6 +174,8 @@ class NominationReviewForm(forms.ModelForm):
         cleaned_data = super().clean()
         category = cleaned_data.get('category')
         name = (cleaned_data.get('name') or '').strip()
+        email = (cleaned_data.get('email') or '').strip().lower()
+        phone_number = (cleaned_data.get('phone_number') or '').strip()
         event = self.event or getattr(self.instance, 'event', None)
         if event and category and name:
             duplicate_qs = Nominee.objects.exclude(pk=getattr(self.instance, 'approved_nominee_id', None)).filter(
@@ -166,6 +183,19 @@ class NominationReviewForm(forms.ModelForm):
                 category=category,
                 name__iexact=name,
             )
-            if duplicate_qs.exists():
-                self.add_error('name', 'A nominee with this name already exists in the selected category.')
+            is_duplicate = False
+            for dup in duplicate_qs:
+                dup_email = dup.email.strip().lower()
+                dup_phone = dup.phone_number.strip()
+                
+                email_match = email and dup_email and email == dup_email
+                phone_match = phone_number and dup_phone and phone_number == dup_phone
+                both_empty = not email and not phone_number and not dup_email and not dup_phone
+                
+                if email_match or phone_match or both_empty:
+                    is_duplicate = True
+                    break
+            
+            if is_duplicate:
+                self.add_error('name', 'A nominee with this name and contact details already exists in the selected category.')
         return cleaned_data
