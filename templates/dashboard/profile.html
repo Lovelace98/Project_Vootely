@@ -128,12 +128,14 @@
                     {% for field in password_form %}
                         <div x-data="{ show: false }">
                             <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">{{ field.label }}</label>
-                            <div class="relative">
+                            <div class="relative w-full" style="position: relative; width: 100%; display: block;">
                                 <input :type="show ? 'text' : 'password'" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required
-                                       class="w-full rounded-2xl border border-vc-dark-200 bg-white pl-4 pr-11 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white">
+                                       class="w-full rounded-2xl border border-vc-dark-200 bg-white pl-4 pr-11 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white"
+                                       style="padding-right: 2.75rem;">
                                 <button 
                                     type="button" 
                                     class="absolute right-3.5 top-1/2 -translate-y-1/2 text-vc-dark-400 hover:text-vc-blue transition-colors focus:outline-none dark:text-slate-400 dark:hover:text-vc-blue"
+                                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);"
                                     @click="show = !show"
                                     aria-label="Toggle password visibility"
                                 >

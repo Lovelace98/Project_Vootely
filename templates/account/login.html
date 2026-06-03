@@ -59,19 +59,21 @@
                                 {% if field.name == 'password' %}
                                     <div x-data="{ show: false }">
                                         <label class="mb-1 block text-xs font-bold text-vc-dark-500 uppercase tracking-wider" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        <div class="relative">
+                                        <div class="relative w-full" style="position: relative; width: 100%; display: block;">
                                             <input 
                                                 :type="show ? 'text' : 'password'" 
                                                 name="{{ field.html_name }}" 
                                                 id="{{ field.id_for_label }}"
                                                 placeholder="Password"
                                                 class="w-full rounded-2xl border border-vc-dark-200 bg-white pl-4 pr-11 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none"
+                                                style="padding-right: 2.75rem;"
                                                 value="{{ field.value|default:'' }}"
                                                 {% if field.field.required %}required{% endif %}
                                             >
                                             <button 
                                                 type="button" 
                                                 class="absolute right-3.5 top-1/2 -translate-y-1/2 text-vc-dark-400 hover:text-vc-blue transition-colors focus:outline-none"
+                                                style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);"
                                                 @click="show = !show"
                                                 aria-label="Toggle password visibility"
                                             >
