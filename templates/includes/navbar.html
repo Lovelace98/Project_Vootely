@@ -30,6 +30,9 @@
                             Dashboard
                         </a>
                     {% else %}
+                        <a href="{% url 'account_login' %}" class="rounded-full px-3.5 py-2 text-sm font-bold text-vc-dark-500 transition hover:bg-vc-blue-50 hover:text-vc-blue">
+                            Login
+                        </a>
                         <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm">
                             Host an Event
                         </a>
@@ -68,6 +71,9 @@
                             Dashboard
                         </a>
                     {% else %}
+                        <a href="{% url 'account_login' %}" class="vc-btn vc-btn-outline-blue vc-btn-sm justify-center" @click="mobileNavOpen = false">
+                            Login
+                        </a>
                         <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-sm justify-center" @click="mobileNavOpen = false">
                             Host an Event
                         </a>

@@ -1473,9 +1473,18 @@ html {
 }
 
 .vc-landing-feature-card {
+  position: relative;
+  overflow: hidden;
   min-height: 18rem;
   padding: 1.5rem;
   background: var(--color-vc-blue);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.vc-landing-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 60px rgba(25, 27, 223, 0.25);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .vc-landing-feature-card h3,
@@ -1524,6 +1533,8 @@ html {
 }
 
 .vc-election-panel {
+  position: relative;
+  overflow: hidden;
   background: var(--color-vc-blue);
   box-shadow: 0 24px 64px rgba(25, 27, 223, 0.22);
 }
@@ -1542,6 +1553,65 @@ html {
 .vc-election-card h3,
 .vc-election-card p {
   color: #ffffff;
+}
+
+/* ─── Card Spirals and Animations ──────────────────── */
+
+@keyframes vc-spiral-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vc-card-spiral {
+  position: absolute;
+  right: -3.5rem;
+  bottom: -3.5rem;
+  width: 14rem;
+  height: 14rem;
+  opacity: 0.1;
+  color: inherit;
+  pointer-events: none;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+}
+
+.vc-card-spiral svg {
+  width: 100%;
+  height: 100%;
+  animation: vc-spiral-spin 60s linear infinite;
+  transform-origin: center;
+}
+
+.vc-landing-feature-card:hover .vc-card-spiral {
+  transform: scale(1.15) rotate(15deg);
+  opacity: 0.2;
+}
+
+.vc-panel-spiral {
+  position: absolute;
+  right: -8rem;
+  bottom: -8rem;
+  width: 28rem;
+  height: 28rem;
+  opacity: 0.05;
+  color: #ffffff;
+  pointer-events: none;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+}
+
+.vc-panel-spiral svg {
+  width: 100%;
+  height: 100%;
+  animation: vc-spiral-spin 90s linear infinite;
+  transform-origin: center;
+}
+
+.vc-election-panel:hover .vc-panel-spiral {
+  transform: scale(1.12) rotate(-10deg);
+  opacity: 0.09;
 }
 
 .vc-live-events-shell {

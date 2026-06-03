@@ -126,10 +126,31 @@
 
                 <div class="space-y-4 max-w-xl">
                     {% for field in password_form %}
-                        <div>
+                        <div x-data="{ show: false }">
                             <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-vc-dark dark:text-slate-200 mb-2">{{ field.label }}</label>
-                            <input type="password" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required
-                                   class="w-full rounded-2xl border border-vc-dark-200 bg-white px-4 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white">
+                            <div class="relative">
+                                <input :type="show ? 'text' : 'password'" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required
+                                       class="w-full rounded-2xl border border-vc-dark-200 bg-white pl-4 pr-11 py-3 text-vc-dark focus:border-vc-blue focus:ring-vc-blue focus:outline-none dark:border-vc-dark-600 dark:bg-vc-surface-raised dark:text-white">
+                                <button 
+                                    type="button" 
+                                    class="absolute right-3.5 top-1/2 -translate-y-1/2 text-vc-dark-400 hover:text-vc-blue transition-colors focus:outline-none dark:text-slate-400 dark:hover:text-vc-blue"
+                                    @click="show = !show"
+                                    aria-label="Toggle password visibility"
+                                >
+                                    <!-- Eye Open Icon -->
+                                    <svg x-show="show" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <!-- Eye Closed Icon -->
+                                    <svg x-show="!show" x-cloak xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                        <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                        <line x1="2" y1="2" x2="22" y2="22"/>
+                                    </svg>
+                                </button>
+                            </div>
                             {% if field.errors %}
                                 <p class="mt-1 text-xs font-semibold text-vc-danger">{{ field.errors.0 }}</p>
                             {% endif %}
