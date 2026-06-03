@@ -59,13 +59,26 @@
             </div>
             <div class="mt-4">
                 <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.event_count }}</p>
+                {% if comparison.show_comparison %}
                 <div class="mt-3 flex items-center">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                        12.1%
-                    </span>
-                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                    {% if comparison.events.is_positive %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.events.pct }}%
+                        </span>
+                    {% elif comparison.events.is_negative %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.events.pct }}%
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                            0.0%
+                        </span>
+                    {% endif %}
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">{{ comparison.label }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
         
@@ -79,13 +92,26 @@
             </div>
             <div class="mt-4">
                 <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.published_count }}</p>
+                {% if comparison.show_comparison %}
                 <div class="mt-3 flex items-center">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                        6.3%
-                    </span>
-                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                    {% if comparison.published.is_positive %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.published.pct }}%
+                        </span>
+                    {% elif comparison.published.is_negative %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.published.pct }}%
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                            0.0%
+                        </span>
+                    {% endif %}
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">{{ comparison.label }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
         
@@ -99,13 +125,26 @@
             </div>
             <div class="mt-4">
                 <p class="text-3xl font-extrabold text-vc-dark tracking-tight">{{ summary.confirmed_votes|default:"0" }}</p>
+                {% if comparison.show_comparison %}
                 <div class="mt-3 flex items-center">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
-                        2.4%
-                    </span>
-                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                    {% if comparison.votes.is_positive %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.votes.pct }}%
+                        </span>
+                    {% elif comparison.votes.is_negative %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.votes.pct }}%
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                            0.0%
+                        </span>
+                    {% endif %}
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">{{ comparison.label }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
         
@@ -121,13 +160,26 @@
                 <p class="text-3xl font-extrabold text-vc-dark tracking-tight leading-none">
                     GHS {{ summary.confirmed_revenue|floatformat:0 }}<span class="text-base font-bold text-vc-dark-400">.00</span>
                 </p>
+                {% if comparison.show_comparison %}
                 <div class="mt-3 flex items-center">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                        12.1%
-                    </span>
-                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">vs last month</span>
+                    {% if comparison.revenue.is_positive %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.revenue.pct }}%
+                        </span>
+                    {% elif comparison.revenue.is_negative %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><polyline points="18 15 12 9 6 15"/></svg>
+                            {{ comparison.revenue.pct }}%
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                            0.0%
+                        </span>
+                    {% endif %}
+                    <span class="ml-2 text-[10px] font-bold text-vc-dark-300">{{ comparison.label }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

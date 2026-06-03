@@ -530,3 +530,94 @@ class EventFlowTests(TestCase):
         self.assertNotContains(response, 'Leaderboard is hidden')
         self.assertIsNotNone(response.context.get('leaderboard'))
         self.assertIsNone(response.context.get('leaderboard_hidden'))
+
+    def test_dashboard_comparison_trends(self):
+        from datetime import datetime, timezone as dt_timezone
+        cache.clear()
+        # Mock timezone.now to a fixed date: June 15, 2026
+        fixed_now = datetime(2026, 6, 15, 12, 0, 0, tzinfo=dt_timezone.utc)
+
+        # 1. Previous period (May 2026) event and purchase
+        may_time = fixed_now - timedelta(days=20) # May 26, 2026
+        with patch('django.utils.timezone.now', return_value=may_time):
+            event_may = self.create_event(status=Event.Status.PUBLISHED, published_at=may_time)
+            nominee_may = self.create_nominee(event_may, name='Ada May')
+            attempt_may = PaymentAttempt.objects.create(
+                event=event_may,
+                nominee=nominee_may,
+                amount=Decimal('10.00'),
+                currency='GHS',
+                platform_commission_percent=event_may.platform_commission_percent,
+                vote_quantity=4,
+                voter_email='may@example.com',
+                gateway_reference='may-ref',
+                status=PaymentAttempt.Status.PAID,
+            )
+            VotePurchase.objects.create(
+                event=event_may,
+                nominee=nominee_may,
+                payment_attempt=attempt_may,
+                quantity=4,
+                amount_paid=Decimal('10.00'),
+                currency='GHS',
+                payment_reference='may-ref',
+                paid_at=may_time,
+            )
+
+        # 2. Current period (June 2026) events and purchase
+        june_time = fixed_now - timedelta(days=2) # June 13, 2026
+        with patch('django.utils.timezone.now', return_value=june_time):
+            event_june1 = self.create_event(status=Event.Status.PUBLISHED, published_at=june_time)
+            event_june2 = self.create_event(status=Event.Status.PUBLISHED, published_at=june_time)
+            nominee_june = self.create_nominee(event_june1, name='Bob June')
+            attempt_june = PaymentAttempt.objects.create(
+                event=event_june1,
+                nominee=nominee_june,
+                amount=Decimal('15.00'),
+                currency='GHS',
+                platform_commission_percent=event_june1.platform_commission_percent,
+                vote_quantity=6,
+                voter_email='june@example.com',
+                gateway_reference='june-ref',
+                status=PaymentAttempt.Status.PAID,
+            )
+            VotePurchase.objects.create(
+                event=event_june1,
+                nominee=nominee_june,
+                payment_attempt=attempt_june,
+                quantity=6,
+                amount_paid=Decimal('15.00'),
+                currency='GHS',
+                payment_reference='june-ref',
+                paid_at=june_time,
+            )
+
+        # Retrieve context for timeframe='this_month' with mocked now
+        with patch('django.utils.timezone.now', return_value=fixed_now):
+            context = dashboard_home_context(self.organizer, timeframe='this_month')
+
+        # Assertions for totals
+        self.assertEqual(context['summary']['confirmed_votes'], 6)
+        self.assertEqual(context['summary']['confirmed_revenue'], Decimal('15.00'))
+
+        # Assertions for comparison trends
+        # Events: Current = 2 created (event_june1, event_june2), Previous = 1 created (event_may)
+        # Trend calculation: ((2 - 1) / 1) * 100 = +100%
+        self.assertTrue(context['comparison']['show_comparison'])
+        self.assertEqual(context['comparison']['label'], 'vs last month')
+
+        self.assertTrue(context['comparison']['events']['is_positive'])
+        self.assertEqual(context['comparison']['events']['pct'], 100.0)
+
+        # Published: Current = 2 published, Previous = 1 published -> +100%
+        self.assertTrue(context['comparison']['published']['is_positive'])
+        self.assertEqual(context['comparison']['published']['pct'], 100.0)
+
+        # Votes: Current = 6, Previous = 4
+        # Trend: ((6 - 4) / 4) * 100 = 50.0%
+        self.assertTrue(context['comparison']['votes']['is_positive'])
+        self.assertEqual(context['comparison']['votes']['pct'], 50.0)
+
+        # Revenue: Current = 15.00, Previous = 10.00 -> 50.0%
+        self.assertTrue(context['comparison']['revenue']['is_positive'])
+        self.assertEqual(context['comparison']['revenue']['pct'], 50.0)

@@ -92,6 +92,58 @@ def timeframe_start(timeframe, now=None):
     return None
 
 
+def get_previous_period_boundaries(timeframe, now=None):
+    now = now or timezone.now()
+    current_start = timeframe_start(timeframe, now)
+    if not current_start:
+        return None, None, ''
+
+    if timeframe == 'today':
+        prev_start = current_start - datetime.timedelta(days=1)
+        prev_end = current_start
+        label = 'vs yesterday'
+    elif timeframe == 'this_week':
+        prev_start = current_start - datetime.timedelta(days=7)
+        prev_end = current_start
+        label = 'vs last week'
+    elif timeframe == 'this_month':
+        if current_start.month == 1:
+            prev_start = current_start.replace(year=current_start.year - 1, month=12)
+        else:
+            prev_start = current_start.replace(month=current_start.month - 1)
+        prev_end = current_start
+        label = 'vs last month'
+    elif timeframe == 'this_year':
+        prev_start = current_start.replace(year=current_start.year - 1)
+        prev_end = current_start
+        label = 'vs last year'
+    else:
+        prev_start, prev_end, label = None, None, ''
+
+    return prev_start, prev_end, label
+
+
+def _calculate_trend(current, previous):
+    current_val = float(current or 0)
+    prev_val = float(previous or 0)
+
+    if prev_val == 0:
+        if current_val > 0:
+            pct = 100.0
+        else:
+            pct = 0.0
+    else:
+        pct = round(((current_val - prev_val) / prev_val) * 100, 1)
+
+    return {
+        'pct': abs(pct),
+        'formatted': f"{pct:+.1f}%" if pct != 0 else "0.0%",
+        'is_positive': pct > 0,
+        'is_negative': pct < 0,
+        'is_neutral': pct == 0,
+    }
+
+
 def _scoped_event_slug(user, event_slug):
     event_slug = (event_slug or '').strip()
     if not event_slug:
@@ -172,7 +224,7 @@ def dashboard_home_context(user, *, timeframe='this_month', event_slug=''):
     timeframe = normalize_timeframe(timeframe)
     event_slug = _scoped_event_slug(user, event_slug)
     key = (
-        f'dashboard-home:v3:user:{user.pk}:tf:{timeframe}:event:{event_slug or "all"}:'
+        f'dashboard-home:v4:user:{user.pk}:tf:{timeframe}:event:{event_slug or "all"}:'
         f'ov:{_organizer_version(user)}:ev:{_event_version_for_slug(user, event_slug)}'
     )
 
@@ -260,6 +312,54 @@ def dashboard_home_context(user, *, timeframe='this_month', event_slug=''):
                 monthly_votes[month - 1] = stat['votes'] or 0
                 monthly_revenue[month - 1] = float(stat['revenue'] or 0.0)
 
+        # Dynamic KPI Trend Calculations
+        current_start = timeframe_start(timeframe, now)
+        prev_start, prev_end, comparison_label = get_previous_period_boundaries(timeframe, now)
+        show_comparison = (current_start is not None)
+
+        if show_comparison:
+            events_base_qs = competition_events_queryset(user)
+            # 1. Total events created
+            current_events_created = events_base_qs.filter(created_at__gte=current_start).count()
+            prev_events_created = events_base_qs.filter(created_at__gte=prev_start, created_at__lt=prev_end).count()
+            event_trend = _calculate_trend(current_events_created, prev_events_created)
+
+            # 2. Published events
+            current_pub_created = events_base_qs.filter(status=Event.Status.PUBLISHED, published_at__gte=current_start).count()
+            prev_pub_created = events_base_qs.filter(status=Event.Status.PUBLISHED, published_at__gte=prev_start, published_at__lt=prev_end).count()
+            pub_trend = _calculate_trend(current_pub_created, prev_pub_created)
+
+            # 3 & 4. Confirmed votes & Gross revenue (filtered by event_slug if set)
+            prev_purchases_qs = VotePurchase.objects.filter(event__owner=user, paid_at__gte=prev_start, paid_at__lt=prev_end)
+            if event_slug:
+                prev_purchases_qs = prev_purchases_qs.filter(event__slug=event_slug)
+
+            prev_totals = prev_purchases_qs.aggregate(
+                total_votes=Coalesce(Sum('quantity'), Value(0), output_field=IntegerField()),
+                total_revenue=Coalesce(
+                    Sum('amount_paid'),
+                    Value(Decimal('0.00')),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
+                ),
+            )
+
+            votes_trend = _calculate_trend(totals['total_votes'], prev_totals['total_votes'])
+            revenue_trend = _calculate_trend(totals['total_revenue'], prev_totals['total_revenue'])
+        else:
+            event_trend = _calculate_trend(0, 0)
+            pub_trend = _calculate_trend(0, 0)
+            votes_trend = _calculate_trend(0, 0)
+            revenue_trend = _calculate_trend(0, 0)
+
+        comparison_data = {
+            'show_comparison': show_comparison,
+            'label': comparison_label,
+            'events': event_trend,
+            'published': pub_trend,
+            'votes': votes_trend,
+            'revenue': revenue_trend,
+        }
+
         return {
             'events': events,
             'recent_purchases': recent_purchases,
@@ -273,6 +373,7 @@ def dashboard_home_context(user, *, timeframe='this_month', event_slug=''):
             'monthly_revenue': monthly_revenue,
             'timeframe': timeframe,
             'selected_event_slug': event_slug,
+            'comparison': comparison_data,
             'summary': {
                 'event_count': len(events),
                 'published_count': sum(1 for event in events if event.status == Event.Status.PUBLISHED),
