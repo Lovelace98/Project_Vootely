@@ -348,10 +348,11 @@
                 </span>
                 <span class="vc-bottom-nav-label">Elections</span>
             </a>
-            <a href="{% url 'dashboard:home' %}" class="vc-bottom-nav-action {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-label="Dashboard home">
-                <span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+            <a href="{% url 'dashboard:home' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
                 </span>
+                <span class="vc-bottom-nav-label">Home</span>
             </a>
             <a href="{% url 'dashboard:revenue' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'revenue' or request.resolver_match.url_name == 'withdrawals' %}active{% endif %}">
                 <span class="vc-bottom-nav-icon">

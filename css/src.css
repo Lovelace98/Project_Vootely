@@ -663,72 +663,69 @@ h1, h2, h3, h4, h5, h6 {
     bottom: calc(0.75rem + env(safe-area-inset-bottom));
     z-index: 45;
     display: grid;
-    grid-template-columns: 1fr 1fr 4.25rem 1fr 1fr;
+    grid-template-columns: repeat(5, 1fr);
     align-items: center;
-    min-height: 4.75rem;
-    padding: 0.55rem 0.7rem;
+    min-height: 3.5rem;
+    padding: 0.3rem 0.4rem;
     border: 1px solid rgba(9, 8, 13, 0.06);
-    border-radius: 1.75rem;
-    background: rgba(255, 255, 255, 0.94);
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.9);
     box-shadow:
-      0 18px 46px rgba(9, 8, 13, 0.15),
-      0 4px 14px rgba(25, 27, 223, 0.08);
+      0 12px 36px rgba(9, 8, 13, 0.12),
+      0 4px 10px rgba(25, 27, 223, 0.06);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
 
   .dark .vc-bottom-nav {
     border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(18, 18, 26, 0.94);
+    background: rgba(18, 18, 26, 0.9);
     box-shadow:
-      0 18px 46px rgba(0, 0, 0, 0.35),
-      0 4px 14px rgba(25, 27, 223, 0.14);
+      0 12px 36px rgba(0, 0, 0, 0.3),
+      0 4px 10px rgba(25, 27, 223, 0.12);
   }
 
   .vc-bottom-nav-item {
     display: flex;
     min-width: 0;
-    height: 3.35rem;
+    height: 2.85rem;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.2rem;
-    border-radius: 9999px;
+    gap: 0.15rem;
+    border-radius: 0.85rem;
     color: var(--color-vc-dark-400);
     text-decoration: none;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
   .vc-bottom-nav-item.active {
-    background: transparent;
+    background: var(--color-vc-blue-50);
     color: var(--color-vc-blue);
   }
 
   .dark .vc-bottom-nav-item.active {
-    background: transparent;
+    background: rgba(25, 27, 223, 0.16);
     color: var(--color-vc-blue-200);
   }
 
   .vc-bottom-nav-icon {
     display: flex;
-    height: 2rem;
-    width: 2rem;
+    height: 1.45rem;
+    width: 1.45rem;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
-  .vc-bottom-nav-item.active .vc-bottom-nav-icon {
-    height: 2.55rem;
-    width: 2.55rem;
-    background: var(--color-vc-blue-50);
-    box-shadow: 0 8px 18px rgba(25, 27, 223, 0.12);
+  .vc-bottom-nav-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
   }
 
-  .dark .vc-bottom-nav-item.active .vc-bottom-nav-icon {
-    background: rgba(25, 27, 223, 0.24);
-    box-shadow: 0 8px 18px rgba(25, 27, 223, 0.18);
+  .vc-bottom-nav-item.active .vc-bottom-nav-icon {
+    transform: scale(1.05);
   }
 
   .vc-bottom-nav-label {
@@ -736,55 +733,9 @@ h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.67rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  .vc-bottom-nav-action {
-    display: flex;
-    height: 4.15rem;
-    width: 4.15rem;
-    align-items: center;
-    justify-content: center;
-    justify-self: center;
-    border-radius: 9999px;
-    background: var(--color-vc-blue-50);
-    color: var(--color-vc-blue);
-    box-shadow:
-      0 14px 28px rgba(25, 27, 223, 0.16),
-      inset 0 0 0 0.45rem rgba(255, 255, 255, 0.58);
-    transform: translateY(-1.15rem);
-  }
-
-  .vc-bottom-nav-action.active {
-    background: var(--color-vc-blue);
-    color: white;
-    box-shadow:
-      0 14px 28px rgba(25, 27, 223, 0.2),
-      inset 0 0 0 0.45rem rgba(255, 255, 255, 0.5);
-  }
-
-  .dark .vc-bottom-nav-action {
-    background: rgba(25, 27, 223, 0.24);
-    color: var(--color-vc-blue-200);
-    box-shadow:
-      0 14px 28px rgba(25, 27, 223, 0.18),
-      inset 0 0 0 0.45rem rgba(184, 185, 245, 0.08);
-  }
-
-  .dark .vc-bottom-nav-action.active {
-    background: var(--color-vc-blue);
-    color: white;
-  }
-
-  .vc-bottom-nav-action span {
-    display: flex;
-    height: 2.65rem;
-    width: 2.65rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 750;
+    line-height: 1.1;
   }
 }
 
@@ -1568,11 +1519,11 @@ html {
 
 .vc-card-spiral {
   position: absolute;
-  right: -3.5rem;
-  bottom: -3.5rem;
-  width: 14rem;
-  height: 14rem;
-  opacity: 0.1;
+  right: -2rem;
+  bottom: -2rem;
+  width: 8rem;
+  height: 8rem;
+  opacity: 0.08;
   color: inherit;
   pointer-events: none;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
@@ -1585,6 +1536,16 @@ html {
   transform-origin: center;
 }
 
+@media (min-width: 768px) {
+  .vc-card-spiral {
+    right: -3.5rem;
+    bottom: -3.5rem;
+    width: 14rem;
+    height: 14rem;
+    opacity: 0.1;
+  }
+}
+
 .vc-landing-feature-card:hover .vc-card-spiral {
   transform: scale(1.15) rotate(15deg);
   opacity: 0.2;
@@ -1592,11 +1553,11 @@ html {
 
 .vc-panel-spiral {
   position: absolute;
-  right: -8rem;
-  bottom: -8rem;
-  width: 28rem;
-  height: 28rem;
-  opacity: 0.05;
+  right: -4rem;
+  bottom: -4rem;
+  width: 16rem;
+  height: 16rem;
+  opacity: 0.04;
   color: #ffffff;
   pointer-events: none;
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
@@ -1607,6 +1568,16 @@ html {
   height: 100%;
   animation: vc-spiral-spin 90s linear infinite;
   transform-origin: center;
+}
+
+@media (min-width: 1024px) {
+  .vc-panel-spiral {
+    right: -8rem;
+    bottom: -8rem;
+    width: 28rem;
+    height: 28rem;
+    opacity: 0.05;
+  }
 }
 
 .vc-election-panel:hover .vc-panel-spiral {
@@ -1868,18 +1839,19 @@ html {
   }
 
   .vc-whatsapp-hint {
-    left: 50%;
+    left: 0;
     top: auto;
     bottom: calc(100% + 0.75rem);
-    transform: translateX(-50%);
-    min-width: 11rem;
-    max-width: 14rem;
+    transform: none;
+    min-width: 12rem;
+    max-width: 16rem;
     white-space: normal;
-    text-align: center;
+    text-align: left;
+    border-radius: 1rem;
   }
 
   .vc-whatsapp-hint::before {
-    left: 50%;
+    left: 1.575rem;
     top: auto;
     bottom: -0.35rem;
     transform: translateX(-50%) rotate(45deg);
