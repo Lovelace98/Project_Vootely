@@ -52,6 +52,10 @@ END
 echo "Running database migrations..."
 python manage.py migrate --noinput
 
+# Collect static files (needed because of persistent static volume mounting)
+echo "Collecting static files..."
+python manage.py collectstatic --noinput --clear
+
 # Start application
 echo "Starting gunicorn server..."
 exec gunicorn votecentral.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -
