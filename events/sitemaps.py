@@ -1,9 +1,22 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
+from urllib.parse import urlparse
+from django.contrib.sites.models import Site
+from votecentral.public_urls import get_public_base_url
 from events.models import Event
 from nominees.models import Nominee
 
-class StaticViewSitemap(Sitemap):
+class VootelySitemap(Sitemap):
+    def get_urls(self, page=1, site=None, protocol=None):
+        base_url = get_public_base_url()
+        if base_url:
+            parsed = urlparse(base_url)
+            domain = parsed.netloc
+            protocol = parsed.scheme or 'https'
+            site = Site(domain=domain, name=domain)
+        return super().get_urls(page=page, site=site, protocol=protocol)
+
+class StaticViewSitemap(VootelySitemap):
     priority = 0.5
     changefreq = 'weekly'
 
@@ -19,7 +32,7 @@ class StaticViewSitemap(Sitemap):
     def location(self, item):
         return reverse(item)
 
-class EventSitemap(Sitemap):
+class EventSitemap(VootelySitemap):
     changefreq = 'daily'
     priority = 0.8
 
@@ -33,7 +46,7 @@ class EventSitemap(Sitemap):
     def lastmod(self, obj):
         return obj.updated_at
 
-class NomineeSitemap(Sitemap):
+class NomineeSitemap(VootelySitemap):
     changefreq = 'daily'
     priority = 0.7
 
