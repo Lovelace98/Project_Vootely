@@ -23,6 +23,23 @@
     <meta name="apple-mobile-web-app-title" content="Vootely">
     <link rel="apple-touch-icon" href="{% static 'images/favicon_512.png' %}">
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:title" content="{% block og_title %}Vootely | Paid Competitions and Secure Elections{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon_512.png' %}{% endblock %}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ canonical_url }}">
+    <meta name="twitter:title" content="{% block twitter_title %}Vootely | Paid Competitions and Secure Elections{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon_512.png' %}{% endblock %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">

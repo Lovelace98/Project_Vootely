@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
@@ -129,6 +130,7 @@ class PublicNomineeDetailView(DetailView):
             if payment_reference
             else ''
         )
+        context['ussd_short_code'] = getattr(settings, 'USSD_SHORT_CODE', '*920*24#')
         return context
 
 

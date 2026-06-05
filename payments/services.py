@@ -506,3 +506,85 @@ def resolve_paystack_account(account_number, bank_code):
     if not body.get('status'):
         raise ValidationError(body.get('message') or 'Could not resolve account.')
     return body.get('data')
+
+
+def detect_momo_provider(phone):
+    digits = ''.join(c for c in phone if c.isdigit())
+    if digits.startswith('233'):
+        local = '0' + digits[3:]
+    else:
+        local = digits
+        if not local.startswith('0') and len(local) == 9:
+            local = '0' + local
+
+    if len(local) < 3:
+        return 'mtn'
+
+    prefix3 = local[:3]
+    
+    mtn_prefixes = {'024', '054', '055', '059', '053', '025'}
+    telecel_prefixes = {'020', '050'}
+    tigo_prefixes = {'026', '056', '027', '057'}
+
+    if prefix3 in mtn_prefixes:
+        return 'mtn'
+    elif prefix3 in telecel_prefixes:
+        return 'vodafone'  # Paystack uses 'vodafone' internally for Telecel
+    elif prefix3 in tigo_prefixes:
+        return 'tigo'      # Paystack uses 'tigo' internally for AirtelTigo
+
+    return 'mtn'
+
+
+def charge_momo_stk_push(payment_attempt):
+    if not settings.PAYSTACK_SECRET_KEY:
+        raise RuntimeError('PAYSTACK_SECRET_KEY is not configured.')
+
+    raw_phone = payment_attempt.voter_phone
+    phone = raw_phone.strip()
+    if phone.startswith('+233'):
+        phone = '0' + phone[4:]
+    elif phone.startswith('233') and len(phone) == 12:
+        phone = '0' + phone[3:]
+
+    provider = detect_momo_provider(phone)
+    
+    payload = {
+        'reference': payment_attempt.gateway_reference,
+        'amount': amount_to_minor_units(payment_attempt.amount),
+        'currency': payment_attempt.currency,  # GHS
+        'email': payment_attempt.voter_email or 'ussd-voter@vootely.com',
+        'mobile_money': {
+            'phone': phone,
+            'provider': provider
+        },
+        'metadata': {
+            'payment_attempt_id': payment_attempt.pk,
+            'event_slug': payment_attempt.event.slug,
+            'nominee_ref': payment_attempt.nominee.slug,
+            'vote_quantity': payment_attempt.vote_quantity,
+            'voter_name': payment_attempt.voter_name,
+            'voter_phone': payment_attempt.voter_phone,
+            'is_ussd': True
+        }
+    }
+
+    response = requests.post(
+        'https://api.paystack.co/charge',
+        json=payload,
+        headers={
+            'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+            'Content-Type': 'application/json',
+        },
+        timeout=15,
+    )
+    response.raise_for_status()
+    body = response.json()
+    if not body.get('status'):
+        raise RuntimeError(body.get('message') or 'Paystack STK push charge initialization failed.')
+
+    # Update payment attempt status to pending
+    payment_attempt.status = PaymentAttempt.Status.PENDING
+    payment_attempt.save(update_fields=['status'])
+    return body
+

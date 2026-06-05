@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.sitemaps',
     'django_htmx',
     'allauth',
     'allauth.account',
@@ -240,6 +241,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'notifications.context_processors.unread_notifications',
                 'payments.context_processors.paystack_settings',
+                'votecentral.context_processors.canonical_url',
             ],
         },
     },
@@ -435,6 +437,7 @@ HUBTEL_TIMEOUT_SECONDS = env.int('HUBTEL_TIMEOUT_SECONDS', default=15)
 ARKESEL_API_KEY = env('ARKESEL_API_KEY', default='')
 ARKESEL_SMS_FROM = env('ARKESEL_SMS_FROM', default='Vootely')
 ARKESEL_SMS_BASE_URL = env('ARKESEL_SMS_BASE_URL', default='https://sms.arkesel.com/api/v2/sms/send')
+USSD_SHORT_CODE = env('USSD_SHORT_CODE', default='*920*24#')
 
 EMAIL_PROVIDER = env('EMAIL_PROVIDER', default='').strip().lower()
 BREVO_API_KEY = env('BREVO_API_KEY', default='')

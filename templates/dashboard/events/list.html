@@ -153,7 +153,7 @@
                             </div>
                             <div>
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Categories</span>
-                                <span class="font-bold text-vc-dark dark:text-white">{{ event.total_category_count }} categor{{ event.total_category_count|pluralize:"y,ies" }}</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{% with count=event.total_category_count|default:0 %}{{ count }} categor{{ count|pluralize:"y,ies" }}{% endwith %}</span>
                             </div>
                             <div class="col-span-2">
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Timeline</span>

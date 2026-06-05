@@ -86,6 +86,10 @@ class LandingPageContextMixin:
             'answer': 'Organizers publish an event, nominees receive public voting pages, and supporters pay per vote through Paystack. Votes are counted only after payment confirmation is received.',
         },
         {
+            'question': 'Does Vootely support offline USSD voting?',
+            'answer': 'Yes. For paid competitions, supporters can vote offline without internet or smartphones. Every nominee receives a unique 5-character voting code. Voters simply dial our platform shortcode, enter the nominee code and quantity, and complete the payment via a direct mobile money prompt on their screen.',
+        },
+        {
             'question': 'How do secure elections work on Vootely?',
             'answer': 'Organizers set positions and candidates, upload the voter roster, issue voter credentials, and then open the election. Voters use their credential link or token to access the ballot and cast their vote privately.',
         },
@@ -136,6 +140,7 @@ class LandingPageContextMixin:
             'contact_form': overrides.pop('contact_form', ContactInquiryForm()),
             'support_email': settings.SUPPORT_EMAIL,
             'whatsapp_url': f"https://wa.me/{whatsapp_phone}?{urlencode({'text': whatsapp_message})}",
+            'ussd_short_code': getattr(settings, 'USSD_SHORT_CODE', '*920*24#'),
         }
         context.update(overrides)
         return context
@@ -260,6 +265,7 @@ class EventDetailView(DetailView):
             if event.allow_public_nominations
             else ''
         )
+        context['ussd_short_code'] = getattr(settings, 'USSD_SHORT_CODE', '*920*24#')
         return context
 
 
@@ -544,10 +550,8 @@ class DashboardCompetitionsListView(LoginRequiredMixin, ListView):
     paginate_by = 6
 
     def get_queryset(self):
-        return Event.objects.filter(
-            owner=self.request.user,
-            kind=Event.Kind.PAID_COMPETITION,
-        ).prefetch_related('nominees', 'competition_categories').order_by('-start_at')
+        from .performance import competition_events_queryset
+        return competition_events_queryset(self.request.user).prefetch_related('nominees', 'competition_categories').order_by('-start_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

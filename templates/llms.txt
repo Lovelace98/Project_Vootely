@@ -1,0 +1,26 @@
+# Vootely
+
+> Vootely is a premium paid competitions and secure organizational elections platform based in Ghana, providing both modern web-based checkout and offline USSD voting channels.
+
+## Core Features
+
+- **Paid Voting Campaigns**: Allows organizations, associations, and student bodies to host public contests. Supporters can purchase votes using standard payment channels.
+- **Mobile Money & Cards**: Fully integrated with secure checkout options allowing online payments via Mobile Money (MTN, Telecel, AirtelTigo) and Visa/Mastercard.
+- **USSD Offline Integration**: Supports dial-to-vote shortcodes (default: `*920*24#`) compatible with basic feature phones (no internet, data, or smartphone required). Triggers direct MoMo STK push authorization prompts to the voter's screen.
+- **Stateless Session Tracking**: Backend matches phone and menu states across asynchronous USSD callback loops.
+- **Real-Time leaderboards**: Web leaderboards sync instantly with both web and USSD votes, ensuring clear standing visibility from launch to final certification.
+- **Structured Election Ballots**: Formal ballot structures allowing voter roster locking, credential-based secure access, and controlled results visibility.
+
+## Dynamic Paths
+
+- **Landing Page**: `{{ request.scheme }}://{{ request.get_host }}/` - Features public overview, live events highlights, USSD mockup demonstration, and organizer contacts.
+- **Active Public Campaigns**: `{{ request.scheme }}://{{ request.get_host }}/events/` - Feed of currently active public voting events.
+- **Sitemap Index**: `{{ request.scheme }}://{{ request.get_host }}/sitemap.xml` - Dynamic list of all public events and nominee pages.
+- **Service Worker Configuration**: `{{ request.scheme }}://{{ request.get_host }}/service-worker.js` - Dynamic PWA management script.
+- **PWA Manifest Configuration**: `{{ request.scheme }}://{{ request.get_host }}/manifest.json` - PWA specifications file.
+
+## Legal & Compliance
+
+- **Privacy Policy**: `{{ request.scheme }}://{{ request.get_host }}/privacy/` - Data governance and storage policies.
+- **Terms of Service**: `{{ request.scheme }}://{{ request.get_host }}/terms/` - Terms and agreements.
+- **Organizer Agreement**: `{{ request.scheme }}://{{ request.get_host }}/organizer-agreement/` - Platform fees, platform commission structures, and payout rules for campaign organizers.

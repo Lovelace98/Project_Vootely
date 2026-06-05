@@ -9,7 +9,12 @@ from django.utils import timezone
 
 
 def generate_vote_code():
-    return uuid.uuid4().hex[:8].upper()
+    import random
+    import string
+    # 5-character code excluding confusing characters (0, O, 1, I, L)
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    return ''.join(random.choices(chars, k=5))
+
 
 
 class CompetitionCategory(models.Model):
@@ -95,6 +100,21 @@ class Nominee(models.Model):
                 slug = f'{base_slug[:166]}-{counter}'
                 counter += 1
             self.slug = slug
+
+        if not self.code:
+            while True:
+                candidate_code = generate_vote_code()
+                if not Nominee.objects.filter(code=candidate_code).exists():
+                    self.code = candidate_code
+                    break
+        else:
+            if not self.pk and Nominee.objects.filter(code=self.code).exists():
+                while True:
+                    candidate_code = generate_vote_code()
+                    if not Nominee.objects.filter(code=candidate_code).exists():
+                        self.code = candidate_code
+                        break
+
         self.full_clean()
         super().save(*args, **kwargs)
 

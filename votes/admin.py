@@ -3,7 +3,7 @@ from unfold.admin import ModelAdmin
 from unfold.contrib.filters.admin import AutocompleteSelectFilter, RangeDateTimeFilter, RangeNumericFilter
 
 from votecentral.admin_utils import ExportCsvMixin
-from .models import VotePurchase
+from .models import VotePurchase, USSDSession
 
 
 @admin.register(VotePurchase)
@@ -49,3 +49,34 @@ class VotePurchaseAdmin(ExportCsvMixin, ModelAdmin):
         'created_at',
     )
     actions = ExportCsvMixin.actions
+
+
+@admin.register(USSDSession)
+class USSDSessionAdmin(ModelAdmin):
+    list_display = (
+        'session_id',
+        'phone_number',
+        'current_state',
+        'votes_count',
+        'amount_due',
+        'updated_at',
+    )
+    search_fields = (
+        'session_id',
+        'phone_number',
+        'current_state',
+    )
+    list_filter = (
+        'current_state',
+    )
+    readonly_fields = (
+        'session_id',
+        'phone_number',
+        'user_id',
+        'current_state',
+        'nominee_id',
+        'votes_count',
+        'amount_due',
+        'created_at',
+        'updated_at',
+    )
