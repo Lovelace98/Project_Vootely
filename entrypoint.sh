@@ -54,7 +54,7 @@ python manage.py migrate --noinput
 
 # Collect static files (needed because of persistent static volume mounting)
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear
+python manage.py collectstatic --noinput --clear --ignore=src.css
 
 # Start application
 echo "Starting daphne server..."

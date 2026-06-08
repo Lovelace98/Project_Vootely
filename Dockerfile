@@ -29,7 +29,7 @@ COPY . /app/
 RUN rm -f bin/tailwindcss && python manage.py tailwind build
 
 # Collect static files for WhiteNoise
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput --ignore=src.css
 
 # Make entrypoint script executable
 RUN chmod +x /app/entrypoint.sh
