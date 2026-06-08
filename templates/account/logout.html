@@ -47,14 +47,18 @@
                     <h2 class="mt-4 text-3xl font-extrabold text-vc-dark tracking-tight">Log Out</h2>
                     <p class="mt-2 text-sm text-vc-dark-400 font-medium">Are you sure you want to end your session?</p>
 
-                    <form method="post" action="{% url 'account_logout' %}" class="mt-8">
+                    <form method="post" action="{% url 'account_logout' %}" class="mt-8" x-data="{ loading: false }" @submit="loading = true">
                         {% csrf_token %}
                         {% if redirect_field_value %}
                         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
                         {% endif %}
-                        <button type="submit"
+                        <button type="submit" :disabled="loading"
                             class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
-                            Confirm Logout
+                            <span x-show="!loading">Confirm Logout</span>
+                            <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                <span>Signing out...</span>
+                            </span>
                         </button>
                     </form>
 
@@ -86,7 +90,7 @@
                 class="hover:text-vc-blue hover:underline transition-all">Privacy</a>
             <a href="{% url 'events:organizer_agreement' %}"
                 class="hover:text-vc-blue hover:underline transition-all">Organizer Agreement</a>
-            <a href="mailto:lovesdesigns1@gmail.com" class="hover:text-vc-blue hover:underline transition-all">Contact
+            <a href="mailto:{{ support_email }}" class="hover:text-vc-blue hover:underline transition-all">Contact
                 Us</a>
         </div>
     </div>

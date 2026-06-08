@@ -12,7 +12,15 @@ from elections.services import (
     publish_election_results,
 )
 from votecentral.admin_utils import ExportCsvMixin, run_guarded_action, status_badge
-from .models import ContactInquiry, Event
+from .models import ContactInquiry, Event, VoteBundle
+
+
+@admin.register(VoteBundle)
+class VoteBundleAdmin(ModelAdmin):
+    list_display = ('event', 'quantity', 'price', 'label', 'is_active')
+    list_filter = ('is_active', 'event')
+    search_fields = ('event__title', 'label')
+    list_select_related = ('event',)
 
 
 @admin.register(Event)
@@ -22,8 +30,11 @@ class EventAdmin(ExportCsvMixin, ModelAdmin):
         'owner',
         'kind',
         'status_display',
+        'ussd_code',
         'commission_percent_display',
         'commission_status_display',
+        'ticket_commission_percent',
+        'ticket_commission_status_display',
         'vote_price',
         'currency',
         'is_public',
@@ -41,12 +52,18 @@ class EventAdmin(ExportCsvMixin, ModelAdmin):
         'is_public',
         'show_leaderboard',
     )
-    search_fields = ('title', 'owner__email', 'slug')
+    search_fields = ('title', 'owner__email', 'slug', 'public_code', '=ussd_code')
     list_select_related = ('owner',)
     autocomplete_fields = ('owner',)
     date_hierarchy = 'created_at'
     prepopulated_fields = {'slug': ('title',)}
-    readonly_fields = ('platform_commission_set_at', 'platform_commission_set_by')
+    readonly_fields = (
+        'platform_commission_set_at',
+        'platform_commission_set_by',
+        'ticket_commission_set_at',
+        'ticket_commission_set_by',
+        'ussd_code',
+    )
     actions = ExportCsvMixin.actions + (
         'publish_competitions',
         'unpublish_competitions',
@@ -79,15 +96,23 @@ class EventAdmin(ExportCsvMixin, ModelAdmin):
             return status_badge('info', 'Configured')
         return status_badge('warning', 'Unset')
 
+    @admin.display(description='Ticket Commission Status')
+    def ticket_commission_status_display(self, obj):
+        if obj.ticket_commission_is_locked():
+            return status_badge('success', 'Locked')
+        return status_badge('info', 'Configurable')
+
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = list(super().get_readonly_fields(request, obj))
         if obj and obj.commission_is_locked():
             readonly_fields.append('platform_commission_percent')
+        if obj and obj.ticket_commission_is_locked():
+            readonly_fields.append('ticket_commission_percent')
         return readonly_fields
 
     def save_model(self, request, obj, form, change):
+        previous = Event.objects.filter(pk=obj.pk).first() if change else None
         if obj.kind == Event.Kind.PAID_COMPETITION:
-            previous = Event.objects.filter(pk=obj.pk).first() if change else None
             previous_percent = previous.platform_commission_percent if previous else None
             if obj.platform_commission_percent != previous_percent:
                 if obj.platform_commission_percent is None:
@@ -100,6 +125,10 @@ class EventAdmin(ExportCsvMixin, ModelAdmin):
             obj.platform_commission_percent = None
             obj.platform_commission_set_at = None
             obj.platform_commission_set_by = None
+        previous_ticket_percent = previous.ticket_commission_percent if previous else None
+        if obj.ticket_commission_percent != previous_ticket_percent:
+            obj.ticket_commission_set_at = timezone.now()
+            obj.ticket_commission_set_by = request.user
         super().save_model(request, obj, form, change)
 
     @admin.action(description='Publish selected paid competitions')

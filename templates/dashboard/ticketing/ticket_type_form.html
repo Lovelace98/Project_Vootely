@@ -1,0 +1,58 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Ticket Type | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="mx-auto max-w-3xl space-y-6 vc-animate-in">
+    <div>
+        <p class="vc-section-label">{{ event.title }}</p>
+        <h1 class="mt-1 vc-section-title dark:text-white">Ticket type</h1>
+    </div>
+    <form method="post" class="vc-card space-y-5 p-6"
+          x-data="{ loading: false }" @submit="loading = true">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
+                {{ form.non_field_errors|join:", " }}
+            </div>
+        {% endif %}
+        {% for field in form %}
+            {% if field.field.widget.input_type == 'checkbox' %}
+                <div class="flex items-start gap-3 rounded-xl border border-vc-dark-100/30 p-4 hover:bg-vc-surface transition-colors">
+                    <div class="pt-0.5">
+                        {{ field }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-vc-dark dark:text-white" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {% if field.help_text %}
+                            <p class="mt-0.5 text-xs text-vc-dark-300">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-vc-dark-500 dark:text-slate-300" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="mt-1 text-xs text-vc-dark-300">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                        <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent w-full justify-center">
+            <span x-show="!loading">Save ticket type</span>
+            <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                <span>Saving...</span>
+            </span>
+        </button>
+    </form>
+</section>
+{% endblock %}

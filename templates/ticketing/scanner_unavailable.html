@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Scanner Unavailable | Vootely{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-xl space-y-6 vc-animate-in">
+    <div class="vc-card p-8 text-center">
+        <p class="vc-section-label">{{ scanner_pass.gate_name }}</p>
+        <h1 class="mt-2 text-2xl font-bold text-vc-dark dark:text-white">Scanner pass unavailable</h1>
+        <p class="mt-3 text-sm text-vc-dark-400">
+            This scanner pass is expired, revoked, or replaced. Ask the event organizer for a fresh gate link and PIN.
+        </p>
+        <p class="mt-2 text-xs text-vc-dark-400">
+            If you changed phones, changed browsers, cleared cookies, or used private browsing, the organizer may need to reset your device binding.
+        </p>
+    </div>
+</section>
+{% endblock %}

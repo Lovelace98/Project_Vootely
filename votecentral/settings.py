@@ -77,6 +77,8 @@ if USE_X_FORWARDED_PROTO:
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 INSTALLED_APPS = [
     'daphne',
@@ -106,6 +108,7 @@ INSTALLED_APPS = [
     'nominees',
     'votes',
     'payments',
+    'ticketing',
     'wallets',
     'notifications',
 ]
@@ -242,6 +245,7 @@ TEMPLATES = [
                 'notifications.context_processors.unread_notifications',
                 'payments.context_processors.paystack_settings',
                 'votecentral.context_processors.canonical_url',
+                'votecentral.context_processors.support_contact',
             ],
         },
     },
@@ -392,7 +396,12 @@ if not DEBUG:
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET = False
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m',
+    'signup': '3/10m',
+    'confirm_email': '5/5m',
+}
 ACCOUNT_FORMS = {
     'signup': 'accounts.forms.CustomSignupForm',
 }
@@ -402,8 +411,12 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-SUPPORT_EMAIL = env('SUPPORT_EMAIL', default='lovesdesigns1@gmail.com')
-SUPPORT_PHONE = env('SUPPORT_PHONE', default='+233 548988503')
+SUPPORT_EMAIL = env('SUPPORT_EMAIL', default='support@vootely.com')
+SUPPORT_PHONE = env('SUPPORT_PHONE', default='+233 54 898 8503')
+SUPPORT_NAME = env('SUPPORT_NAME', default='Vootely')
+SECURITY_EMAIL = env('SECURITY_EMAIL', default='security@vootely.com')
+BREVO_SENDER_EMAIL = env('BREVO_SENDER_EMAIL', default='853e5e001@smtp-brevo.com')
+USSD_VOTER_EMAIL = env('USSD_VOTER_EMAIL', default='ussd-voter@vootely.com')
 
 EMAIL_BACKEND = env(
     'EMAIL_BACKEND',
@@ -421,7 +434,7 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
 EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Vootely <no-reply@localhost>')
 SERVER_EMAIL = env('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
-NOTIFICATION_ADMIN_EMAILS = env.list('NOTIFICATION_ADMIN_EMAILS', default=['lovesdesigns1@gmail.com'])
+NOTIFICATION_ADMIN_EMAILS = env.list('NOTIFICATION_ADMIN_EMAILS', default=['support@vootely.com'])
 NOTIFICATION_REMINDER_LEAD_HOURS = env.int('NOTIFICATION_REMINDER_LEAD_HOURS', default=24)
 NOTIFICATION_RETRY_LIMIT = env.int('NOTIFICATION_RETRY_LIMIT', default=3)
 SMS_PROVIDER = env('SMS_PROVIDER', default='arkesel').strip().lower()
@@ -450,10 +463,7 @@ TAILWIND_CLI_DIST_CSS = 'css/tailwind.css'
 
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY', default='')
-PAYSTACK_WEBHOOK_SECRET = env(
-    'PAYSTACK_WEBHOOK_SECRET',
-    default=PAYSTACK_SECRET_KEY,
-)
+PAYSTACK_WEBHOOK_SECRET = env('PAYSTACK_WEBHOOK_SECRET')
 PAYSTACK_INITIALIZE_URL = env(
     'PAYSTACK_INITIALIZE_URL',
     default='https://api.paystack.co/transaction/initialize',

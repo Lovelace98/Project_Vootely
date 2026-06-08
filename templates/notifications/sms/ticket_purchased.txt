@@ -1,0 +1,1 @@
+Your {{ event_title }} ticket is ready. Open: {{ ticket_purchase_url }} Ref: {{ ticket_purchase_reference }}

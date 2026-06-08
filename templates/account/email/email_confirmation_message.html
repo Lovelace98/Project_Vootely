@@ -24,6 +24,6 @@
 <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">{{ activate_url }}</p>
 
 <p style="margin-top: 24px;">Welcome aboard,<br><strong>The Vootely Team</strong><br>
-<a href="mailto:lovesdesigns1@gmail.com" style="color: #3b82f6; text-decoration: none; font-size: 13px;">lovesdesigns1@gmail.com</a> &middot;
-<a href="tel:+233548988503" style="color: #3b82f6; text-decoration: none; font-size: 13px;">+233 548988503</a></p>
+<a href="mailto:{{ support_email }}" style="color: #3b82f6; text-decoration: none; font-size: 13px;">{{ support_email }}</a> &middot;
+<a href="tel:{{ support_phone|cut:' ' }}" style="color: #3b82f6; text-decoration: none; font-size: 13px;">{{ support_phone }}</a></p>
 {% endblock %}

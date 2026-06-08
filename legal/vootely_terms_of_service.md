@@ -15,14 +15,15 @@ Where a provision applies to one category only, it is stated clearly.
 ---
 
 ## 2. Description of the Vootely Service
-Vootely provides a digital paid-competition platform. The Platform enables:
-* Organizers to create public voting competitions, manage nominees, and configure vote prices (in GHS).
-* Voters to purchase packages of votes for nominees using Paystack (Mobile Money & Card networks).
-* Real-time leaderboard updates on public event pages via HTMX polling.
-* Organizer wallet accounts that track total votes, platform commissions, and ledger-backed payouts.
-* Automated SMS confirmations backed by Hubtel for successful transactions.
+Vootely provides a digital voting and event ticketing platform. The Platform enables:
+* Organizers to create public voting competitions, secure elections, and ticketed events, manage nominees/ticket types, and configure prices (in GHS).
+* Voters to purchase packages of votes for nominees, or buyers to purchase event tickets using Paystack (Mobile Money & Card networks).
+* Real-time leaderboard updates on public event pages.
+* Organizer wallet accounts that track total sales, platform commissions, and ledger-backed payouts.
+* Automated SMS and Email confirmations containing direct ticket links or receipts for successful transactions.
+* Gate scanning check-in interfaces for event gatekeepers to verify ticket validity.
 
-Vootely is a technology service operator. Vootely is not a bank, financial institution, or licensed depository. The funds held in organizer wallets represent collected competition revenues (less platform commissions) awaiting payout processing under this agreement.
+Vootely is a technology service operator. Vootely is not a bank, financial institution, or licensed depository. The funds held in organizer wallets represent collected revenues (less platform commissions) awaiting payout processing under this agreement.
 
 ---
 
@@ -42,17 +43,21 @@ By using the Platform as an organizer, you agree to:
 * Comply with the Cybersecurity Act 2020 (Act 1038) regarding fraud prevention.
 
 ### 3.4 Platform Fees and Commissions
-Vootely does not charge a fixed monthly subscription. Instead, Vootely operates on a **commission-based fee structure**. Vootely charges a **10% platform commission** on all successful vote purchases. The remaining **90%** is credited to the organizer's wallet ledger. Withdrawal payouts can be requested through the organizer dashboard and are subject to admin review and ledger-backed posting.
+Vootely does not charge a fixed monthly subscription. Instead, Vootely operates on a **commission-based fee structure** where fees are auto-deducted from successful checkout transactions:
+* **Paid Competitions:** A negotiated platform commission agreed upon for each specific event before it goes live.
+* **Ticketed Events:** A standard **7% platform commission** automatically deducted from each ticket purchase.
+The remaining net revenues are credited to the organizer's wallet ledger. Withdrawal payouts can be requested through the organizer dashboard and are subject to prompt admin review and ledger-backed posting, targeting settlement within 24 hours of approval.
 
 ---
 
-## 4. Voter Terms and Conditions (Guest Checkout)
+## 4. Voter and Ticket Buyer Terms (Guest Checkout)
 
-### 4.1 Nature of Votes
-Votes purchased on the Vootely Platform:
-* Are immediately applied to the selected nominee of the specified competition.
-* Have no secondary monetary value, are non-transferable, and cannot be exchanged for cash, mobile money, or bank credit.
-* **Are completely final and non-refundable** once the transaction is completed via Paystack, as the service is rendered instantly by updating the leaderboard.
+### 4.1 Nature of Votes and Tickets
+Purchases made on the Vootely Platform:
+* **Votes:** Are immediately applied to the selected nominee and rendered instantly by updating the leaderboard.
+* **Tickets:** Are issued as unique digital verification links sent via SMS and Email to the buyer, which must be scanned and validated at the event gate for entry.
+* All votes and tickets have no secondary monetary value, are non-transferable, and cannot be exchanged for cash, mobile money, or bank credit.
+* **All transactions are completely final and non-refundable** once the payment is completed via Paystack.
 
 ### 4.2 Voting Integrity
 Voters must not attempt to bypass payment gateways, execute chargebacks, or introduce automated scripting to manipulate vote tallies. Any detected fraudulent checkout attempts will result in the immediate cancellation of related votes and potential reporting to payment providers and authorities.

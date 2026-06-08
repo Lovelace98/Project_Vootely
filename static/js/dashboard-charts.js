@@ -94,6 +94,13 @@
             borderRadius: 6,
             barThickness: 8,
             maxBarThickness: 12,
+          }, {
+            label: 'Tickets',
+            data: data.monthly_tickets || [],
+            backgroundColor: '#fe6807',
+            borderRadius: 6,
+            barThickness: 8,
+            maxBarThickness: 12,
           }]
         },
         options: {
@@ -113,9 +120,11 @@
                   let label = context.dataset.label || '';
                   if (label) label += ': ';
                   if (context.parsed.y !== null) {
-                    label += context.datasetIndex === 1
-                      ? 'GHS ' + context.parsed.y.toLocaleString()
-                      : context.parsed.y.toLocaleString();
+                    if (context.datasetIndex === 1) {
+                      label += 'GHS ' + context.parsed.y.toLocaleString();
+                    } else {
+                      label += context.parsed.y.toLocaleString();
+                    }
                   }
                   return label;
                 }
@@ -197,18 +206,37 @@
             label: 'Votes Cast',
             data: data.weekly_votes || [],
             borderColor: '#191bdf',
-            backgroundColor: 'rgba(25, 27, 223, 0.05)',
+            backgroundColor: 'rgba(25, 27, 223, 0.03)',
             borderWidth: 3.5,
             fill: true,
             tension: 0.4,
             pointRadius: 4,
             pointBackgroundColor: '#191bdf'
+          }, {
+            label: 'Tickets Sold',
+            data: data.weekly_tickets || [],
+            borderColor: '#fe6807',
+            backgroundColor: 'rgba(254, 104, 7, 0.03)',
+            borderWidth: 3.5,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#fe6807'
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { family: "'DM Sans', sans-serif", size: 11, weight: '600' }
+              }
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,

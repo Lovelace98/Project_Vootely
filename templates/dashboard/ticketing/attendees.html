@@ -1,0 +1,112 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Paid Attendees | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="vc-section-label">{{ event.title }}</p>
+            <h1 class="mt-1 vc-section-title dark:text-white">Paid Attendees</h1>
+            <p class="mt-1 vc-section-subtitle dark:text-slate-400">People with confirmed payments, their ticket IDs, and gate status.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:ticket_check_in' event.slug %}" class="vc-btn vc-btn-accent vc-btn-sm">Check in</a>
+            <a href="{{ event.get_dashboard_url }}" class="vc-btn vc-btn-outline vc-btn-sm">Back</a>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-5">
+        <div class="vc-stat"><p class="vc-stat-label">Paid Tickets</p><p class="vc-stat-value">{{ total_ticket_count }}</p></div>
+        <div class="vc-stat vc-stat-blue"><p class="vc-stat-label">Checked In</p><p class="vc-stat-value">{{ checked_in_count }}</p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Remaining</p><p class="vc-stat-value">{{ active_ticket_count }}</p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Provisional Confirmed</p><p class="vc-stat-value">{{ provisional_confirmed_count }}</p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Provisional Rejected</p><p class="vc-stat-value">{{ provisional_rejected_count }}</p></div>
+    </div>
+
+    <form method="get" class="vc-card p-4">
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <input name="q" value="{{ query }}" type="search" placeholder="Search name, phone, email, order ref, ticket ID, or ticket type" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm">
+            <button type="submit" class="vc-btn vc-btn-accent justify-center sm:w-auto">Search</button>
+        </div>
+    </form>
+
+    <div class="vc-card overflow-hidden p-0">
+        <div class="overflow-x-auto">
+            <table class="min-w-[900px] w-full text-left text-sm">
+                <thead class="bg-vc-surface text-xs uppercase tracking-wide text-vc-dark-400">
+                    <tr>
+                        <th class="px-5 py-4 font-bold">Attendee</th>
+                        <th class="px-5 py-4 font-bold">Order</th>
+                        <th class="px-5 py-4 font-bold">Tickets</th>
+                        <th class="px-5 py-4 font-bold">Ticket IDs</th>
+                        <th class="px-5 py-4 font-bold">Check-in</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-vc-dark-600">
+                    {% for purchase in purchases %}
+                        <tr class="align-top">
+                            <td class="px-5 py-4">
+                                <p class="font-semibold text-vc-dark dark:text-white">{{ purchase.buyer_name|default:"Unnamed attendee" }}</p>
+                                <p class="mt-1 text-xs text-vc-dark-400">{{ purchase.buyer_email|default:"No email" }}</p>
+                                <p class="text-xs text-vc-dark-400">{{ purchase.buyer_phone|default:"No phone" }}</p>
+                                {% if purchase.metadata.purchase_for == 'someone' %}
+                                    <p class="mt-1.5 text-xs font-semibold text-vc-accent">Recipient: {{ purchase.metadata.recipient_phone }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-5 py-4">
+                                <p class="font-mono text-xs font-bold text-vc-dark dark:text-white">{{ purchase.gateway_reference }}</p>
+                                <p class="mt-1 text-xs text-vc-dark-400">{{ purchase.currency }} {{ purchase.amount|floatformat:2 }}</p>
+                            </td>
+                            <td class="px-5 py-4">
+                                <p class="font-semibold text-vc-dark dark:text-white">{{ purchase.quantity }} {{ purchase.ticket_type.name }}</p>
+                                <p class="mt-1 text-xs text-vc-dark-400">{{ purchase.checked_in_count }}/{{ purchase.ticket_count }} checked in</p>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex max-w-md flex-wrap gap-2">
+                                    {% for ticket in purchase.tickets.all %}
+                                        <span class="rounded-full border border-slate-200 px-2.5 py-1 font-mono text-[11px] font-bold {% if ticket.status == 'used' %}bg-green-50 text-vc-success{% elif ticket.status == 'active' %}bg-white text-vc-dark{% else %}bg-red-50 text-vc-danger{% endif %}">
+                                            {{ ticket.code }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="space-y-2">
+                                    {% for ticket in purchase.tickets.all %}
+                                        <div class="flex items-center justify-between gap-3 rounded-xl bg-vc-surface px-3 py-2">
+                                            <span class="font-mono text-[11px] font-bold text-vc-dark-400">{{ ticket.code }}</span>
+                                            <span class="vc-badge {% if ticket.status == 'used' %}vc-badge-success{% elif ticket.status == 'active' %}vc-badge-neutral{% else %}vc-badge-danger{% endif %}">
+                                                {% if ticket.status == 'used' %}Checked in{% else %}{{ ticket.get_status_display }}{% endif %}
+                                            </span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="px-5 py-8"><div class="vc-empty">No paid attendees found.</div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if is_paginated %}
+        <div class="flex items-center justify-between">
+            {% if page_obj.has_previous %}
+                <a class="vc-btn vc-btn-outline vc-btn-sm" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Previous</a>
+            {% else %}
+                <span></span>
+            {% endif %}
+            <span class="text-sm font-semibold text-vc-dark-400">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="vc-btn vc-btn-outline vc-btn-sm" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Next</a>
+            {% else %}
+                <span></span>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

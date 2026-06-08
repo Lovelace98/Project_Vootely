@@ -1,0 +1,55 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Ticket Sales | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in">
+    <div class="flex items-end justify-between">
+        <div>
+            <p class="vc-section-label">{{ event.title }}</p>
+            <h1 class="mt-1 vc-section-title dark:text-white">Ticket Sales</h1>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'dashboard:ticket_attendees' event.slug %}" class="vc-btn vc-btn-accent vc-btn-sm">Attendees</a>
+            <a href="{{ event.get_dashboard_url }}" class="vc-btn vc-btn-outline vc-btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="vc-card p-6">
+        <div class="space-y-3">
+            {% for purchase in purchases %}
+                <div class="vc-status-row">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">{{ purchase.buyer_name|default:purchase.buyer_email }}</p>
+                        <p class="text-sm text-vc-dark-400">{{ purchase.gateway_reference }} · {{ purchase.quantity }} {{ purchase.ticket_type.name }} · {{ purchase.currency }} {{ purchase.amount|floatformat:2 }}</p>
+                    </div>
+                    <span class="vc-badge {% if purchase.status == 'paid' %}vc-badge-success{% elif purchase.status == 'pending' or purchase.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %}">{{ purchase.status }}</span>
+                </div>
+            {% empty %}
+                <div class="vc-empty">No ticket purchases yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+            <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                        &larr; Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                        Next &rarr;
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

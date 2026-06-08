@@ -10,4 +10,4 @@ If the link does not work, copy and paste it into your browser's address bar. On
 
 Welcome aboard,
 The Vootely Team
-lovesdesigns1@gmail.com | +233 548988503
+{{ support_email }} | {{ support_phone }}

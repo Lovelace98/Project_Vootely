@@ -128,3 +128,15 @@ secrets.json
 # System files
 .DS_Store
 Thumbs.db
+
+# Database temporary files
+db.sqlite3-shm
+db.sqlite3-wal
+
+# Temporary & output directories
+scratch/
+output/
+bin/
+test-results/
+.playwright-mcp/
+

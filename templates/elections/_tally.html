@@ -1,0 +1,31 @@
+{% if results_public %}
+    {% if live_totals %}
+        {% for position in live_totals %}
+            <div class="vc-card p-6 tally-position mb-6" data-position-id="{{ position.position_id }}">
+                <h2 class="text-lg font-semibold">{{ position.position_title }}</h2>
+                <div class="mt-4 space-y-3">
+                    {% for candidate in position.candidates %}
+                        <div class="tally-row vc-status-row" data-candidate-id="{{ candidate.candidate_id }}">
+                            <span>{{ candidate.candidate_name }}</span>
+                            <span class="font-semibold tally-votes">{{ candidate.votes }}</span>
+                        </div>
+                    {% endfor %}
+                    {% if position.abstentions is not None %}
+                        <div class="vc-status-row border-t border-dashed border-vc-orange/20 pt-2 text-vc-orange-700 font-medium bg-vc-orange-50/20 px-3 py-1.5 rounded-xl">
+                            <span>Abstain / Blank Votes</span>
+                            <span class="font-semibold">{{ position.abstentions }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="vc-card p-6">
+            <p class="text-vc-dark-400">No tallied results available yet.</p>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="vc-card p-6">
+        <p class="text-vc-dark-400">Results are not public yet.</p>
+    </div>
+{% endif %}

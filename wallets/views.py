@@ -1,8 +1,12 @@
+import html
+import json
 import logging
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import TemplateView
@@ -81,9 +85,16 @@ class DashboardWithdrawalsView(LoginRequiredMixin, TemplateView):
         summary = withdrawal_summary_fast(self.request.user)
         context['form'] = kwargs.get('form') or self.get_form()
         context['summary'] = summary
-        context['withdrawals'] = WithdrawalRequest.objects.filter(
+        withdrawals_qs = WithdrawalRequest.objects.filter(
             organizer=self.request.user
-        ).select_related('reviewed_by')
+        ).select_related('reviewed_by').order_by('-requested_at')
+        from django.core.paginator import Paginator
+        paginator = Paginator(withdrawals_qs, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['withdrawals'] = page_obj.object_list
+        context['page_obj'] = page_obj
+        context['is_paginated'] = page_obj.has_other_pages()
         return context
 
 
@@ -100,9 +111,6 @@ class ResolveAccountView(LoginRequiredMixin, View):
             return HttpResponse('<p class="text-xs text-vc-dark-300 italic">Enter both provider and account number to verify...</p>')
 
         try:
-            from django.core.exceptions import ValidationError
-            import json
-            import html
             data = resolve_paystack_account(account_number, bank_code)
             account_name = data.get('account_name', '')
             safe_name = json.dumps(account_name)
@@ -117,7 +125,7 @@ class ResolveAccountView(LoginRequiredMixin, View):
                 </script>
                 <p class="text-xs text-vc-success font-medium">✓ Verified: {escaped_name}</p>
             """)
-        except Exception as e:
+        except (ValidationError, RuntimeError) as e:
             return HttpResponse(f'<p class="text-xs text-vc-danger font-medium">⚠ {html.escape(str(e))}</p>')
 
 
@@ -149,12 +157,12 @@ class RequestOTPView(LoginRequiredMixin, View):
             send_mail(
                 'Security Code: Vootely Withdrawal',
                 f'Your withdrawal security code is: {otp}. It will expire in 10 minutes. If you did not request this, please change your password immediately.',
-                'security@vootely.com',
+                settings.SECURITY_EMAIL,
                 [request.user.email],
                 fail_silently=False,
             )
             return HttpResponse('<p class="text-xs text-vc-success font-medium">✓ Code sent to your email</p>')
-        except Exception as e:
+        except OSError as e:
             cache.delete(f'withdrawal_otp_{request.user.pk}')
             logger.warning('Failed to send withdrawal OTP for user %s: %s', request.user.pk, e)
             return HttpResponse(

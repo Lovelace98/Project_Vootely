@@ -27,7 +27,8 @@
 
     <div class="vc-card p-8">
         {% if nominations_open %}
-            <form method="post" enctype="multipart/form-data" class="space-y-5">
+            <form method="post" enctype="multipart/form-data" class="space-y-5"
+                  x-data="{ loading: false }" @submit="loading = true">
                 {% csrf_token %}
                 {% if form.non_field_errors %}
                     <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger">
@@ -46,8 +47,12 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-                <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg">
-                    Submit nomination
+                <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent vc-btn-lg">
+                    <span x-show="!loading">Submit nomination</span>
+                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span>Submitting...</span>
+                    </span>
                 </button>
             </form>
         {% elif event.status == 'closed' %}

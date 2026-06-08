@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Vootely | Paid Competitions and Secure Elections{% endblock %}
+{% block title %}Vootely | Paid Competitions, Secure Elections, and Event Ticketing{% endblock %}
 {% block meta_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}
 {% block body_class %}min-h-screen bg-white text-vc-dark antialiased flex flex-col vc-landing-page{% endblock %}
 {% block main_class %}flex-grow w-full{% endblock %}
@@ -30,10 +30,10 @@
                         Competitions and elections
                     </span>
                     <h1 class="mt-6 max-w-3xl text-5xl font-bold tracking-tight text-vc-dark sm:text-6xl lg:text-7xl">
-                        Run paid competitions and secure elections with one trusted platform.
+                        Run paid competitions, secure elections, and ticketed events with one trusted platform.
                     </h1>
                     <p class="mt-6 max-w-2xl text-lg leading-8 text-vc-dark-400 sm:text-xl">
-                        Vootely helps student bodies, associations, and organizations launch public competitions, manage secure elections, and keep every voting experience clear from first click to final result.
+                        Vootely helps student bodies, associations, and event organizers launch public competitions, sell tickets, manage secure elections, and keep every experience clear from first click to final result.
                     </p>
                     <div class="mt-8 flex flex-col gap-4 sm:flex-row">
                         <a href="{% url 'account_signup' %}" class="vc-btn vc-btn-accent vc-btn-lg">
@@ -79,12 +79,12 @@
                     </div>
 
                     <div class="vc-floating-card vc-floating-card-bottom-right hidden md:flex">
-                        <span class="vc-floating-icon bg-vc-blue-50 text-vc-blue">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"></path></svg>
+                        <span class="vc-floating-icon bg-vc-orange-50 text-vc-orange">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         </span>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Reporting</p>
-                            <p class="mt-1 text-sm font-bold text-vc-dark">Revenue and Results Tracking</p>
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-vc-dark-300">Convenience</p>
+                            <p class="mt-1 text-sm font-bold text-vc-dark">Fast Gate Check-In App</p>
                         </div>
                     </div>
 
@@ -96,9 +96,160 @@
         </div>
     </section>
 
-    {% if featured_events %}
-        <section id="live-events" class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+    {% if combined_events %}
+        <section id="live-events" class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12" x-data="{ activeTab: 'all' }">
+            <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-8">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.24em] text-vc-blue">Explore Vootely</p>
+                    <h2 class="mt-3 text-2xl font-bold tracking-tight text-vc-dark sm:text-3xl">See what's happening now</h2>
+                </div>
+                {% if featured_events and featured_tickets %}
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/20 rounded-full border border-slate-200/60 dark:border-slate-800/40 w-fit max-w-full overflow-x-auto">
+                        <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-white dark:bg-slate-900 text-vc-dark dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap">All Events</button>
+                        <button type="button" @click="activeTab = 'competitions'" :class="activeTab === 'competitions' ? 'bg-white dark:bg-slate-900 text-vc-dark dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap">Paid Competitions</button>
+                        <button type="button" @click="activeTab = 'tickets'" :class="activeTab === 'tickets' ? 'bg-white dark:bg-slate-900 text-vc-dark dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap">Ticketed Events</button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- All Events Carousel -->
             <div
+                x-show="activeTab === 'all'"
+                class="vc-live-events-shell rounded-[2rem] px-6 py-8 sm:px-8 lg:px-10 lg:py-10"
+                x-data="{
+                    activeIndex: 0,
+                    timer: null,
+                    groupSize: 3,
+                    get total() { return {{ combined_events|length }}; },
+                    updateGroupSize() {
+                        if (window.innerWidth < 768) {
+                            this.groupSize = 1;
+                        } else if (window.innerWidth < 1100) {
+                            this.groupSize = 2;
+                        } else {
+                            this.groupSize = 3;
+                        }
+                        if (this.activeIndex > this.maxStart()) {
+                            this.activeIndex = this.maxStart();
+                        }
+                    },
+                    maxStart() {
+                        return Math.max(this.total - this.groupSize, 0);
+                    },
+                    next() {
+                        this.activeIndex = this.activeIndex >= this.maxStart() ? 0 : this.activeIndex + 1;
+                    },
+                    prev() {
+                        this.activeIndex = this.activeIndex <= 0 ? this.maxStart() : this.activeIndex - 1;
+                    },
+                    goTo(index) {
+                        this.activeIndex = Math.min(index, this.maxStart());
+                    },
+                    start() {
+                        this.stop();
+                        this.timer = setInterval(() => this.next(), 4200);
+                    },
+                    stop() {
+                        if (this.timer) clearInterval(this.timer);
+                        this.timer = null;
+                    }
+                }"
+                x-init="updateGroupSize(); start(); window.addEventListener('resize', () => updateGroupSize())"
+                @mouseenter="stop()"
+                @mouseleave="start()"
+            >
+                <div class="overflow-hidden">
+                    <div
+                        class="flex gap-5 transition-transform duration-700 ease-out"
+                        :style="`transform: translateX(-${activeIndex * (100 / groupSize)}%)`"
+                    >
+                        {% for event in combined_events %}
+                            <a href="{{ event.get_absolute_url }}" class="vc-live-event-card w-full shrink-0 lg:basis-[calc((100%-2.5rem)/3)] md:basis-[calc((100%-1.25rem)/2)]">
+                                <div class="vc-live-event-media relative">
+                                    {% if event.kind == 'ticketed_event' %}
+                                        <span class="absolute top-3 right-3 z-10 inline-flex items-center rounded-full bg-vc-orange px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">Ticketed</span>
+                                    {% else %}
+                                        <span class="absolute top-3 right-3 z-10 inline-flex items-center rounded-full bg-vc-blue px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">Competition</span>
+                                    {% endif %}
+                                    {% if event.flyer %}
+                                        <img src="{{ event.flyer.url }}" alt="{{ event.title }} flyer" class="h-full w-full object-cover" loading="lazy">
+                                    {% elif event.banner %}
+                                        <img src="{{ event.banner.url }}" alt="{{ event.title }} banner" class="h-full w-full object-cover" loading="lazy">
+                                    {% else %}
+                                        <div class="vc-live-event-placeholder">
+                                            <span>{% if event.kind == 'ticketed_event' %}Ticketed{% else %}Live Event{% endif %}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="p-5 flex flex-col justify-between flex-1">
+                                    <div>
+                                        <p class="text-lg font-bold text-vc-dark leading-snug line-clamp-1" title="{{ event.title }}">{{ event.title }}</p>
+                                        <div class="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+                                            <span>Hosted by</span>
+                                            <span class="font-semibold text-vc-blue">{{ event.owner.get_full_name|default:event.owner.username }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 space-y-1.5 text-xs text-slate-500">
+                                        {% if event.kind == 'ticketed_event' %}
+                                            <div class="flex items-center gap-1.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                                <span>{{ event.event_date_display }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                                <span class="truncate" title="{{ event.venue_display }}">{{ event.venue_display }}</span>
+                                            </div>
+                                            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/20 flex items-center justify-between">
+                                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tickets</span>
+                                                <span class="text-xs font-bold text-vc-orange">
+                                                    {% if event.starting_price is not None %}
+                                                        Starting From <span class="font-extrabold text-vc-dark">{{ event.currency }} {{ event.starting_price|floatformat:2 }}</span>
+                                                    {% else %}
+                                                        Free
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-sm text-vc-dark-400">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }} live</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <template x-for="index in Math.max(total - groupSize + 1, 1)" :key="index">
+                            <button
+                                type="button"
+                                class="h-2.5 rounded-full bg-vc-blue/20 transition-all"
+                                :class="activeIndex === index - 1 ? 'w-8 bg-vc-blue' : 'w-2.5'"
+                                @click="goTo(index - 1); stop(); start();"
+                                :aria-label="`Show event set ${index}`"
+                            ></button>
+                        </template>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="vc-live-event-nav" @click="prev(); stop(); start();" aria-label="Previous events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                        </button>
+                        <button type="button" class="vc-live-event-nav" @click="next(); stop(); start();" aria-label="Next events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-center">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">See all events</a>
+                </div>
+            </div>
+
+            <!-- Paid Competitions Carousel -->
+            {% if featured_events %}
+            <div
+                x-show="activeTab === 'competitions'"
                 class="vc-live-events-shell rounded-[2rem] px-6 py-8 sm:px-8 lg:px-10 lg:py-10"
                 x-data="{
                     activeIndex: 0,
@@ -142,35 +293,36 @@
                 @mouseenter="stop()"
                 @mouseleave="start()"
             >
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.24em] text-vc-blue">Live now on Vootely</p>
-                        <h2 class="mt-3 text-2xl font-bold tracking-tight text-vc-dark sm:text-3xl">Browse active competitions already collecting votes.</h2>
-                    </div>
-                    <p class="text-sm font-medium text-vc-dark-400">{{ active_events_count }} live competition{{ active_events_count|pluralize }}</p>
-                </div>
-
-                <div class="mt-8 overflow-hidden">
+                <div class="overflow-hidden">
                     <div
                         class="flex gap-5 transition-transform duration-700 ease-out"
                         :style="`transform: translateX(-${activeIndex * (100 / groupSize)}%)`"
                     >
                         {% for event in featured_events %}
                             <a href="{{ event.get_absolute_url }}" class="vc-live-event-card w-full shrink-0 lg:basis-[calc((100%-2.5rem)/3)] md:basis-[calc((100%-1.25rem)/2)]">
-                                <div class="vc-live-event-media">
+                                <div class="vc-live-event-media relative">
+                                    <span class="absolute top-3 right-3 z-10 inline-flex items-center rounded-full bg-vc-blue px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">Competition</span>
                                     {% if event.flyer %}
-                                        <img src="{{ event.flyer.url }}" alt="{{ event.title }} flyer" class="h-full w-full object-cover">
+                                        <img src="{{ event.flyer.url }}" alt="{{ event.title }} flyer" class="h-full w-full object-cover" loading="lazy">
                                     {% elif event.banner %}
-                                        <img src="{{ event.banner.url }}" alt="{{ event.title }} banner" class="h-full w-full object-cover">
+                                        <img src="{{ event.banner.url }}" alt="{{ event.title }} banner" class="h-full w-full object-cover" loading="lazy">
                                     {% else %}
                                         <div class="vc-live-event-placeholder">
                                             <span>Live Event</span>
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div class="p-5">
-                                    <p class="text-lg font-bold text-vc-dark">{{ event.title }}</p>
-                                    <p class="mt-2 text-sm text-vc-dark-400">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }} live</p>
+                                <div class="p-5 flex flex-col justify-between flex-1">
+                                    <div>
+                                        <p class="text-lg font-bold text-vc-dark leading-snug line-clamp-1" title="{{ event.title }}">{{ event.title }}</p>
+                                        <div class="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+                                            <span>Hosted by</span>
+                                            <span class="font-semibold text-vc-blue">{{ event.owner.get_full_name|default:event.owner.username }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 space-y-1.5 text-xs text-slate-500">
+                                        <p class="text-sm text-vc-dark-400">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }} live</p>
+                                    </div>
                                 </div>
                             </a>
                         {% endfor %}
@@ -185,15 +337,15 @@
                                 class="h-2.5 rounded-full bg-vc-blue/20 transition-all"
                                 :class="activeIndex === index - 1 ? 'w-8 bg-vc-blue' : 'w-2.5'"
                                 @click="goTo(index - 1); stop(); start();"
-                                :aria-label="`Show live event set ${index}`"
+                                :aria-label="`Show competition set ${index}`"
                             ></button>
                         </template>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button type="button" class="vc-live-event-nav" @click="prev(); stop(); start();" aria-label="Previous live events">
+                        <button type="button" class="vc-live-event-nav" @click="prev(); stop(); start();" aria-label="Previous competitions">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
                         </button>
-                        <button type="button" class="vc-live-event-nav" @click="next(); stop(); start();" aria-label="Next live events">
+                        <button type="button" class="vc-live-event-nav" @click="next(); stop(); start();" aria-label="Next competitions">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
                         </button>
                     </div>
@@ -203,16 +355,145 @@
                     <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">See all events</a>
                 </div>
             </div>
+            {% endif %}
+
+            <!-- Ticketed Events Carousel -->
+            {% if featured_tickets %}
+            <div
+                x-show="activeTab === 'tickets'"
+                class="vc-live-events-shell rounded-[2rem] px-6 py-8 sm:px-8 lg:px-10 lg:py-10"
+                x-data="{
+                    activeIndex: 0,
+                    timer: null,
+                    groupSize: 3,
+                    get total() { return {{ featured_tickets|length }}; },
+                    updateGroupSize() {
+                        if (window.innerWidth < 768) {
+                            this.groupSize = 1;
+                        } else if (window.innerWidth < 1100) {
+                            this.groupSize = 2;
+                        } else {
+                            this.groupSize = 3;
+                        }
+                        if (this.activeIndex > this.maxStart()) {
+                            this.activeIndex = this.maxStart();
+                        }
+                    },
+                    maxStart() {
+                        return Math.max(this.total - this.groupSize, 0);
+                    },
+                    next() {
+                        this.activeIndex = this.activeIndex >= this.maxStart() ? 0 : this.activeIndex + 1;
+                    },
+                    prev() {
+                        this.activeIndex = this.activeIndex <= 0 ? this.maxStart() : this.activeIndex - 1;
+                    },
+                    goTo(index) {
+                        this.activeIndex = Math.min(index, this.maxStart());
+                    },
+                    start() {
+                        this.stop();
+                        this.timer = setInterval(() => this.next(), 4500);
+                    },
+                    stop() {
+                        if (this.timer) clearInterval(this.timer);
+                        this.timer = null;
+                    }
+                }"
+                x-init="updateGroupSize(); start(); window.addEventListener('resize', () => updateGroupSize())"
+                @mouseenter="stop()"
+                @mouseleave="start()"
+            >
+                <div class="overflow-hidden">
+                    <div
+                        class="flex gap-5 transition-transform duration-700 ease-out"
+                        :style="`transform: translateX(-${activeIndex * (100 / groupSize)}%)`"
+                    >
+                        {% for event in featured_tickets %}
+                            <a href="{{ event.get_absolute_url }}" class="vc-live-event-card w-full shrink-0 lg:basis-[calc((100%-2.5rem)/3)] md:basis-[calc((100%-1.25rem)/2)]">
+                                <div class="vc-live-event-media relative">
+                                    <span class="absolute top-3 right-3 z-10 inline-flex items-center rounded-full bg-vc-orange px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">Ticketed</span>
+                                    {% if event.flyer %}
+                                        <img src="{{ event.flyer.url }}" alt="{{ event.title }} flyer" class="h-full w-full object-cover" loading="lazy">
+                                    {% elif event.banner %}
+                                        <img src="{{ event.banner.url }}" alt="{{ event.title }} banner" class="h-full w-full object-cover" loading="lazy">
+                                    {% else %}
+                                        <div class="vc-live-event-placeholder">
+                                            <span>Ticketed Event</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="p-5 flex flex-col justify-between flex-1">
+                                    <div>
+                                        <p class="text-lg font-bold text-vc-dark leading-snug line-clamp-1" title="{{ event.title }}">{{ event.title }}</p>
+                                        <div class="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+                                            <span>Hosted by</span>
+                                            <span class="font-semibold text-vc-blue">{{ event.owner.get_full_name|default:event.owner.username }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 space-y-1.5 text-xs text-slate-500">
+                                        <div class="flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                            <span>{{ event.event_date_display }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                            <span class="truncate" title="{{ event.venue_display }}">{{ event.venue_display }}</span>
+                                        </div>
+                                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tickets</span>
+                                            <span class="text-xs font-bold text-vc-orange">
+                                                {% if event.starting_price is not None %}
+                                                    Starting From <span class="font-extrabold text-vc-dark">{{ event.currency }} {{ event.starting_price|floatformat:2 }}</span>
+                                                {% else %}
+                                                    Free
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <template x-for="index in Math.max(total - groupSize + 1, 1)" :key="index">
+                            <button
+                                type="button"
+                                class="h-2.5 rounded-full bg-vc-orange/20 transition-all"
+                                :class="activeIndex === index - 1 ? 'w-8 bg-vc-orange' : 'w-2.5'"
+                                @click="goTo(index - 1); stop(); start();"
+                                :aria-label="`Show ticketed event set ${index}`"
+                            ></button>
+                        </template>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="vc-live-event-nav" @click="prev(); stop(); start();" aria-label="Previous ticketed events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                        </button>
+                        <button type="button" class="vc-live-event-nav" @click="next(); stop(); start();" aria-label="Next ticketed events">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-center">
+                    <a href="{% url 'events:home' %}" class="vc-btn vc-btn-outline-blue vc-btn-lg">See all events</a>
+                </div>
+            </div>
+            {% endif %}
         </section>
     {% endif %}
 
     <section id="features" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div class="mx-auto max-w-2xl text-center">
             <p class="vc-section-kicker">Features</p>
-            <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">One product for public competitions and secure organizational voting.</h2>
-            <p class="mt-4 text-lg text-vc-dark-400">Vootely helps you launch visible campaigns for the public and structured election processes for internal decision-making.</p>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-vc-dark sm:text-4xl">One unified platform for competitions, secure elections, and ticketed events.</h2>
+            <p class="mt-4 text-lg text-vc-dark-400">Vootely provides organizers with the tools to manage voting campaigns, secure organizational ballots, and sell tickets with fast payouts.</p>
         </div>
-        <div class="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+        <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <article class="vc-landing-feature-card">
                 <div class="vc-card-spiral text-white">
                     <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -221,7 +502,7 @@
                 </div>
                 <span class="vc-feature-chip relative z-10">01</span>
                 <h3 class="mt-4 text-xl font-bold relative z-10">Paid competitions</h3>
-                <p class="mt-3 text-sm leading-6 relative z-10">Set vote pricing, publish the campaign, and let supporters vote without creating an account.</p>
+                <p class="mt-3 text-sm leading-6 relative z-10">Set vote pricing, publish campaigns, and let supporters vote online or offline via USSD without creating an account.</p>
             </article>
             <article class="vc-landing-feature-card">
                 <div class="vc-card-spiral text-white">
@@ -231,7 +512,7 @@
                 </div>
                 <span class="vc-feature-chip relative z-10">02</span>
                 <h3 class="mt-4 text-xl font-bold relative z-10">Nominee pages</h3>
-                <p class="mt-3 text-sm leading-6 relative z-10">Present candidates clearly with photos, bios, voting codes, and direct voting paths.</p>
+                <p class="mt-3 text-sm leading-6 relative z-10">Present candidates clearly with photos, bios, individual codes, and direct voting checkout flows.</p>
             </article>
             <article class="vc-landing-feature-card">
                 <div class="vc-card-spiral text-white">
@@ -240,8 +521,8 @@
                     </svg>
                 </div>
                 <span class="vc-feature-chip relative z-10">03</span>
-                <h3 class="mt-4 text-xl font-bold relative z-10">Secure payment flow</h3>
-                <p class="mt-3 text-sm leading-6 relative z-10">Use Paystack-backed checkout so paid votes only count after payment is confirmed.</p>
+                <h3 class="mt-4 text-xl font-bold relative z-10">Direct ticketing</h3>
+                <p class="mt-3 text-sm leading-6 relative z-10">Configure ticket types, handle online payments via Paystack, and issue ticket links to buyers instantly via SMS and Email.</p>
             </article>
             <article class="vc-landing-feature-card">
                 <div class="vc-card-spiral text-white">
@@ -250,8 +531,8 @@
                     </svg>
                 </div>
                 <span class="vc-feature-chip relative z-10">04</span>
-                <h3 class="mt-4 text-xl font-bold relative z-10">Election-ready structure</h3>
-                <p class="mt-3 text-sm leading-6 relative z-10">Run structured ballots for associations, departments, and organizations with cleaner voting control.</p>
+                <h3 class="mt-4 text-xl font-bold relative z-10">Gate Check-In App</h3>
+                <p class="mt-3 text-sm leading-6 relative z-10">Equip gate staff with our responsive check-in app to authenticate tickets and avoid duplicate entries.</p>
             </article>
             <article class="vc-landing-feature-card">
                 <div class="vc-card-spiral text-white">
@@ -260,8 +541,18 @@
                     </svg>
                 </div>
                 <span class="vc-feature-chip relative z-10">05</span>
-                <h3 class="mt-4 text-xl font-bold relative z-10">Reporting visibility</h3>
-                <p class="mt-3 text-sm leading-6 relative z-10">Track confirmed revenue, live standings, and voting activity from one dashboard.</p>
+                <h3 class="mt-4 text-xl font-bold relative z-10">Fast organizer payouts</h3>
+                <p class="mt-3 text-sm leading-6 relative z-10">Monitor accumulated net earnings in your dashboard wallet and request fast, secure payouts direct to Mobile Money or bank account.</p>
+            </article>
+            <article class="vc-landing-feature-card">
+                <div class="vc-card-spiral text-white">
+                    <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                        <path d="M100,100 A10,10 0 0,0 80,100 A20,20 0 0,0 120,100 A30,30 0 0,0 60,100 A40,40 0 0,0 140,100 A50,50 0 0,0 40,100 A60,60 0 0,0 160,100 A70,70 0 0,0 20,100 A80,80 0 0,0 180,100 A90,90 0 0,0 0,100 A100,100 0 0,0 200,100" />
+                    </svg>
+                </div>
+                <span class="vc-feature-chip relative z-10">06</span>
+                <h3 class="mt-4 text-xl font-bold relative z-10">Secure elections</h3>
+                <p class="mt-3 text-sm leading-6 relative z-10">Run structured ballots with credential-based voter access to ensure secure, private internal organizational voting.</p>
             </article>
         </div>
     </section>
@@ -322,7 +613,7 @@
             <!-- Visual USSD Screen Mockup -->
             <div class="relative flex justify-center items-center py-6 w-full max-w-[340px] mx-auto aspect-square">
                 <!-- Mockup Image with USSD overlay baked in -->
-                <img src="{% static 'images/iphone_new.png' %}" alt="USSD Voting Flow on Mobile" class="absolute inset-0 w-full h-full object-contain z-0 select-none">
+                <img src="{% static 'images/iphone_new.png' %}" alt="USSD Voting Flow on Mobile" class="absolute inset-0 w-full h-full object-contain z-0 select-none" loading="lazy">
             </div>
 
         </div>
@@ -561,6 +852,63 @@
         </div>
     </section>
 
+    <!-- Blog Section -->
+    {% if blogs %}
+        <section id="blogs" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-10">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.24em] text-vc-blue">Guides &amp; Advice</p>
+                    <h2 class="mt-3 text-2xl font-bold tracking-tight text-vc-dark sm:text-3xl">Latest Organizer Guides</h2>
+                </div>
+                <a href="{% url 'events:blog_list' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-vc-blue hover:text-vc-blue-600 transition-colors">
+                    View All Articles
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {% for post in blogs %}
+                    <article class="flex flex-col overflow-hidden rounded-[2rem] border border-vc-dark-100/50 bg-white shadow-[0_15px_40px_rgba(9,8,13,0.04)] hover:shadow-[0_25px_60px_rgba(9,8,13,0.08)] hover:-translate-y-1 transition duration-300">
+                        <div class="relative aspect-[16/9] overflow-hidden bg-slate-100">
+                            <a href="{% url 'events:blog_detail' post.slug %}" class="block h-full w-full">
+                                <img src="{% static post.image_static_path %}" alt="{{ post.title }}" class="h-full w-full object-cover" loading="lazy">
+                            </a>
+                            <div class="absolute top-4 left-4">
+                                <span class="inline-flex items-center rounded-full bg-vc-blue/10 backdrop-blur-md px-3 py-1 text-xs font-bold text-vc-blue border border-vc-blue/10">
+                                    {{ post.category }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col flex-1 p-6 justify-between">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-[10px] text-vc-dark-300 font-semibold">
+                                    <span>{{ post.published_date }}</span>
+                                    <span>·</span>
+                                    <span>{{ post.read_time }}</span>
+                                </div>
+                                <h3 class="text-base font-bold text-vc-dark leading-snug hover:text-vc-blue transition-colors">
+                                    <a href="{% url 'events:blog_detail' post.slug %}">
+                                        {{ post.title }}
+                                    </a>
+                                </h3>
+                                <p class="text-xs text-vc-dark-400 line-clamp-3 leading-relaxed font-normal">
+                                    {{ post.excerpt }}
+                                </p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-vc-dark-100/50 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-vc-dark-300">By {{ post.author }}</span>
+                                <a href="{% url 'events:blog_detail' post.slug %}" class="inline-flex items-center gap-1 text-[11px] font-bold text-vc-blue hover:text-vc-blue-600 transition-colors">
+                                    Read Guide
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
     <section
         id="contact"
         class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
@@ -580,8 +928,12 @@
                 </div>
             </div>
             <div class="rounded-[1.75rem] border border-vc-dark-100/60 bg-white p-6 shadow-[0_20px_60px_rgba(9,8,13,0.06)] sm:p-8">
-                <form action="{% url 'events:contact_inquiry_submit' %}" method="post" class="space-y-5">
+                <form action="{% url 'events:contact_inquiry_submit' %}" method="post" class="space-y-5"
+                      x-data="{ loading: false }" @submit="loading = true">
                     {% csrf_token %}
+                    <div style="display:none !important;">
+                        {{ contact_form.website }}
+                    </div>
                     {% if contact_form.non_field_errors %}
                         <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                             {{ contact_form.non_field_errors }}
@@ -614,8 +966,12 @@
                             {% if contact_form.message.errors %}<p class="mt-2 text-sm text-red-600">{{ contact_form.message.errors|join:', ' }}</p>{% endif %}
                         </div>
                     </div>
-                    <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg w-full sm:w-auto">
-                        Send message
+                    <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent vc-btn-lg w-full sm:w-auto">
+                        <span x-show="!loading">Send message</span>
+                        <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <span>Sending...</span>
+                        </span>
                     </button>
                 </form>
             </div>

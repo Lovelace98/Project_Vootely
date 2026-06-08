@@ -1,0 +1,244 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Scanner Access | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="vc-section-label">{{ event.title }}</p>
+            <h1 class="mt-1 vc-section-title dark:text-white">Scanner Access</h1>
+            <p class="mt-1 vc-section-subtitle dark:text-slate-400">Create event-scoped scanner passes for each gate without sharing your organizer login.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:ticket_check_in' event.slug %}" class="vc-btn vc-btn-accent vc-btn-sm">Organizer scanner</a>
+            <a href="{{ event.get_dashboard_url }}" class="vc-btn vc-btn-outline vc-btn-sm">Back</a>
+        </div>
+    </div>
+
+    {% if share_panel %}
+        <div
+            class="vc-card border-2 border-vc-blue/30 bg-vc-blue-50/40 p-6 dark:bg-vc-blue-950/20"
+            x-data="{
+                copied: '',
+                failed: '',
+                async copy(value, key) {
+                    this.failed = '';
+                    try {
+                        await navigator.clipboard.writeText(value);
+                        this.copied = key;
+                        setTimeout(() => { if (this.copied === key) this.copied = ''; }, 1800);
+                    } catch (error) {
+                        this.failed = key;
+                    }
+                }
+            }"
+        >
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="vc-section-label">Share once</p>
+                    <h2 class="mt-1 text-xl font-bold text-vc-dark dark:text-white">{{ share_panel.gate_name }} scanner credentials</h2>
+                    <p class="mt-1 text-sm text-vc-dark-400">This PIN is shown only now. Send the message to staff before leaving this page.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="https://wa.me/?text={{ share_panel.message|urlencode }}" target="_blank" rel="noopener" class="vc-btn vc-btn-outline-blue vc-btn-sm">WhatsApp</a>
+                    <a href="sms:?body={{ share_panel.message|urlencode }}" class="vc-btn vc-btn-outline vc-btn-sm">SMS</a>
+                </div>
+            </div>
+            <div class="mt-5 grid gap-4 lg:grid-cols-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-vc-dark-400">Scanner URL</label>
+                    <input x-ref="shareUrl" readonly value="{{ share_panel.share_url }}" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-vc-dark">
+                    <button type="button" class="vc-btn vc-btn-outline vc-btn-sm mt-2" @click="copy($refs.shareUrl.value, 'url')" x-text="copied === 'url' ? 'Copied' : (failed === 'url' ? 'Copy failed' : 'Copy URL')"></button>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-vc-dark-400">Activation PIN</label>
+                    <input x-ref="sharePin" readonly value="{{ share_panel.pin }}" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm font-bold text-vc-dark">
+                    <button type="button" class="vc-btn vc-btn-outline vc-btn-sm mt-2" @click="copy($refs.sharePin.value, 'pin')" x-text="copied === 'pin' ? 'Copied' : (failed === 'pin' ? 'Copy failed' : 'Copy PIN')"></button>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-vc-dark-400">Expires</label>
+                    <div class="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-vc-dark">{{ share_panel.expires_label }}</div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="text-xs font-bold uppercase text-vc-dark-400">Ready message</label>
+                <textarea x-ref="shareMessage" readonly rows="7" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-vc-dark">{{ share_panel.message }}</textarea>
+                <button type="button" class="vc-btn vc-btn-accent vc-btn-sm mt-2" @click="copy($refs.shareMessage.value, 'message')" x-text="copied === 'message' ? 'Copied' : (failed === 'message' ? 'Copy failed' : 'Copy full message')"></button>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        <form method="post" class="vc-card p-6 space-y-4"
+              x-data="{ loading: false }" @submit="loading = true">
+            {% csrf_token %}
+            <div>
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Create scanner pass</h2>
+                <p class="mt-1 text-sm text-vc-dark-400">Use one pass per staff phone or gate device.</p>
+            </div>
+            {% if form.non_field_errors %}
+                <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-vc-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div>
+                <label for="{{ form.gate_name.id_for_label }}" class="text-sm font-bold text-vc-dark dark:text-white">Gate name</label>
+                <input id="{{ form.gate_name.id_for_label }}" name="{{ form.gate_name.html_name }}" value="{{ form.gate_name.value|default:'' }}" type="text" placeholder="Gate A" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" required>
+                {% for error in form.gate_name.errors %}<p class="mt-1 text-xs font-semibold text-vc-danger">{{ error }}</p>{% endfor %}
+            </div>
+            <div>
+                <label for="{{ form.staff_label.id_for_label }}" class="text-sm font-bold text-vc-dark dark:text-white">Staff label</label>
+                <input id="{{ form.staff_label.id_for_label }}" name="{{ form.staff_label.html_name }}" value="{{ form.staff_label.value|default:'' }}" type="text" placeholder="Ama at Gate A" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm">
+                {% for error in form.staff_label.errors %}<p class="mt-1 text-xs font-semibold text-vc-danger">{{ error }}</p>{% endfor %}
+            </div>
+            <div>
+                <label for="{{ form.pin.id_for_label }}" class="text-sm font-bold text-vc-dark dark:text-white">Activation PIN</label>
+                <input id="{{ form.pin.id_for_label }}" name="{{ form.pin.html_name }}" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4-12 characters" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" required>
+                <p class="mt-1 text-xs text-vc-dark-400">The PIN will appear once with the scanner link after creation.</p>
+                {% for error in form.pin.errors %}<p class="mt-1 text-xs font-semibold text-vc-danger">{{ error }}</p>{% endfor %}
+            </div>
+            <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent w-full justify-center">
+                <span x-show="!loading">Create pass</span>
+                <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span>Creating...</span>
+                </span>
+            </button>
+        </form>
+
+        <div class="vc-card p-6">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Active gate links</h2>
+                    <p class="mt-1 text-sm text-vc-dark-400">Each pass is limited to one active device and expires {{ event.end_at|date:"M j, Y g:i A" }} + 12h.</p>
+                </div>
+            </div>
+            <div class="mt-5 space-y-4">
+                {% for scanner_pass in scanner_passes %}
+                    <div
+                        class="rounded-xl border border-gray-100 bg-white p-4 dark:bg-vc-surface-raised dark:border-vc-dark-600"
+                        x-data="{
+                            copied: '',
+                            failed: '',
+                            async copy(value, key) {
+                                this.failed = '';
+                                try {
+                                    await navigator.clipboard.writeText(value);
+                                    this.copied = key;
+                                    setTimeout(() => { if (this.copied === key) this.copied = ''; }, 1500);
+                                } catch (error) {
+                                    this.failed = key;
+                                }
+                            }
+                        }"
+                    >
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="font-semibold text-vc-dark dark:text-white">{{ scanner_pass.gate_name }}</p>
+                                    <span class="vc-badge {% if scanner_pass.status == 'revoked' %}vc-badge-danger{% elif scanner_pass.expires_at <= now %}vc-badge-warning{% else %}vc-badge-success{% endif %}">
+                                        {% if scanner_pass.status == 'revoked' %}Revoked{% elif scanner_pass.expires_at <= now %}Expired{% else %}Active{% endif %}
+                                    </span>
+                                    {% if scanner_pass.device_session_key %}
+                                        <span class="vc-badge vc-badge-neutral">Device active</span>
+                                    {% endif %}
+                                    {% if scanner_pass.allow_provisional_entry %}
+                                        <span class="vc-badge vc-badge-warning">Emergency provisional on</span>
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 text-sm text-vc-dark-400">{{ scanner_pass.staff_label|default:"No staff label" }}</p>
+                                <p class="mt-2 text-xs text-vc-dark-400">{{ scanner_pass.checkin_count }} checked in · {{ scanner_pass.attempt_count }} scan attempts · {{ scanner_pass.provisional_confirmed_count }} provisional confirmed · {{ scanner_pass.provisional_rejected_count }} rejected · Expires {{ scanner_pass.expires_at|date:"M j, Y g:i A" }}</p>
+                                {% if scanner_pass.activated_at %}
+                                    <p class="mt-1 text-xs text-vc-dark-400">Activated {{ scanner_pass.activated_at|date:"M j, Y g:i A" }}. If staff clears cookies, uses private browsing, or changes browser, reset the device binding.</p>
+                                {% else %}
+                                    <p class="mt-1 text-xs text-vc-dark-400">Not activated yet. This pass will lock to the first device that enters the PIN.</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% if scanner_pass.status == 'active' and scanner_pass.expires_at > now %}
+                                    <button type="button" class="vc-btn vc-btn-outline vc-btn-sm" @click="copy($refs.link{{ scanner_pass.pk }}.value, 'link')" x-text="copied === 'link' ? 'Copied' : (failed === 'link' ? 'Copy failed' : 'Copy link')"></button>
+                                    <form method="post" action="{% url 'dashboard:ticket_scanner_pass_action' event.slug scanner_pass.pk 'reset' %}"
+                                          x-data="{ loading: false }" @submit="loading = true">
+                                        {% csrf_token %}
+                                        <button type="submit" :disabled="loading" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                                            <span x-show="!loading">Reset device</span>
+                                            <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                                <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                                <span>Resetting...</span>
+                                            </span>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'dashboard:ticket_scanner_pass_action' event.slug scanner_pass.pk 'toggle_provisional' %}"
+                                          x-data="{ loading: false }" @submit="loading = true">
+                                        {% csrf_token %}
+                                        <button type="submit" :disabled="loading" class="vc-btn vc-btn-outline vc-btn-sm">
+                                            <span x-show="!loading">{% if scanner_pass.allow_provisional_entry %}Disable emergency{% else %}Enable emergency{% endif %}</span>
+                                            <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                                <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                                <span>Processing...</span>
+                                            </span>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'dashboard:ticket_scanner_pass_action' event.slug scanner_pass.pk 'revoke' %}"
+                                          x-data="{ loading: false }" @submit="loading = true">
+                                        {% csrf_token %}
+                                        <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm">
+                                            <span x-show="!loading">Revoke</span>
+                                            <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                                <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                                <span>Revoking...</span>
+                                            </span>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <input x-ref="link{{ scanner_pass.pk }}" readonly value="{{ scanner_pass.share_url }}" class="mt-3 w-full rounded-xl border border-slate-100 bg-vc-surface px-3 py-2 font-mono text-xs text-vc-dark-400">
+                        {% if scanner_pass.status == 'active' and scanner_pass.expires_at > now %}
+                            <details class="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                <summary class="cursor-pointer text-xs font-bold uppercase text-vc-dark-400">Reset credentials</summary>
+                                <form method="post" action="{% url 'dashboard:ticket_scanner_pass_action' event.slug scanner_pass.pk 'reset_credentials' %}" class="mt-3 flex flex-col gap-2 sm:flex-row"
+                                      x-data="{ loading: false }" @submit="loading = true">
+                                    {% csrf_token %}
+                                    <input name="{{ credential_reset_form.pin.html_name }}" type="password" inputmode="numeric" autocomplete="new-password" minlength="4" maxlength="12" placeholder="New PIN" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" required>
+                                    <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm justify-center whitespace-nowrap">
+                                        <span x-show="!loading">Rotate link + PIN</span>
+                                        <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                            <span>Rotating...</span>
+                                        </span>
+                                    </button>
+                                </form>
+                                <p class="mt-2 text-xs text-vc-dark-400">Use this if the link or PIN leaked, or if staff forgot the PIN. The old link stops working.</p>
+                            </details>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">No scanner passes yet.</div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+                    <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    <div class="flex gap-2">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                &larr; Previous
+                            </a>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                Next &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

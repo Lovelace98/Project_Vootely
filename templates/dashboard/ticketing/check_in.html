@@ -1,0 +1,138 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Check In Tickets | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+{{ doorlist|json_script:"vc-doorlist-data" }}
+<section
+    class="space-y-6 vc-animate-in"
+    x-data="ticketCheckInPage({
+        eventId: '{{ event_check_in_code|default:event.public_code }}',
+        eventTitle: '{{ event.title|escapejs }}',
+        scanUrl: '{{ scan_url }}',
+        provisionalSyncUrl: '{{ provisional_sync_url }}',
+        provisionalAllowed: {{ provisional_allowed|yesno:"true,false" }},
+        csrfToken: '{{ csrf_token }}'
+    })"
+    x-init="init()">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="vc-badge vc-badge-neutral">Event Code: {{ event_check_in_code|default:event.public_code }}</span>
+                <span class="vc-badge vc-badge-success" x-show="locked">Locked</span>
+                <span class="vc-badge vc-badge-warning" x-show="!online">Offline lookup</span>
+                <span class="vc-badge vc-badge-warning" x-show="provisionalAllowed && !online">Emergency provisional available</span>
+            </div>
+            <h1 class="mt-2 vc-section-title dark:text-white">Ticket Check-In</h1>
+            <p class="mt-1 vc-section-subtitle dark:text-slate-400">{{ event.title }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:ticket_attendees' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Attendees</a>
+            <a href="{% url 'dashboard:ticket_scanner_passes' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Gate access</a>
+            <a href="{% url 'dashboard:ticket_check_in_launch' %}" class="vc-btn vc-btn-outline vc-btn-sm">Change event</a>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-4">
+        <div class="vc-stat"><p class="vc-stat-label">Paid Tickets</p><p class="vc-stat-value" x-text="tickets.length"></p></div>
+        <div class="vc-stat vc-stat-blue"><p class="vc-stat-label">Checked In</p><p class="vc-stat-value" x-text="checkedInCount"></p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Remaining</p><p class="vc-stat-value" x-text="activeCount"></p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Pending Sync</p><p class="vc-stat-value" x-text="provisionalPendingCount"></p></div>
+    </div>
+
+    <div class="vc-card p-6" x-show="!locked">
+        <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Lock this device to the event</h2>
+        <p class="mt-1 text-sm text-vc-dark-400">Enter the event code before scanning so gate staff cannot accidentally check tickets into the wrong event.</p>
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <input x-model.trim="lockInput" type="text" inputmode="text" placeholder="Enter event code {{ event_check_in_code|default:event.public_code }}" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm uppercase" @keydown.enter.prevent="lockEvent()">
+            <button type="button" @click="lockEvent()" class="vc-btn vc-btn-accent justify-center">Lock event</button>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-2" x-show="locked">
+        <div class="vc-card space-y-5 p-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-vc-dark dark:text-white">QR scanner</h2>
+                    <p class="mt-1 text-sm text-vc-dark-400" x-text="scannerState"></p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" @click="startScanner()" class="vc-btn vc-btn-accent vc-btn-sm whitespace-nowrap px-5" x-show="!scanning">Start camera</button>
+                    <button type="button" @click="stopScanner()" class="vc-btn vc-btn-outline vc-btn-sm" x-show="scanning">Stop</button>
+                </div>
+            </div>
+
+            <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-vc-dark">
+                <video id="vc-checkin-video" class="hidden h-64 w-full bg-black object-cover" playsinline muted></video>
+                <div id="qr-scanner" style="min-height: 16rem;" x-show="!usingNativeScanner || !scanning"></div>
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center" x-show="scanning && usingNativeScanner">
+                    <div class="h-44 w-44 rounded-2xl border-4 border-white/80 shadow-[0_0_0_999px_rgba(0,0,0,0.25)]"></div>
+                </div>
+                <div class="flex items-center justify-center px-6 text-center text-sm font-semibold text-white/70" style="min-height: 16rem;" x-show="!scanning">
+                    Camera preview appears here after the event is locked and the camera starts.
+                </div>
+            </div>
+
+            <div class="rounded-xl border p-4" :class="resultOk ? 'border-green-200 bg-green-50 text-vc-success' : 'border-red-200 bg-red-50 text-vc-danger'" x-show="resultMessage">
+                <p class="text-sm font-bold" x-text="resultMessage"></p>
+                <p class="mt-1 text-xs" x-show="resultDetail" x-text="resultDetail"></p>
+            </div>
+
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800" x-show="provisionalCandidate">
+                <p class="text-sm font-bold">Admit provisionally?</p>
+                <p class="mt-1 text-xs">This will not be final until Vootely syncs with the server. Confirm only during a real network outage.</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button type="button" class="vc-btn vc-btn-accent vc-btn-sm" @click="confirmProvisionalEntry()">Admit provisionally</button>
+                    <button type="button" class="vc-btn vc-btn-outline vc-btn-sm" @click="cancelProvisionalEntry()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs text-vc-dark-400" x-show="provisionalPendingCount || provisionalRejectedCount || provisionalConfirmedCount">
+                <span x-text="`${provisionalPendingCount} pending sync`"></span>
+                <span x-text="`${provisionalConfirmedCount} provisional confirmed`"></span>
+                <span x-text="`${provisionalRejectedCount} rejected`"></span>
+                <button type="button" class="vc-btn vc-btn-outline vc-btn-sm" @click="syncProvisionalQueue()" x-show="online && provisionalPendingCount">Retry sync</button>
+            </div>
+
+            <div class="border-t border-gray-100 pt-5">
+                <label class="text-sm font-bold text-vc-dark dark:text-white">Manual ticket ID</label>
+                <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input x-model.trim="code" type="text" autocomplete="off" placeholder="Scan or enter ticket ID" class="w-full rounded-xl border border-slate-200 px-4 py-3 font-mono text-sm uppercase" @keydown.enter.prevent="checkIn(code)">
+                    <button type="button" @click="checkIn(code)" class="vc-btn vc-btn-accent justify-center whitespace-nowrap px-6">Check in</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="vc-card flex min-h-[36rem] flex-col p-6">
+            <div>
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Doorlist lookup</h2>
+                <p class="mt-1 text-sm text-vc-dark-400">Search by name, phone, email, ticket ID, order ref, or ticket type.</p>
+                <input x-model.debounce.150ms="query" type="search" placeholder="Search attendee" class="mt-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm">
+            </div>
+
+            <div class="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
+                <template x-for="ticket in filteredTickets" :key="ticket.code">
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:bg-vc-surface-raised dark:border-vc-dark-600">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="truncate font-semibold text-vc-dark dark:text-white" x-text="ticket.buyer_name || ticket.buyer_email || ticket.buyer_phone || 'Unnamed attendee'"></p>
+                                <p class="mt-1 text-xs text-vc-dark-400" x-text="[ticket.ticket_type, ticket.buyer_phone, ticket.buyer_email].filter(Boolean).join(' · ')"></p>
+                                <p class="mt-2 font-mono text-xs font-bold text-vc-dark-400" x-text="ticket.code"></p>
+                            </div>
+                            <span class="vc-badge shrink-0" :class="ticket.status === 'used' ? 'vc-badge-success' : (ticket.status === 'provisional_pending' ? 'vc-badge-warning' : (ticket.status === 'provisional_rejected' ? 'vc-badge-danger' : 'vc-badge-neutral'))" x-text="ticket.status === 'used' ? 'Checked in' : (ticket.status === 'provisional_pending' ? 'Pending sync' : (ticket.status === 'provisional_rejected' ? 'Rejected' : 'Active'))"></span>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between gap-3">
+                            <p class="text-xs text-vc-dark-400" x-text="ticket.provisional_message || (ticket.used_at ? checkedInLabel(ticket) : ticket.purchase_reference)"></p>
+                            <button type="button" class="vc-btn vc-btn-accent vc-btn-sm" @click="checkIn(ticket.code)" x-show="ticket.status === 'active'">Check in</button>
+                        </div>
+                    </div>
+                </template>
+                <div class="vc-empty" x-show="filteredTickets.length === 0">No matching tickets found.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="https://unpkg.com/html5-qrcode" defer></script>
+{% endblock %}

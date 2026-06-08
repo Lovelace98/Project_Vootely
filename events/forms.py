@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ContactInquiry, Event
+from .models import ContactInquiry, Event, VoteBundle
 
 
 class StyledModelForm(forms.ModelForm):
@@ -97,7 +97,84 @@ class EventForm(StyledModelForm):
         return flyer
 
 
+class TicketedEventForm(StyledModelForm):
+    class Meta:
+        model = Event
+        fields = [
+            'title',
+            'description',
+            'venue',
+            'event_date',
+            'banner',
+            'flyer',
+            'currency',
+            'start_at',
+            'end_at',
+            'is_public',
+        ]
+        widgets = {
+            'event_date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+            'start_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+            'end_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+            'description': forms.Textarea(attrs={'rows': 5}),
+        }
+        labels = {
+            'banner': 'Event Banner (Landscape)',
+            'flyer': 'Event Flyer (1:1 Square)',
+            'event_date': 'Event Date & Time',
+            'start_at': 'Ticket Sale Starts',
+            'end_at': 'Ticket Sale Ends',
+            'venue': 'Venue / Location',
+        }
+        help_texts = {
+            'banner': 'Landscape view. Recommended size: 1200x630 pixels.',
+            'flyer': 'Square view. Recommended size: 1080x1080 pixels.',
+            'is_public': 'Make this event visible on the public listing page after publishing.',
+            'event_date': 'When does the event take place? Leave blank if not yet confirmed.',
+            'venue': 'Where is the event? Leave blank if the venue hasn\'t been confirmed yet.',
+            'start_at': 'When should ticket sales begin?',
+            'end_at': 'When should ticket sales close?',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._apply_styles()
+        if 'event_date' in self.fields:
+            self.fields['event_date'].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['start_at'].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['end_at'].input_formats = ['%Y-%m-%dT%H:%M']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_at = cleaned_data.get('start_at')
+        end_at = cleaned_data.get('end_at')
+        if start_at and end_at and end_at <= start_at:
+            raise forms.ValidationError('End date must be after the start date.')
+        return cleaned_data
+
+
 class ContactInquiryForm(StyledModelForm):
+    website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'style': 'display:none !important;',
+                'tabindex': '-1',
+                'autocomplete': 'off',
+            }
+        ),
+        label='',
+    )
+
     class Meta:
         model = ContactInquiry
         fields = ['name', 'email', 'phone_number', 'heard_about_us', 'message']
@@ -125,3 +202,44 @@ class ContactInquiryForm(StyledModelForm):
             ('', 'Select one'),
             *ContactInquiry.HeardAboutUs.choices,
         ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        website = cleaned_data.get('website')
+        if website:
+            raise forms.ValidationError("Spam request blocked.")
+        return cleaned_data
+
+
+class VoteBundleForm(StyledModelForm):
+    class Meta:
+        model = VoteBundle
+        fields = ['quantity', 'price', 'label', 'is_active']
+        widgets = {
+            'quantity': forms.NumberInput(attrs={'min': 1, 'class': 'w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-3 text-vc-dark dark:text-white', 'placeholder': 'e.g. 50'}),
+            'price': forms.NumberInput(attrs={'min': 0.01, 'step': 0.01, 'class': 'w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-3 text-vc-dark dark:text-white', 'placeholder': 'e.g. 40.00'}),
+            'label': forms.TextInput(attrs={'class': 'w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-3 text-vc-dark dark:text-white', 'placeholder': 'e.g. Save 10%, Popular'}),
+        }
+        help_texts = {
+            'quantity': 'Number of votes bundled (e.g. 50)',
+            'price': 'Discounted package price (e.g. GHS 40.00 instead of GHS 50.00)',
+            'label': 'Badge label shown to users (optional)',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        self._apply_styles()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        qty = cleaned_data.get('quantity')
+        price = cleaned_data.get('price')
+        if qty and price and self.event:
+            base_price = self.event.vote_price or 1.00
+            unit_price = price / qty
+            if unit_price > base_price:
+                raise forms.ValidationError(
+                    f"Bundle unit price ({unit_price:.2f}) cannot exceed the event's base vote price ({base_price:.2f})."
+                )
+        return cleaned_data

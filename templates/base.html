@@ -16,6 +16,12 @@
         if (localStorage.getItem('darkMode') === 'true') {
             document.documentElement.classList.add('dark');
         }
+        if (sessionStorage.getItem('pwa-splash-shown') === 'true') {
+            document.documentElement.classList.add('pwa-splash-hidden');
+        }
+        if (localStorage.getItem('votecentral.dashboard.sidebarCollapsed') === 'true') {
+            document.documentElement.classList.add('sidebar-is-collapsed');
+        }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,20 +40,21 @@
 
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ canonical_url }}">
+    <meta http-equiv="content-language" content="en-GH">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ canonical_url }}">
-    <meta property="og:title" content="{% block og_title %}Vootely | Paid Competitions and Secure Elections{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Vootely | Paid Competitions, Secure Elections, and Event Ticketing{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon_512.png' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-image.png' %}{% endblock %}">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ canonical_url }}">
-    <meta name="twitter:title" content="{% block twitter_title %}Vootely | Paid Competitions and Secure Elections{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Vootely | Paid Competitions, Secure Elections, and Event Ticketing{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Run paid competitions and secure elections on Vootely with clear public pages, trusted voting flows, and organizer-friendly reporting.{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon_512.png' %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-image.png' %}{% endblock %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,8 +62,12 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        @keyframes vc-spin { to { transform: rotate(360deg); } }
+        .vc-spinner { display: inline-block; width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: vc-spin 0.6s linear infinite; vertical-align: middle; }
+        .vc-btn-loading { pointer-events: none; cursor: wait; opacity: 0.8; }
     </style>
 
+    <script defer src="{% static 'js/ticket-check-in.js' %}?v=5"></script>
     <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -67,6 +78,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col{% endblock %}">
+    {% include 'includes/pwa_splash.html' %}
+
     {% block body %}
     {% include 'includes/navbar.html' %}
 
@@ -154,6 +167,55 @@
             </button>
         </div>
     </div>
+
+    <!-- Global Loading Store for Button Spinners -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('loading', {
+                states: {},
+                start(key) { this.states[key] = true },
+                stop(key) { this.states[key] = false },
+                is(key) { return !!this.states[key] }
+            });
+        });
+    </script>
+
+    <!-- HTMX Loading States for Buttons -->
+    <script>
+        document.addEventListener('htmx:beforeRequest', function(evt) {
+            const elt = evt.detail.elt;
+            if (elt && elt.tagName === 'BUTTON') {
+                elt.classList.add('vc-btn-loading');
+                elt.disabled = true;
+            }
+            const form = elt?.closest?.('form');
+            if (form) {
+                const btns = form.querySelectorAll('button[type="submit"]');
+                btns.forEach(btn => { btn.classList.add('vc-btn-loading'); btn.disabled = true; });
+            }
+        });
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            const elt = evt.detail.elt;
+            if (elt && elt.tagName === 'BUTTON') {
+                elt.classList.remove('vc-btn-loading');
+                elt.disabled = false;
+            }
+            const form = elt?.closest?.('form');
+            if (form) {
+                const btns = form.querySelectorAll('button[type="submit"]');
+                btns.forEach(btn => { btn.classList.remove('vc-btn-loading'); btn.disabled = false; });
+            }
+        });
+        document.addEventListener('htmx:beforeSwap', function(evt) {
+            if (evt.detail.xhr.status === 422) {
+                const form = evt.detail.elt?.closest?.('form');
+                if (form) {
+                    const btns = form.querySelectorAll('button');
+                    btns.forEach(btn => { btn.classList.remove('vc-btn-loading'); btn.disabled = false; });
+                }
+            }
+        });
+    </script>
 
     <!-- PWA Store and Service Worker Registration -->
     <script>

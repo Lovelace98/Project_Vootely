@@ -60,3 +60,15 @@ class NomineeSitemap(VootelySitemap):
 
     def lastmod(self, obj):
         return obj.updated_at
+
+
+class BlogSitemap(VootelySitemap):
+    changefreq = 'weekly'
+    priority = 0.6
+
+    def items(self):
+        from events.blog_data import BLOG_POSTS
+        return BLOG_POSTS
+
+    def location(self, item):
+        return reverse('events:blog_detail', args=[item['slug']])

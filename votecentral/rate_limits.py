@@ -13,8 +13,11 @@ def request_identifier(request, *, scope='ip'):
 def is_rate_limited(request, key_prefix, limit, window_seconds, *, scope='ip'):
     identifier = request_identifier(request, scope=scope)
     cache_key = f'{key_prefix}:{identifier}'
-    added = cache.add(cache_key, 1, timeout=window_seconds)
-    if added:
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:
+        cache.add(cache_key, 1, timeout=window_seconds)
         return False
-    count = cache.incr(cache_key)
+    if count == 1:
+        cache.expire(cache_key, window_seconds)
     return count > limit

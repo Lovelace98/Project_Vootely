@@ -67,8 +67,8 @@
     const link = event.target.closest('a[href]');
     if (!link || shouldDashboardBoostLink(link)) return;
     link.setAttribute('hx-boost', 'false');
-    event.stopPropagation();
     if (!isPlainLeftClick(event)) return;
+    event.stopPropagation();
     if (link.target && link.target !== '_self') return;
     if (link.hasAttribute('download')) return;
     const url = getLinkUrl(link);

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Activate Scanner | Vootely{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-xl space-y-6 vc-animate-in">
+    <div>
+        <p class="vc-section-label">{{ scanner_pass.gate_name }}</p>
+        <h1 class="mt-1 vc-section-title dark:text-white">Activate scanner</h1>
+        <p class="mt-1 vc-section-subtitle">{{ event.title }} · Event Code: {{ event.public_code }}</p>
+    </div>
+
+    <form method="post" class="vc-card p-6 space-y-4" x-data="{ loading: false }" @submit="loading = true">
+        {% csrf_token %}
+        <div>
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Enter activation PIN</h2>
+            <p class="mt-1 text-sm text-vc-dark-400">This link is limited to {{ scanner_pass.gate_name }} and one active device.</p>
+            <p class="mt-2 text-xs text-vc-dark-400">Use the same browser for the event. Private browsing, clearing cookies, or switching phones can require the organizer to reset this pass.</p>
+        </div>
+        <div>
+            <label for="{{ form.pin.id_for_label }}" class="text-sm font-bold text-vc-dark dark:text-white">PIN</label>
+            <input id="{{ form.pin.id_for_label }}" name="{{ form.pin.html_name }}" type="password" inputmode="numeric" autocomplete="one-time-code" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" autofocus required>
+            {% for error in form.pin.errors %}<p class="mt-1 text-xs font-semibold text-vc-danger">{{ error }}</p>{% endfor %}
+        </div>
+        <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent w-full justify-center">
+            <span x-show="!loading">Activate this device</span>
+            <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                <span>Activating...</span>
+            </span>
+        </button>
+    </form>
+</section>
+{% endblock %}

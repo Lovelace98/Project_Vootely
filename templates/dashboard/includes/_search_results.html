@@ -89,7 +89,7 @@
         </div>
     {% endif %}
 
-    {% if payments or organizer_payments %}
+    {% if payments or organizer_payments or ticket_purchases or tickets %}
         <div>
             <p class="text-[10px] font-bold uppercase tracking-wider text-vc-success mb-2 dark:text-emerald-400">Transactions &amp; Payments</p>
             <div class="space-y-2">
@@ -115,11 +115,33 @@
                         </span>
                     </a>
                 {% endfor %}
+                {% for purchase in ticket_purchases %}
+                    <a href="{% url 'dashboard:ticket_sales' purchase.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-bold text-vc-dark dark:text-white">{{ purchase.buyer_name|default:purchase.buyer_email|default:"Guest buyer" }} · {{ purchase.quantity }} ticket{{ purchase.quantity|pluralize }}</p>
+                            <p class="text-[10px] text-vc-dark-400 dark:text-slate-400">Ticket payment · Ref {{ purchase.gateway_reference }} · {{ purchase.event.title }}</p>
+                        </div>
+                        <span class="vc-badge {% if purchase.status == 'paid' %}vc-badge-success{% elif purchase.status == 'pending' or purchase.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %} text-[8px]">
+                            {{ purchase.status }}
+                        </span>
+                    </a>
+                {% endfor %}
+                {% for ticket in tickets %}
+                    <a href="{% url 'dashboard:ticket_check_in' ticket.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-bold text-vc-dark dark:text-white">Ticket {{ ticket.code }} · {{ ticket.ticket_type.name }}</p>
+                            <p class="text-[10px] text-vc-dark-400 dark:text-slate-400">{{ ticket.purchase.buyer_email|default:"No email" }} · {{ ticket.event.title }}</p>
+                        </div>
+                        <span class="vc-badge {% if ticket.status == 'active' %}vc-badge-success{% elif ticket.status == 'used' %}vc-badge-neutral{% else %}vc-badge-danger{% endif %} text-[8px]">
+                            {{ ticket.status }}
+                        </span>
+                    </a>
+                {% endfor %}
             </div>
         </div>
     {% endif %}
 
-    {% if not events and not nominees and not election_candidates and not election_positions and not election_voters and not election_credentials and not election_invoices and not payments and not organizer_payments %}
+    {% if not events and not nominees and not election_candidates and not election_positions and not election_voters and not election_credentials and not election_invoices and not payments and not organizer_payments and not ticket_purchases and not tickets %}
         <div class="text-center py-8 text-vc-dark-400 dark:text-slate-400">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-vc-dark-200"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <p class="text-xs font-semibold">No matches found for "{{ query }}"</p>

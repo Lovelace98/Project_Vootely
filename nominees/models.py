@@ -115,7 +115,6 @@ class Nominee(models.Model):
                         self.code = candidate_code
                         break
 
-        self.full_clean()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -172,6 +171,8 @@ class NominationSubmission(models.Model):
         indexes = [
             models.Index(fields=('event', 'status', '-created_at'), name='nomsub_event_status_created'),
             models.Index(fields=('category', 'status', '-created_at'), name='nomsub_cat_status_created'),
+            models.Index(fields=('email',), name='nomsub_email'),
+            models.Index(fields=('phone_number',), name='nomsub_phone'),
         ]
 
     def __str__(self):
@@ -209,7 +210,6 @@ class NominationSubmission(models.Model):
             self.reviewed_at = None
             self.review_notes = self.review_notes or ''
             self.approved_nominee = None
-        self.full_clean()
         super().save(*args, **kwargs)
 
     def _duplicate_queryset(self):

@@ -36,12 +36,12 @@ When an organizer registers an account on the Vootely platform, we collect:
 * Avatar image and custom branding assets if uploaded by the organizer.
 * Financial/Billing information (such as bank name, account number, and account holder name) solely to process ledger-backed revenue withdrawals.
 
-### 3.2 Data collected from Voters (Guest Checkout)
-Vootely operates a guest-first voting flow where voters do not need to create accounts. When a voter purchases votes for a nominee, we collect:
-* Voter's full name.
-* Voter's email address.
-* Voter's phone number (used for Paystack checkout and Hubtel-backed payment/vote confirmations).
-* Vote details (event name, chosen nominee, purchase quantity, amount paid).
+### 3.2 Data collected from Voters & Ticket Buyers (Guest Checkout)
+Vootely operates a guest-first checkout flow where users do not need to create accounts to purchase votes or event tickets. We collect:
+* Buyer's full name.
+* Buyer's email address.
+* Buyer's phone number (used for Paystack checkout and Hubtel-backed payment/receipt confirmations).
+* Transaction details (event name, nominee selection or ticket type, purchase quantity, amount paid).
 * Payment details (handled securely by our licensed payment partner, Paystack — we do not store credit card numbers or Mobile Money PINs on our servers).
 
 ### 3.3 Data collected from Nominees
@@ -59,6 +59,14 @@ When you visit the Vootely website, we automatically collect:
 
 This data is used solely for platform security, performance monitoring, and fraud prevention.
 
+### 3.5 Data collected from Organizer Staff / Gate Scanners
+When an organizer's staff logs in to scan tickets and verify gate entry on our check-in interface, we collect:
+* Staff device details (IP address, user-agent, browser settings).
+* Session authentication tokens and keys.
+* Scan activity logs (scanned ticket ID, scanning event ID, ticket check-in timestamp).
+
+This data is processed to authenticate staff users, prevent gate entry fraud, and track legitimate check-in logs under Ghana's data protection rules.
+
 ---
 
 ## 4. Why We Collect Your Data — Legal Basis
@@ -66,11 +74,11 @@ We collect and process personal data only for specific, legitimate purposes in a
 
 | Purpose | Data Used | Legal Basis |
 | :--- | :--- | :--- |
-| **Providing voting and competition services** | Organizer accounts, voter transactions, nominee records | Contract performance |
-| **Processing Paystack payments & issuing votes** | Phone number, email, amount, nominee selection | Contract performance |
-| **Sending transactional notifications** | Phone number, email | Contract performance / Consent |
+| **Providing voting, ticketing, and check-in services** | Organizer/Staff accounts, transactions, nominee/ticket records | Contract performance |
+| **Processing Paystack payments & issuing votes/tickets** | Phone number, email, amount, nominee/ticket selection | Contract performance |
+| **Sending transactional notifications & ticket links** | Phone number, email | Contract performance / Consent |
 | **Processing wallet withdrawals for organizers** | Bank details, ledger records | Contract performance |
-| **Platform security & anti-fraud auditing** | Usage data, transaction logs | Legitimate interest / Legal obligation |
+| **Platform security, staff check-in auth & anti-fraud** | Usage data, IP, user-agent, transaction/scan logs | Legitimate interest / Legal obligation |
 | **Legal compliance and record-keeping** | All transaction records | Legal obligation |
 
 ---

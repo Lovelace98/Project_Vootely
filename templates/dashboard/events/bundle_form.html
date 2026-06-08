@@ -1,0 +1,62 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Add Vote Package | Vootely{% endblock %}
+{% block nav_competitions %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="mx-auto max-w-2xl vc-animate-in">
+    <div class="vc-card p-8">
+        <p class="vc-section-label">Competition Pricing</p>
+        <h1 class="mt-1 vc-section-title">Add Vote Package</h1>
+        <p class="text-sm text-vc-dark-400 mt-2">Configure custom package pricing for <strong>{{ event.title }}</strong>.</p>
+
+        <form method="post" class="mt-8 space-y-6">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
+                    {{ form.non_field_errors|join:", " }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="flex items-start gap-3 rounded-xl border border-vc-dark-100/30 p-4 hover:bg-vc-surface transition-colors">
+                        <div class="pt-0.5">
+                            {{ field }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-vc-dark dark:text-white" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.help_text %}
+                                <p class="mt-0.5 text-xs text-vc-dark-300 dark:text-slate-400">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-vc-dark-500 dark:text-slate-300" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="mt-1.5 text-xs text-vc-dark-300 dark:text-slate-400">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="mt-1 text-sm font-medium text-vc-danger">{{ field.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="vc-btn vc-btn-accent">
+                    Save Package
+                </button>
+                <a href="{{ event.get_dashboard_url }}" class="vc-btn vc-btn-outline">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

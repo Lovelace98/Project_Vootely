@@ -72,7 +72,12 @@ class PaystackInitiateView(View):
             return redirect(event.get_absolute_url())
 
         quantity = form.cleaned_data['quantity']
-        amount = (event.vote_price or Decimal('0.00')) * quantity
+        
+        bundle = event.vote_bundles.filter(quantity=quantity, is_active=True).first()
+        if bundle:
+            amount = bundle.price
+        else:
+            amount = (event.vote_price or Decimal('0.00')) * quantity
         payment_attempt = PaymentAttempt.objects.create(
             event=event,
             nominee=nominee,
@@ -92,7 +97,7 @@ class PaystackInitiateView(View):
 
         try:
             payload = initialize_paystack_transaction(payment_attempt)
-        except Exception as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
             payment_attempt.status = PaymentAttempt.Status.FAILED
             payment_attempt.gateway_status = 'initialize_failed'
             payment_attempt.failure_reason = str(exc)[:255]
@@ -173,7 +178,13 @@ class PaystackWebhookView(View):
 
                 handle_organizer_paystack_webhook(payload)
             except OrganizerPaymentAttempt.DoesNotExist:
-                return HttpResponse('Ignored.', status=200)
+                try:
+                    from ticketing.models import TicketPurchase
+                    from ticketing.services import handle_ticket_paystack_webhook
+
+                    handle_ticket_paystack_webhook(payload)
+                except TicketPurchase.DoesNotExist:
+                    return HttpResponse('Ignored.', status=200)
 
         return HttpResponse('OK', status=200)
 
@@ -205,7 +216,29 @@ class PaystackCallbackView(View):
                     gateway_reference=reference
                 )
             except OrganizerPaymentAttempt.DoesNotExist:
-                return redirect('payments:status_detail', reference=reference)
+                try:
+                    from ticketing.models import TicketPurchase
+                    from ticketing.services import (
+                        record_ticket_paystack_callback,
+                        ticket_purchase_status_redirect_url,
+                    )
+
+                    ticket_purchase = TicketPurchase.objects.select_related('event', 'ticket_type').get(
+                        gateway_reference=reference
+                    )
+                except TicketPurchase.DoesNotExist:
+                    return redirect('payments:status_detail', reference=reference)
+
+                callback_status = request.GET.get('status', '').strip().lower()
+                record_ticket_paystack_callback(ticket_purchase, callback_status=callback_status)
+
+                if ticket_purchase.status == TicketPurchase.Status.PAID:
+                    messages.success(request, f"Ticket payment successful! Your tickets for '{ticket_purchase.event.title}' are ready.")
+                elif ticket_purchase.status in {TicketPurchase.Status.FAILED, TicketPurchase.Status.CANCELLED}:
+                    messages.error(request, f"Ticket payment for '{ticket_purchase.event.title}' was unsuccessful or cancelled.")
+                else:
+                    messages.info(request, f"Ticket payment for '{ticket_purchase.event.title}' is pending confirmation.")
+                return redirect(ticket_purchase_status_redirect_url(ticket_purchase))
             callback_status = request.GET.get('status', '').strip().lower()
             record_organizer_paystack_callback(organizer_attempt, callback_status=callback_status)
             

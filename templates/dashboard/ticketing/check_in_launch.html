@@ -1,0 +1,43 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Gate Check-In | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="mx-auto max-w-4xl space-y-6 vc-animate-in">
+    <div>
+        <p class="vc-section-label">Gate access</p>
+        <h1 class="mt-1 vc-section-title dark:text-white">Start Check-In</h1>
+        <p class="mt-1 vc-section-subtitle dark:text-slate-400">Enter an event code or event slug to lock this device to one event before scanning tickets.</p>
+    </div>
+
+    <form method="post" class="vc-card p-6">
+        {% csrf_token %}
+        <label for="event_id" class="text-sm font-bold text-vc-dark dark:text-white">Event code or slug</label>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+            <input id="event_id" name="event_id" type="text" inputmode="text" autocomplete="off" placeholder="Example: V-8K4P2 or accra-live-night" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm uppercase" autofocus>
+            <button type="submit" class="vc-btn vc-btn-accent justify-center">Open gate</button>
+        </div>
+    </form>
+
+    <div class="vc-card p-6">
+        <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Recent ticketed events</h2>
+            <a href="{% url 'dashboard:tickets' %}" class="vc-btn vc-btn-outline vc-btn-sm">All tickets</a>
+        </div>
+        <div class="mt-4 space-y-3">
+            {% for event in events %}
+                <a href="{% url 'dashboard:ticket_check_in' event.slug %}" class="vc-status-row hover:bg-vc-surface">
+                    <div>
+                        <p class="font-semibold text-vc-dark dark:text-white">{{ event.title }}</p>
+                        <p class="text-sm text-vc-dark-400">Event Code: {{ event.public_code }} · {{ event.start_at|date:"M j, Y g:i A" }}</p>
+                    </div>
+                    <span class="vc-badge vc-badge-neutral">{{ event.status }}</span>
+                </a>
+            {% empty %}
+                <div class="vc-empty">No ticketed events yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

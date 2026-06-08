@@ -1,7 +1,7 @@
 {% extends 'dashboard_base.html' %}
 
 {% block title %}{{ event.title }} Election | Vootely{% endblock %}
-{% block nav_my_events %}active{% endblock %}
+{% block nav_elections %}active{% endblock %}
 
 {% block dashboard_content %}
 <section class="space-y-6" x-data="{ guideOpen: false, currentStep: 1 }">
@@ -135,6 +135,10 @@
                 {% endif %}
                 {% if latest_tally %}
                     <a href="{% url 'elections:results' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Results page</a>
+                    <a href="{{ live_results_url }}" target="_blank" class="vc-btn vc-btn-accent vc-btn-sm" x-data="{ copied: false }"
+                       @click="navigator.clipboard.writeText('{{ live_results_url|escapejs }}'); copied = true; setTimeout(() => copied = false, 2000)">
+                        <span x-text="copied ? 'Copied!' : 'Share Live Results'"></span>
+                    </a>
                 {% endif %}
             </div>
             {% if latest_invoice %}

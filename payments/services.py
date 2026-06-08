@@ -275,6 +275,18 @@ def verify_and_process_paystack_payment(reference):
                 return 'organizer_success'
         except (OrganizerPaymentAttempt.DoesNotExist, ImportError):
             pass
+
+        # Check if it is a ticket purchase
+        try:
+            from ticketing.models import TicketPurchase
+            from ticketing.services import handle_ticket_paystack_webhook
+
+            purchase = TicketPurchase.objects.get(gateway_reference=reference)
+            if purchase.status != TicketPurchase.Status.PAID:
+                handle_ticket_paystack_webhook(payload)
+                return 'ticket_success'
+        except (TicketPurchase.DoesNotExist, ImportError):
+            pass
     elif status in {'abandoned', 'failed', 'reversed'}:
         # Check standard payment attempt
         try:
@@ -305,6 +317,23 @@ def verify_and_process_paystack_payment(reference):
                 )
                 return 'organizer_failed'
         except (OrganizerPaymentAttempt.DoesNotExist, ImportError):
+            pass
+
+        # Check ticket purchase
+        try:
+            from ticketing.models import TicketPurchase
+            from ticketing.services import mark_ticket_purchase_unsuccessful
+
+            purchase = TicketPurchase.objects.get(gateway_reference=reference)
+            if purchase.status not in {TicketPurchase.Status.PAID, TicketPurchase.Status.FAILED, TicketPurchase.Status.CANCELLED}:
+                mark_ticket_purchase_unsuccessful(
+                    purchase,
+                    gateway_status=status,
+                    failure_reason=data.get('gateway_response') or 'The ticket payment was not completed successfully.',
+                    cancelled=(status == 'abandoned'),
+                )
+                return 'ticket_failed'
+        except (TicketPurchase.DoesNotExist, ImportError):
             pass
 
     return None
@@ -455,6 +484,10 @@ def handle_paystack_webhook(payload):
     from notifications.services import queue_payment_confirmed
 
     queue_payment_confirmed(attempt)
+
+    from events.performance import broadcast_leaderboard_update
+    broadcast_leaderboard_update(attempt.event_id)
+
     return attempt
 
 
@@ -553,7 +586,7 @@ def charge_momo_stk_push(payment_attempt):
         'reference': payment_attempt.gateway_reference,
         'amount': amount_to_minor_units(payment_attempt.amount),
         'currency': payment_attempt.currency,  # GHS
-        'email': payment_attempt.voter_email or 'ussd-voter@vootely.com',
+        'email': payment_attempt.voter_email or settings.USSD_VOTER_EMAIL,
         'mobile_money': {
             'phone': phone,
             'provider': provider
@@ -587,4 +620,3 @@ def charge_momo_stk_push(payment_attempt):
     payment_attempt.status = PaymentAttempt.Status.PENDING
     payment_attempt.save(update_fields=['status'])
     return body
-

@@ -49,7 +49,7 @@
     </div>
 
     <!-- Overview Stats cards -->
-    <div class="grid gap-6 sm:grid-cols-2">
+    <div class="grid gap-6 sm:grid-cols-3">
         <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-6 border border-gray-100 flex items-center justify-between">
             <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Total Analytics Revenue</p>
@@ -65,7 +65,16 @@
                 <p class="text-3xl font-extrabold text-vc-dark dark:text-white mt-2 leading-none">{{ total_votes }}</p>
             </div>
             <div class="h-12 w-12 rounded-full bg-vc-orange-50 dark:bg-slate-800 flex items-center justify-center text-vc-orange dark:text-white shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-vc-surface-raised dark:border-vc-dark-600 rounded-[2rem] p-6 border border-gray-100 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-vc-dark-400">Total Tickets Sold</p>
+                <p class="text-3xl font-extrabold text-vc-dark dark:text-white mt-2 leading-none">{{ total_tickets }}</p>
+            </div>
+            <div class="h-12 w-12 rounded-full bg-emerald-50 dark:bg-slate-800 flex items-center justify-center text-emerald-600 dark:text-white shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
             </div>
         </div>
     </div>
@@ -101,6 +110,9 @@
 </div>
 
 <script id="dashboardAnalyticsChartData" type="application/json">
-{"weekly_votes": {{ weekly_votes|safe }}}
+{
+    "weekly_votes": {{ weekly_votes|safe }},
+    "weekly_tickets": {{ weekly_tickets|safe }}
+}
 </script>
 {% endblock %}

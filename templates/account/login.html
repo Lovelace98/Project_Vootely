@@ -32,7 +32,7 @@
                     <h2 class="text-3xl font-extrabold text-vc-dark tracking-tight">Sign In</h2>
                     <p class="mt-1 text-sm text-vc-dark-400 font-medium">Log in to your organizer dashboard to manage events.</p>
 
-                    <form method="post" action="{% url 'account_login' %}" class="mt-8 space-y-5">
+                    <form method="post" action="{% url 'account_login' %}" class="mt-8 space-y-5" x-data="{ loading: false }" @submit="loading = true">
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}
@@ -120,10 +120,18 @@
                             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
                         {% endif %}
 
-                        <div class="pt-2">
-                            <button type="submit" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
-                                Sign In
+                        <div class="flex items-center justify-between pt-2">
+                            <button type="submit" :disabled="loading" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
+                                <span x-show="!loading">Sign In</span>
+                                <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    <span>Signing in...</span>
+                                </span>
                             </button>
+                        </div>
+
+                        <div class="flex items-center justify-between -mt-2">
+                            <a href="{% url 'account_reset_password' %}" class="text-xs font-semibold text-vc-blue hover:text-vc-blue-700 hover:underline transition-colors">Forgot your password?</a>
                         </div>
                     </form>
 
@@ -144,7 +152,7 @@
             <a href="{% url 'events:terms_of_service' %}" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
             <a href="{% url 'events:privacy_policy' %}" class="hover:text-vc-blue hover:underline transition-all">Privacy</a>
             <a href="{% url 'events:organizer_agreement' %}" class="hover:text-vc-blue hover:underline transition-all">Organizer Agreement</a>
-            <a href="mailto:lovesdesigns1@gmail.com" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+            <a href="mailto:{{ support_email }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
         </div>
     </div>
 </div>

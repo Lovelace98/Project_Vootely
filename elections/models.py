@@ -455,6 +455,9 @@ class ElectionAuditLog(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=('event', '-created_at'), name='auditlog_event_created'),
+        ]
 
 
 class ElectionTallySnapshot(models.Model):

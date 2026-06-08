@@ -1,0 +1,1 @@
+Ticket payment unsuccessful for {{ event_title }}

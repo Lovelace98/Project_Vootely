@@ -16,19 +16,19 @@
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="vc-stat vc-stat-accent vc-animate-in vc-stagger-1">
             <p class="vc-stat-label">Available to Withdraw</p>
-            <p class="vc-stat-value text-vc-orange">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
+            <p class="vc-stat-value text-vc-orange text-base sm:text-xl">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-stat-blue vc-animate-in vc-stagger-2">
             <p class="vc-stat-label">Confirmed Earnings</p>
-            <p class="vc-stat-value">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
+            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-animate-in vc-stagger-3">
             <p class="vc-stat-label">In Progress</p>
-            <p class="vc-stat-value">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
+            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-animate-in vc-stagger-4">
             <p class="vc-stat-label">Total Withdrawn</p>
-            <p class="vc-stat-value">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
+            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
         </div>
     </div>
 
@@ -38,7 +38,8 @@
         <div class="vc-card p-6 vc-animate-in vc-stagger-3">
             <h2 class="text-lg font-semibold text-vc-dark">Request a Payout</h2>
             <p class="mt-1 text-sm text-vc-dark-400">Pending requests don't count as paid out. Approved and processing requests reduce available balance.</p>
-            <form method="post" class="mt-6 space-y-4">
+            <form method="post" class="mt-6 space-y-4"
+                  x-data="{ loading: false }" @submit="loading = true">
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="relative">
@@ -80,9 +81,15 @@
                 {% if form.non_field_errors %}
                     <p class="text-sm font-medium text-vc-danger">{{ form.non_field_errors|join:", " }}</p>
                 {% endif %}
-                <button type="submit" class="vc-btn vc-btn-accent vc-btn-block vc-btn-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                    Submit Withdrawal Request
+                <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent vc-btn-block vc-btn-lg">
+                    <span x-show="!loading">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Submit Withdrawal Request
+                    </span>
+                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span>Submitting...</span>
+                    </span>
                 </button>
             </form>
         </div>
@@ -121,6 +128,27 @@
                     </div>
                 {% endfor %}
             </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-vc-dark-600 mt-6">
+                    <span class="text-xs font-semibold text-vc-dark-400 dark:text-slate-400">
+                        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    <div class="flex gap-2">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                &larr; Previous
+                            </a>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">
+                                Next &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 </section>

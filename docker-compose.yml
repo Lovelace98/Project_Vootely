@@ -7,7 +7,7 @@ services:
     image: votecentral-app:latest
     container_name: votecentral_web
     restart: always
-    # entrypoint.sh is set in Dockerfile and handles DB checks, migrations, and gunicorn startup.
+    # entrypoint.sh is set in Dockerfile and handles DB checks, migrations, and daphne startup.
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media

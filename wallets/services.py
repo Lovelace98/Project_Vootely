@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import DecimalField, Sum, Value
 from django.db.models.functions import Coalesce
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from .models import LedgerEntry, LedgerTransaction, WalletAccount, WithdrawalRequest
 
@@ -96,19 +96,26 @@ def get_pending_review_withdrawal_total(user):
     )
 
 
-def get_reserved_withdrawal_total(user, *, exclude_withdrawal=None):
+def get_reserved_withdrawal_total(user, *, exclude_withdrawal=None, exclude_pending=False):
+    statuses = list(WITHDRAWAL_RESERVED_STATUSES)
+    if exclude_pending:
+        statuses = [s for s in statuses if s != WithdrawalRequest.Status.PENDING]
     queryset = WithdrawalRequest.objects.filter(
         organizer=user,
-        status__in=WITHDRAWAL_RESERVED_STATUSES,
+        status__in=statuses,
     )
     if exclude_withdrawal is not None and exclude_withdrawal.pk:
         queryset = queryset.exclude(pk=exclude_withdrawal.pk)
     return aggregate_money(queryset)
 
 
-def get_available_withdrawal_balance(user, *, exclude_withdrawal=None):
+def get_available_withdrawal_balance(user, *, exclude_withdrawal=None, exclude_pending=False):
     confirmed_earnings = get_confirmed_earnings_total(user)
-    reserved_total = get_reserved_withdrawal_total(user, exclude_withdrawal=exclude_withdrawal)
+    reserved_total = get_reserved_withdrawal_total(
+        user,
+        exclude_withdrawal=exclude_withdrawal,
+        exclude_pending=exclude_pending,
+    )
     return quantize_amount(max(confirmed_earnings - reserved_total, Decimal('0.00')))
 
 
@@ -195,10 +202,81 @@ def post_payment_ledger_transaction(payment_attempt):
             ),
         ]
     )
+    transaction_row.ensure_balanced()
     from events.performance import bump_event_cache, bump_organizer_cache
 
     bump_organizer_cache(payment_attempt.event.owner_id)
     bump_event_cache(payment_attempt.event_id)
+    return transaction_row
+
+
+@transaction.atomic
+def post_ticket_ledger_transaction(ticket_purchase):
+    if hasattr(ticket_purchase, 'ledger_transaction'):
+        return ticket_purchase.ledger_transaction
+
+    organizer_account = get_organizer_account(ticket_purchase.event.owner)
+    platform_account = get_platform_account()
+    gross = quantize_amount(ticket_purchase.amount)
+    base_amount = quantize_amount(ticket_purchase.amount - ticket_purchase.buyer_handling_fee)
+    commission_rate = (
+        Decimal(ticket_purchase.ticket_commission_percent) / Decimal('100')
+    ).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+    commission = quantize_amount(base_amount * commission_rate)
+    organizer_share = quantize_amount(base_amount - commission)
+    platform_fee = quantize_amount(commission + ticket_purchase.buyer_handling_fee)
+
+    try:
+        with transaction.atomic():
+            transaction_row = LedgerTransaction.objects.create(
+                reference=ticket_purchase.gateway_reference,
+                ticket_purchase=ticket_purchase,
+                description=f'Ticket purchase by {ticket_purchase.buyer_name or ticket_purchase.buyer_email or "Guest"} for {ticket_purchase.event.title}',
+                metadata={
+                    'event_id': ticket_purchase.event_id,
+                    'ticket_type_id': ticket_purchase.ticket_type_id,
+                    'ticket_type_name': ticket_purchase.ticket_type.name,
+                    'quantity': ticket_purchase.quantity,
+                    'buyer_name': ticket_purchase.buyer_name,
+                    'buyer_email': ticket_purchase.buyer_email,
+                    'buyer_phone': ticket_purchase.buyer_phone,
+                    'commission_percent': str(ticket_purchase.ticket_commission_percent),
+                    'commission_amount': str(commission),
+                    'buyer_handling_fee': str(ticket_purchase.buyer_handling_fee),
+                    'organizer_share_amount': str(organizer_share),
+                    'gross_amount': str(gross),
+                    'revenue_type': 'ticket',
+                },
+            )
+    except IntegrityError:
+        return LedgerTransaction.objects.get(ticket_purchase=ticket_purchase)
+    LedgerEntry.objects.bulk_create(
+        [
+            LedgerEntry(
+                transaction=transaction_row,
+                account=organizer_account,
+                amount=organizer_share,
+                kind=LedgerEntry.Kind.ORGANIZER_SALE_CREDIT,
+            ),
+            LedgerEntry(
+                transaction=transaction_row,
+                account=platform_account,
+                amount=platform_fee,
+                kind=LedgerEntry.Kind.PLATFORM_FEE_CREDIT,
+            ),
+            LedgerEntry(
+                transaction=transaction_row,
+                account=platform_account,
+                amount=-gross,
+                kind=LedgerEntry.Kind.GATEWAY_SETTLEMENT_DEBIT,
+            ),
+        ]
+    )
+    transaction_row.ensure_balanced()
+    from events.performance import bump_event_cache, bump_organizer_cache
+
+    bump_organizer_cache(ticket_purchase.event.owner_id)
+    bump_event_cache(ticket_purchase.event_id)
     return transaction_row
 
 
@@ -239,6 +317,7 @@ def post_withdrawal_ledger_transaction(withdrawal_request):
             ),
         ]
     )
+    transaction_row.ensure_balanced()
     from events.performance import bump_organizer_cache
 
     bump_organizer_cache(withdrawal_request.organizer_id)

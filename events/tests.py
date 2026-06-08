@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core import mail
@@ -134,7 +135,7 @@ class EventFlowTests(TestCase):
             Notification.objects.filter(
                 event=event,
                 event_type=Notification.EventType.EVENT_COMMISSION_SETUP_REQUIRED,
-                recipient_email='lovesdesigns1@gmail.com',
+                recipient_email=settings.SUPPORT_EMAIL,
             ).exists()
         )
         self.assertTrue(
@@ -142,7 +143,7 @@ class EventFlowTests(TestCase):
                 event=event,
                 event_type=Notification.EventType.EVENT_COMMISSION_SETUP_REQUIRED,
                 channel=Notification.Channel.SMS,
-                recipient_phone='+233548988503',
+                recipient_phone=settings.SUPPORT_PHONE.replace(' ', ''),
             ).exists()
         )
 
@@ -184,10 +185,11 @@ class EventFlowTests(TestCase):
         self.assertContains(response, 'landing-hero-woman-transparent.png')
         self.assertContains(response, 'Affordable platform management fee')
         self.assertContains(response, 'negotiated platform commission')
-        self.assertContains(response, 'lovesdesigns1@gmail.com')
-        self.assertContains(response, 'https://wa.me/233548988503?text=')
+        self.assertContains(response, settings.SUPPORT_EMAIL)
+        wa_phone = settings.SUPPORT_PHONE.replace(' ', '').lstrip('+')
+        self.assertContains(response, f'https://wa.me/{wa_phone}?text=')
         self.assertContains(response, 'See all events')
-        self.assertContains(response, 'Browse active competitions already collecting votes.')
+        self.assertContains(response, "See what\u0027s happening now")
         self.assertContains(response, 'FAQ')
         self.assertContains(response, '#faq')
         self.assertContains(response, 'How do platform fees work for paid competitions?')
@@ -275,7 +277,7 @@ class EventFlowTests(TestCase):
         self.assertContains(response, 'This field is required.')
         self.assertContains(response, 'Enter a valid email address.')
 
-    @patch('events.views.send_mail', side_effect=Exception('email down'))
+    @patch('events.views.send_mail', side_effect=OSError('email down'))
     def test_contact_inquiry_submit_keeps_saved_inquiry_when_email_fails(self, mocked_send_mail):
         response = self.client.post(
             reverse('events:contact_inquiry_submit'),
@@ -292,6 +294,23 @@ class EventFlowTests(TestCase):
         self.assertEqual(ContactInquiry.objects.count(), 1)
         mocked_send_mail.assert_called_once()
         self.assertContains(response, 'Your message has been saved.')
+
+    def test_contact_inquiry_submit_honeypot_blocks_spam(self):
+        response = self.client.post(
+            reverse('events:contact_inquiry_submit'),
+            {
+                'name': 'Spam Bot',
+                'email': 'spam@example.com',
+                'phone_number': '+233240000000',
+                'heard_about_us': ContactInquiry.HeardAboutUs.WHATSAPP,
+                'message': 'This is automated spam message.',
+                'website': 'http://spam-url-link.com',  # Honeypot filled by bot
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ContactInquiry.objects.count(), 0)
+        self.assertContains(response, 'Spam request blocked.')
 
     def test_public_events_route_hides_draft_events_and_show_published_event(self):
         draft = self.create_event(title='Hidden Draft')
@@ -621,3 +640,42 @@ class EventFlowTests(TestCase):
         # Revenue: Current = 15.00, Previous = 10.00 -> 50.0%
         self.assertTrue(context['comparison']['revenue']['is_positive'])
         self.assertEqual(context['comparison']['revenue']['pct'], 50.0)
+
+    def test_dashboard_vote_bundle_lifecycle(self):
+        event = self.create_event(kind=Event.Kind.PAID_COMPETITION)
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+
+        # 1. Test creation view GET
+        url_create = reverse('dashboard:vote_bundle_create', args=[event.slug])
+        response = self.client.get(url_create)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Add Vote Package')
+
+        # 2. Test creation view POST
+        response_post = self.client.post(url_create, {
+            'quantity': 50,
+            'price': '40.00',
+            'label': 'Save 20%',
+            'is_active': True
+        })
+        self.assertRedirects(response_post, event.get_dashboard_url())
+        self.assertEqual(event.vote_bundles.count(), 1)
+        bundle = event.vote_bundles.first()
+        self.assertEqual(bundle.quantity, 50)
+        self.assertEqual(bundle.price, Decimal('40.00'))
+
+        # 3. Test deletion view POST
+        url_delete = reverse('dashboard:vote_bundle_delete', args=[event.slug, bundle.pk])
+        response_delete = self.client.post(url_delete)
+        self.assertRedirects(response_delete, event.get_dashboard_url())
+        self.assertEqual(event.vote_bundles.count(), 0)
+
+    def test_dashboard_vote_bundle_permissions(self):
+        event_other = self.create_event(owner=self.other_user, kind=Event.Kind.PAID_COMPETITION)
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+
+        # Organizer tries to access other organizer's bundle creation view
+        url_create = reverse('dashboard:vote_bundle_create', args=[event_other.slug])
+        response = self.client.get(url_create)
+        self.assertEqual(response.status_code, 404)
+

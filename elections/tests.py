@@ -676,7 +676,7 @@ class SecureElectionTests(TestCase):
         self.assertTrue(
             Notification.objects.filter(
                 event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
-                recipient_phone='+233241112223',  # Normalized phone
+                recipient_phone='0241112223',
             ).exists()
         )
         self.assertTrue(
@@ -688,7 +688,7 @@ class SecureElectionTests(TestCase):
         self.assertTrue(
             Notification.objects.filter(
                 event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
-                recipient_phone='+233242223334',  # Normalized phone
+                recipient_phone='0242223334',
             ).exists()
         )
 

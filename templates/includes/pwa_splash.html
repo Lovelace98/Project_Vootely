@@ -1,0 +1,160 @@
+{% load static %}
+<!-- PWA Splash Screen Overlay -->
+<div id="pwa-splash" class="pwa-splash-overlay">
+    <style>
+        .pwa-splash-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            opacity: 1;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: visible;
+        }
+
+        /* Show splash screen only in standalone display mode (PWA) */
+        @media (display-mode: standalone) {
+            .pwa-splash-overlay {
+                display: flex;
+            }
+        }
+
+        /* If splash has already been shown in this session, hide it immediately */
+        .pwa-splash-hidden .pwa-splash-overlay {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        .pwa-splash-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .pwa-splash-logo-container {
+            position: relative;
+            display: flex;
+            height: 5.5rem; /* 88px */
+            width: 5.5rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Outer spin animation (matching payment confirmation modal styling) */
+        .pwa-splash-spinner {
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            border-width: 4px;
+            border-style: solid;
+            border-color: rgba(25, 27, 223, 0.1);
+            border-top-color: #191bdf;
+            animation: pwa-spin 1s linear infinite;
+        }
+
+        /* Inner logo pulse animation */
+        .pwa-splash-logo {
+            height: 2.5rem; /* 40px */
+            width: 2.5rem;
+            object-fit: contain;
+            animation: pwa-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .pwa-splash-text-container {
+            text-align: center;
+            animation: pwa-fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        .pwa-splash-title {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.875rem; /* 30px */
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin: 0 0 0.5rem 0;
+            color: #0f172a; /* Slate 900 */
+        }
+
+        .pwa-splash-brand-highlight {
+            color: #191bdf; /* Vootely Blue */
+        }
+
+        .pwa-splash-subtitle {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8125rem; /* 13px */
+            font-weight: 600;
+            color: #64748b; /* Slate 500 */
+            letter-spacing: 0.075em;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        @keyframes pwa-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pwa-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.94); }
+        }
+
+        @keyframes pwa-fade-in-up {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    <div class="pwa-splash-logo-container">
+        <div class="pwa-splash-spinner"></div>
+        <img src="{% static 'images/only_logo.png' %}" alt="Vootely" class="pwa-splash-logo">
+    </div>
+    
+    <div class="pwa-splash-text-container">
+        <h2 class="pwa-splash-title">Voo<span class="pwa-splash-brand-highlight">tely</span></h2>
+        <p class="pwa-splash-subtitle">Ghana's #1 voting platform</p>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const splash = document.getElementById('pwa-splash');
+        
+        if (isStandalone) {
+            const hasShown = sessionStorage.getItem('pwa-splash-shown');
+            if (!hasShown) {
+                // Keep tracks of start time to guarantee a smooth, professional minimum duration
+                const startTime = performance.now();
+                const minDuration = 1200; // 1.2s
+
+                const hideSplash = () => {
+                    const elapsed = performance.now() - startTime;
+                    const delay = Math.max(0, minDuration - elapsed);
+                    
+                    setTimeout(() => {
+                        splash.classList.add('fade-out');
+                        sessionStorage.setItem('pwa-splash-shown', 'true');
+                        setTimeout(() => {
+                            splash.style.display = 'none';
+                        }, 400); // Wait for the transition to finish before hiding it from DOM
+                    }, delay);
+                };
+
+                if (document.readyState === 'complete') {
+                    hideSplash();
+                } else {
+                    window.addEventListener('load', hideSplash);
+                }
+            }
+        }
+    })();
+</script>

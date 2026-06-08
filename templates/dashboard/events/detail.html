@@ -1,7 +1,7 @@
 {% extends 'dashboard_base.html' %}
 
 {% block title %}{{ event.title }} Dashboard | Vootely{% endblock %}
-{% block nav_my_events %}active{% endblock %}
+{% block nav_competitions %}active{% endblock %}
 
 {% block dashboard_content %}
 <section class="space-y-6" x-data="{ guideOpen: false, currentStep: 1 }">
@@ -144,6 +144,20 @@
                     </button>
                 </div>
             </div>
+            {% if event.status == 'published' %}
+                <hr class="my-4 border-vc-dark-200 dark:border-vc-dark-600">
+                <div class="flex flex-wrap items-center gap-2" x-data="{ copied: false }">
+                    <span class="text-sm font-medium text-vc-dark dark:text-white mr-1">Live Leaderboard:</span>
+                    <button
+                        type="button"
+                        class="vc-btn vc-btn-outline vc-btn-sm"
+                        @click="navigator.clipboard.writeText('{{ live_leaderboard_url|escapejs }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                    >
+                        <span x-text="copied ? 'Copied!' : 'Copy URL'"></span>
+                    </button>
+                    <a href="{{ live_leaderboard_url }}" target="_blank" class="vc-btn vc-btn-accent vc-btn-sm">Open Live Board</a>
+                </div>
+            {% endif %}
         </div>
     {% endif %}
 
@@ -165,9 +179,16 @@
                         </div>
                         <div class="flex gap-2">
                             <a href="{% url 'dashboard:category_edit' event.slug category.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>
-                            <form method="post" action="{% url 'dashboard:category_delete' event.slug category.slug %}">
+                            <form method="post" action="{% url 'dashboard:category_delete' event.slug category.slug %}"
+                                  x-data="{ loading: false }" @submit="loading = true">
                                 {% csrf_token %}
-                                <button type="submit" class="vc-btn vc-btn-danger vc-btn-sm">Delete</button>
+                                <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm">
+                                    <span x-show="!loading">Delete</span>
+                                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                        <span>Deleting...</span>
+                                    </span>
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -196,9 +217,16 @@
                         </div>
                         <div class="flex gap-2">
                             <a href="{% url 'dashboard:nominee_edit' event.slug nominee.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>
-                            <form method="post" action="{% url 'dashboard:nominee_delete' event.slug nominee.slug %}">
+                            <form method="post" action="{% url 'dashboard:nominee_delete' event.slug nominee.slug %}"
+                                  x-data="{ loading: false }" @submit="loading = true">
                                 {% csrf_token %}
-                                <button type="submit" class="vc-btn vc-btn-danger vc-btn-sm">Delete</button>
+                                <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm">
+                                    <span x-show="!loading">Delete</span>
+                                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                        <span>Deleting...</span>
+                                    </span>
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -243,8 +271,8 @@
         </div>
     </div>
 
-    <!-- Bottom Two-column layout -->
-    <div class="grid gap-6 lg:grid-cols-2 mt-6">
+    <!-- Bottom Three-column layout -->
+    <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3 mt-6">
         <!-- Leaderboard -->
         <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[300px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
             <h2 class="text-lg font-semibold text-vc-dark dark:text-white shrink-0">Leaderboard</h2>
@@ -259,6 +287,46 @@
                     </a>
                 </div>
             {% endif %}
+        </div>
+
+        <!-- Pricing & Bundles -->
+        <div class="vc-card p-6 vc-animate-in vc-stagger-3 h-[300px] flex flex-col dark:bg-vc-surface-raised dark:border-vc-dark-600">
+            <div class="flex items-center justify-between shrink-0">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Pricing &amp; Bundles</h2>
+                <a href="{% url 'dashboard:vote_bundle_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                    Add package
+                </a>
+            </div>
+            <div class="mt-5 space-y-3 overflow-y-auto flex-1 pr-1">
+                {% for bundle in event.vote_bundles.all %}
+                    <div class="vc-status-row dark:border-vc-dark-600">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-vc-dark dark:text-white">{{ bundle.quantity }} Votes</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">
+                                {{ event.currency }} {{ bundle.price }}
+                                {% if bundle.label %}· <span class="font-bold text-vc-blue dark:text-vc-blue-400">{{ bundle.label }}</span>{% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <form method="post" action="{% url 'dashboard:vote_bundle_delete' event.slug bundle.pk %}"
+                                  x-data="{ loading: false }" @submit="loading = true">
+                                {% csrf_token %}
+                                <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm">
+                                    <span x-show="!loading">Delete</span>
+                                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-1">
+                                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                        <span>Deleting...</span>
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">
+                        Add pricing packages to offer discounts on bulk votes.
+                    </div>
+                {% endfor %}
+            </div>
         </div>
 
         <!-- Latest Payments -->
@@ -288,7 +356,7 @@
     </div>
 
     <!-- Beautiful Confirmation Modal -->
-    <div x-data="{ modalOpen: false, modalTitle: '', modalBody: '', formToSubmit: null, dangerMode: false }"
+    <div x-data="{ modalOpen: false, modalTitle: '', modalBody: '', formToSubmit: null, dangerMode: false, loading: false }"
          @open-confirm-modal.window="modalTitle = $event.detail.title; modalBody = $event.detail.body; formToSubmit = $event.detail.form; dangerMode = $event.detail.danger || false; modalOpen = true"
          class="relative z-50 animate-fade-in"
          style="display: none;"
@@ -321,7 +389,13 @@
                   
                   <div class="mt-6 flex justify-end gap-3">
                       <button @click="modalOpen = false" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Cancel</button>
-                      <button @click="document.getElementById(formToSubmit).submit(); modalOpen = false" class="vc-btn vc-btn-sm" :class="dangerMode ? 'bg-vc-danger hover:bg-red-700 text-white' : 'vc-btn-accent'">Confirm &amp; Proceed</button>
+                      <button @click="loading = true; document.getElementById(formToSubmit).submit(); modalOpen = false" :disabled="loading" class="vc-btn vc-btn-sm" :class="dangerMode ? 'bg-vc-danger hover:bg-red-700 text-white' : 'vc-btn-accent'">
+                          <span x-show="!loading">Confirm &amp; Proceed</span>
+                          <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                              <span>Processing...</span>
+                          </span>
+                      </button>
                   </div>
              </div>
          </div>

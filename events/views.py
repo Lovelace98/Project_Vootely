@@ -6,13 +6,14 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
-from django.db.models import DecimalField, IntegerField, Prefetch, Q, Sum, Value
+from django.db.models import Count, DecimalField, IntegerField, Min, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
+from django.utils import timezone
 
 from votecentral.mixins import SafeIntegrityMixin
 from votecentral.public_urls import build_public_url
@@ -20,9 +21,10 @@ from payments.models import PaymentAttempt
 from votes.models import VotePurchase
 from nominees.models import CompetitionCategory, NominationSubmission, Nominee
 
-from .forms import ContactInquiryForm, EventForm
-from .models import Event
+from .forms import ContactInquiryForm, EventForm, VoteBundleForm
+from .models import Event, VoteBundle
 from .performance import build_event_leaderboard, dashboard_home_context
+from .blog_data import BLOG_POSTS
 
 
 class OrganizerEventMixin(LoginRequiredMixin):
@@ -117,6 +119,18 @@ class LandingPageContextMixin:
             'question': 'Can Vootely help us prepare and launch the event?',
             'answer': 'Yes. If you are planning a competition or an election, you can contact Vootely for setup guidance, launch planning, and the right structure for your voting use case.',
         },
+        {
+            'question': 'Does Vootely support event ticketing?',
+            'answer': 'Yes. Vootely lets organizers create ticketed events alongside paid competitions and secure elections. You can set up ticket types (e.g., General Admission, VIP), set pricing, manage sales, and check attendees in at the door — all from the same dashboard.',
+        },
+        {
+            'question': 'How does attendee check-in work for ticketed events?',
+            'answer': 'Vootely includes a dedicated scanner tool that works on any smartphone. Create scanner passes for each gate or entry point, and your staff can check attendees in by scanning or searching from their own phone. Check-in data updates in real time so you always know how many guests are inside.',
+        },
+        {
+            'question': 'Can I run a paid competition and sell tickets for the same event?',
+            'answer': 'Yes. Vootely supports both in one event. You can sell tickets for entry while also running a paid competition with voting — all managed from a single dashboard with unified reporting.',
+        },
     ]
 
     @staticmethod
@@ -127,20 +141,26 @@ class LandingPageContextMixin:
         return format(quantized, 'f').rstrip('0').rstrip('.')
 
     def get_landing_context(self, **overrides):
-        active_events = Event.objects.active_public().select_related('owner').prefetch_related('nominees')
-        featured_events = list(active_events[:10])
+        active_events = Event.objects.active_public().select_related('owner').prefetch_related('nominees').annotate(
+            starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True))
+        )
+        featured_events = list(active_events.filter(kind=Event.Kind.PAID_COMPETITION)[:10])
+        featured_tickets = list(active_events.filter(kind=Event.Kind.TICKETED_EVENT)[:10])
+        combined_events = list(active_events.filter(kind__in=[Event.Kind.PAID_COMPETITION, Event.Kind.TICKETED_EVENT])[:12])
         whatsapp_phone = ''.join(character for character in settings.SUPPORT_PHONE if character.isdigit())
         whatsapp_message = "Hello, I'd like to learn more about Vootely for a competition or election."
 
         context = {
             'active_events_count': active_events.count(),
             'featured_events': featured_events,
+            'featured_tickets': featured_tickets,
+            'combined_events': combined_events,
             'reviews': self.reviews,
             'faq_items': self.faq_items,
             'contact_form': overrides.pop('contact_form', ContactInquiryForm()),
-            'support_email': settings.SUPPORT_EMAIL,
             'whatsapp_url': f"https://wa.me/{whatsapp_phone}?{urlencode({'text': whatsapp_message})}",
             'ussd_short_code': getattr(settings, 'USSD_SHORT_CODE', '*920*24#'),
+            'blogs': BLOG_POSTS[:3],
         }
         context.update(overrides)
         return context
@@ -184,7 +204,7 @@ class LandingContactInquiryCreateView(LandingPageContextMixin, View):
                 [settings.SUPPORT_EMAIL],
                 fail_silently=False,
             )
-        except Exception:
+        except OSError:
             messages.warning(
                 request,
                 'Your message has been saved. We could not send the email notification right now, but the inquiry is safely on file.',
@@ -195,13 +215,82 @@ class LandingContactInquiryCreateView(LandingPageContextMixin, View):
         return HttpResponseRedirect(f"{reverse('events:landing')}#contact")
 
 
+class BlogListView(TemplateView):
+    template_name = 'events/blog_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['posts'] = BLOG_POSTS
+        return context
+
+
+class BlogDetailView(TemplateView):
+    template_name = 'events/blog_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = self.kwargs.get('slug')
+        post = next((p for p in BLOG_POSTS if p['slug'] == slug), None)
+        if not post:
+            raise Http404("Blog post not found")
+        
+        context['post'] = post
+        context['recommended_posts'] = [p for p in BLOG_POSTS if p['slug'] != slug][:3]
+        return context
+
+
 class HomeView(ListView):
     model = Event
     template_name = 'events/home.html'
     context_object_name = 'events'
+    paginate_by = 6
 
     def get_queryset(self):
-        return Event.objects.active_public().select_related('owner').prefetch_related('nominees', 'competition_categories')
+        queryset = Event.objects.published().select_related('owner').prefetch_related('nominees').annotate(
+            starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True))
+        )
+        
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            queryset = queryset.filter(
+                Q(title__icontains=q) | Q(description__icontains=q)
+            )
+
+        status = self.request.GET.get('status', 'active')
+        now = timezone.now()
+        if status == 'active':
+            queryset = queryset.filter(start_at__lte=now, end_at__gte=now)
+        elif status == 'upcoming':
+            queryset = queryset.filter(start_at__gt=now)
+        elif status == 'ended':
+            queryset = queryset.filter(end_at__lt=now)
+
+        kind = self.request.GET.get('kind', 'all').strip().lower()
+        if kind == 'ticketed_event':
+            queryset = queryset.filter(kind=Event.Kind.TICKETED_EVENT)
+        elif kind == 'paid_competition':
+            queryset = queryset.filter(kind=Event.Kind.PAID_COMPETITION)
+
+        sort = self.request.GET.get('sort', 'newest')
+        if sort == 'newest':
+            queryset = queryset.order_by('-published_at')
+        elif sort == 'ending_soon':
+            queryset = queryset.order_by('end_at')
+
+        return queryset
+
+    def get_template_names(self):
+        if self.request.htmx:
+            return ['events/includes/_events_grid.html']
+        return [self.template_name]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '')
+        context['current_status'] = self.request.GET.get('status', 'active')
+        context['current_sort'] = self.request.GET.get('sort', 'newest')
+        context['current_kind'] = self.request.GET.get('kind', 'all')
+        return context
 
 
 class EventDetailView(DetailView):
@@ -211,7 +300,7 @@ class EventDetailView(DetailView):
 
     def get_queryset(self):
         return Event.objects.filter(
-            kind=Event.Kind.PAID_COMPETITION,
+            kind__in=[Event.Kind.PAID_COMPETITION, Event.Kind.TICKETED_EVENT],
             is_public=True,
             status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
         ).select_related('owner').prefetch_related(
@@ -221,6 +310,8 @@ class EventDetailView(DetailView):
                     Prefetch('nominees', queryset=Nominee.objects.filter(is_active=True).order_by('display_order', 'name'))
                 ).order_by('display_order', 'name'),
             )
+            ,
+            'ticket_types',
         )
 
     def get(self, request, *args, **kwargs):
@@ -247,24 +338,30 @@ class EventDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.object
-        if event.show_leaderboard:
+        if event.kind == Event.Kind.PAID_COMPETITION and event.show_leaderboard:
             context['leaderboard'] = build_event_leaderboard(event)
         else:
             context['leaderboard'] = None
-            context['leaderboard_hidden'] = True
+            context['leaderboard_hidden'] = event.kind == Event.Kind.PAID_COMPETITION
         context['state'] = event.public_state()
         category_sections = []
-        for category in event.competition_categories.filter(is_active=True).order_by('display_order', 'name'):
-            nominees = list(category.nominees.filter(is_active=True).order_by('display_order', 'name'))
-            category_sections.append({'category': category, 'nominees': nominees})
+        if event.kind == Event.Kind.PAID_COMPETITION:
+            for category in event.competition_categories.filter(is_active=True).order_by('display_order', 'name'):
+                nominees = list(category.nominees.filter(is_active=True).order_by('display_order', 'name'))
+                category_sections.append({'category': category, 'nominees': nominees})
         context['category_sections'] = category_sections
-        context['nominees'] = event.nominees.filter(is_active=True).select_related('category')
+        context['nominees'] = event.nominees.filter(is_active=True).select_related('category') if event.kind == Event.Kind.PAID_COMPETITION else []
         context['nominations_open'] = event.accepts_nominations()
         context['nomination_url'] = (
             build_public_url(reverse('events:nominate', args=[event.slug]))
             if event.allow_public_nominations
             else ''
         )
+        ticket_types = list(event.ticket_types.filter(is_active=True).order_by('price', 'name').annotate_sold_count())
+        for ticket_type in ticket_types:
+            ticket_type.public_is_on_sale = ticket_type.is_on_sale()
+        context['ticket_types'] = ticket_types
+        context['tickets_open'] = event.accepts_tickets()
         context['ussd_short_code'] = getattr(settings, 'USSD_SHORT_CODE', '*920*24#')
         return context
 
@@ -373,14 +470,18 @@ class DashboardEventDetailView(OrganizerEventMixin, DetailView):
                 'publish_errors': publish_errors,
                 'nominees': event.nominees.select_related('category').all(),
                 'categories': event.competition_categories.prefetch_related('nominees').all(),
-                'submission_counts': {
-                    status: event.nomination_submissions.filter(status=status).count()
-                    for status, _label in NominationSubmission.Status.choices
-                },
+                'submission_counts': dict(
+                    event.nomination_submissions.values('status').annotate(
+                        count=Count('pk')
+                    ).values_list('status', 'count')
+                ),
                 'nomination_url': (
                     build_public_url(reverse('events:nominate', args=[event.slug]))
                     if event.allow_public_nominations
                     else ''
+                ),
+                'live_leaderboard_url': build_public_url(
+                    reverse('events:leaderboard_live', args=[event.slug])
                 ),
                 'commission_locked': event.commission_is_locked(),
             }
@@ -526,6 +627,28 @@ class DashboardSearchView(LoginRequiredMixin, View):
             | Q(event__title__icontains=query)
         ).select_related('event', 'invoice')[:6]
 
+        from ticketing.models import Ticket, TicketPurchase
+
+        ticket_purchases = TicketPurchase.objects.filter(
+            event__owner=request.user
+        ).filter(
+            Q(gateway_reference__icontains=query)
+            | Q(buyer_name__icontains=query)
+            | Q(buyer_email__icontains=query)
+            | Q(buyer_phone__icontains=query)
+            | Q(event__title__icontains=query)
+            | Q(ticket_type__name__icontains=query)
+        ).select_related('event', 'ticket_type')[:6]
+
+        tickets = Ticket.objects.filter(
+            event__owner=request.user
+        ).filter(
+            Q(code__icontains=query)
+            | Q(purchase__gateway_reference__icontains=query)
+            | Q(purchase__buyer_email__icontains=query)
+            | Q(event__title__icontains=query)
+        ).select_related('event', 'ticket_type', 'purchase')[:6]
+
         from django.shortcuts import render
         
         context = {
@@ -538,6 +661,8 @@ class DashboardSearchView(LoginRequiredMixin, View):
             'election_invoices': election_invoices,
             'payments': payments,
             'organizer_payments': organizer_payments,
+            'ticket_purchases': ticket_purchases,
+            'tickets': tickets,
             'query': query,
         }
         return render(request, self.template_name, context)
@@ -591,3 +716,81 @@ class TermsOfServiceView(TemplateView):
 
 class OrganizerAgreementView(TemplateView):
     template_name = 'legal/merchant_agreement.html'
+
+
+class DashboardVoteBundleCreateView(OrganizerEventMixin, CreateView):
+    model = VoteBundle
+    form_class = VoteBundleForm
+    template_name = 'dashboard/events/bundle_form.html'
+
+    def get_event(self):
+        if not hasattr(self, '_event'):
+            self._event = get_object_or_404(
+                Event.objects.select_related('owner'),
+                slug=self.kwargs['event_slug'],
+                owner=self.request.user,
+                kind=Event.Kind.PAID_COMPETITION,
+            )
+        return self._event
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.get_event()
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.event = self.get_event()
+        response = super().form_valid(form)
+        messages.success(self.request, 'Vote bundle added successfully.')
+        return response
+
+    def get_success_url(self):
+        return self.get_event().get_dashboard_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['event'] = self.get_event()
+        return context
+
+
+class DashboardVoteBundleDeleteView(OrganizerEventMixin, View):
+    def get_event(self):
+        if not hasattr(self, '_event'):
+            self._event = get_object_or_404(
+                Event.objects.select_related('owner'),
+                slug=self.kwargs['event_slug'],
+                owner=self.request.user,
+                kind=Event.Kind.PAID_COMPETITION,
+            )
+        return self._event
+
+    def post(self, request, *args, **kwargs):
+        event = self.get_event()
+        bundle = get_object_or_404(VoteBundle, event=event, pk=self.kwargs['pk'])
+        bundle.delete()
+        messages.success(request, 'Vote bundle deleted.')
+        return HttpResponseRedirect(event.get_dashboard_url())
+
+
+class EventLiveLeaderboardView(DetailView):
+    model = Event
+    template_name = 'events/live_leaderboard.html'
+    context_object_name = 'event'
+
+    def get_queryset(self):
+        return Event.objects.filter(
+            kind=Event.Kind.PAID_COMPETITION,
+            is_public=True,
+            status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
+        ).select_related('owner')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event = self.object
+        from .performance import build_event_leaderboard
+        if event.show_leaderboard:
+            context['leaderboard'] = build_event_leaderboard(event)
+        else:
+            context['leaderboard'] = None
+            context['leaderboard_hidden'] = True
+        return context

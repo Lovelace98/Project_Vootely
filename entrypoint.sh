@@ -57,5 +57,5 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
 # Start application
-echo "Starting gunicorn server..."
-exec gunicorn votecentral.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -
+echo "Starting daphne server..."
+exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log --verbosity 2 votecentral.asgi:application

@@ -15,21 +15,21 @@ By registering on the Vootely Platform, clicking 'I Agree' during sign-up, or us
 
 ## 1. Definitions
 
-* **"Platform"**: The Vootely Paid-Competition Platform, including the organizer dashboard, public event microsites, leaderboards, and all related software services available at our website.
-* **"Voter Data"**: All personal data relating to guest voters that is collected, stored, or processed through the Platform during vote purchases, including names, email addresses, phone numbers, and transaction logs.
+* **"Platform"**: The Vootely Digital Platform, including the organizer dashboard, public voting/ticketing microsites, leaderboards, ticket verification/gate check-in systems, and all related software services available at our website.
+* **"Voter Data"**: All personal data relating to guest voters and ticket buyers that is collected, stored, or processed through the Platform during purchases, including names, email addresses, phone numbers, and transaction logs.
 * **"Data Controller"**: The entity that determines the purposes and means of processing personal data. Under this Agreement, the Organizer is the Data Controller of Voter Data.
 * **"Data Processor"**: The entity that processes personal data on behalf of the Data Controller. Under this Agreement, Vootely acts as the Data Processor of Voter Data.
-* **"Commission Rate"**: The platform commission percentage (10% standard rate) deducted by Vootely from the gross amount of vote purchases.
+* **"Commission Rate"**: The platform commission percentage deducted by Vootely from gross transaction amounts. For Paid Competitions, this is negotiated on an event-by-event basis prior to going live. For Ticketed Events, this is a standard rate of 7% of gross ticket sales.
 * **"Effective Date"**: The date on which the Organizer completes registration on the Platform.
 
 ---
 
 ## 2. Services to Be Provided
-i. Subject to compliance with this Agreement, Vootely agrees to provide the Organizer with access to the Platform for the purpose of hosting, publishing, and managing paid voting competitions in Ghana.
+i. Subject to compliance with this Agreement, Vootely agrees to provide the Organizer with access to the Platform for the purpose of hosting, publishing, and managing paid voting competitions, secure organizational elections, and event ticketing/sales in Ghana.
 
 ii. Vootely will use commercially reasonable efforts to maintain Platform availability of 99.9% uptime, excluding planned maintenance.
 
-iii. Vootely provides ledger-backed wallet services showing the Organizer's accumulated competition revenues (less Vootely's 10% platform commission) and handles withdrawal requests after admin review.
+iii. Vootely provides ledger-backed wallet services showing the Organizer's accumulated revenues (less applicable platform commissions) and handles withdrawal requests after admin review.
 
 ---
 
@@ -56,21 +56,23 @@ Vootely agrees and undertakes that it will:
 
 ---
 
-## 4. Wallet, Commissions, and Payout Payouts
+## 4. Wallet, Commissions, and Payouts
 
 ### 4.1 Commission Fee
-The Organizer agrees that Vootely's fee is a **10% platform commission** automatically deducted from every successful vote purchase processed through the Paystack checkout.
+The Organizer agrees that Vootely's platform fee is automatically deducted from every successful transaction processed through the checkout gateway:
+* **Paid Competitions:** A negotiated commission rate agreed upon for each specific event before it is published and goes live.
+* **Ticketed Events:** A standard **7% platform commission** auto-deducted from all ticket sales.
 
 ### 4.2 Wallet Ledgers
 All successful payments post a balanced ledger transaction:
-* Gross voter payment is received.
-* 10% platform commission is posted as a debit.
-* 90% net revenue is credited to the Organizer's wallet ledger.
+* Gross buyer or voter payment is received.
+* Applicable platform commission (negotiated rate for voting, standard 7% for tickets) is posted as a debit.
+* Net revenue (gross payment less commission) is credited to the Organizer's wallet ledger.
 
 ### 4.3 Payout Requests & Review
 * Organizers may request a withdrawal of their available ledger balance through the dashboard.
-* Payout requests are reviewed by Platform Admins to verify that the votes were legitimately purchased and no chargeback/fraud risks exist.
-* Once approved, the funds are paid out to the Organizer's configured bank account or mobile money wallet, and a payout ledger entry is recorded.
+* Payout requests are reviewed by Platform Admins to verify that the transactions were legitimately purchased and no chargeback/fraud risks exist.
+* Once approved, the funds are paid out to the Organizer's configured bank account or mobile money wallet, and a payout ledger entry is recorded. We aim to review and process payout requests promptly, targeting settlement within 24 hours of approval.
 
 ---
 

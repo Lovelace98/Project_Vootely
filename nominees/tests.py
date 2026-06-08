@@ -202,7 +202,7 @@ class NominationWorkflowTests(TestCase):
     def test_public_nomination_submission_is_rate_limited(self):
         cache.clear()
         url = reverse('events:nominate', args=[self.event.slug])
-        for index in range(10):
+        for index in range(20):
             response = self.client.post(
                 url,
                 data={

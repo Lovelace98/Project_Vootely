@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket {{ ticket.code }} | Vootely{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-2xl space-y-6 vc-animate-in">
+    <div class="vc-card p-6 text-center">
+        <p class="vc-section-label">Entry ticket</p>
+        <h1 class="mt-2 text-2xl font-bold text-vc-dark dark:text-white">{{ ticket.event.title }}</h1>
+        <p class="mt-2 text-sm text-vc-dark-400">{{ ticket.ticket_type.name }} · {{ ticket.purchase.buyer_name|default:ticket.purchase.buyer_email }}</p>
+        <img src="{% url 'ticketing:ticket_qr' ticket.code %}" alt="QR code for {{ ticket.code }}" class="mx-auto mt-6 h-64 w-64 rounded-xl border border-slate-100 bg-white p-4">
+        <p class="mt-4 font-mono text-lg font-bold tracking-wider text-vc-dark dark:text-white">{{ ticket.code }}</p>
+        <span class="vc-badge {% if ticket.status == 'active' %}vc-badge-success{% elif ticket.status == 'used' %}vc-badge-neutral{% else %}vc-badge-danger{% endif %} mt-3">
+            {{ ticket.get_status_display }}
+        </span>
+    </div>
+</section>
+{% endblock %}

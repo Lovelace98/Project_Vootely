@@ -35,10 +35,14 @@
                         <h2 class="mt-4 text-3xl font-extrabold text-vc-dark tracking-tight">Confirm Email</h2>
                         <p class="mt-2 text-sm text-vc-dark-400 font-medium">Please confirm your registration for email address: <br><strong class="text-vc-dark-600 font-bold text-xs">{{ confirmation.email_address.email }}</strong></p>
 
-                        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="mt-8">
+                        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="mt-8" x-data="{ loading: false }" @submit="loading = true">
                             {% csrf_token %}
-                            <button type="submit" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
-                                Confirm Email Address
+                            <button type="submit" :disabled="loading" class="vc-btn vc-btn-primary vc-btn-block vc-btn-lg shadow-md font-semibold tracking-wide text-white uppercase text-xs">
+                                <span x-show="!loading">Confirm Email Address</span>
+                                <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    <span>Confirming...</span>
+                                </span>
                             </button>
                         </form>
                     {% else %}
@@ -66,7 +70,7 @@
             </span>
             <a href="#" class="hover:text-vc-blue hover:underline transition-all">Terms</a>
             <a href="#" class="hover:text-vc-blue hover:underline transition-all">Plans</a>
-            <a href="mailto:{{ support_email|default:'lovesdesigns1@gmail.com' }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
+            <a href="mailto:{{ support_email }}" class="hover:text-vc-blue hover:underline transition-all">Contact Us</a>
         </div>
     </div>
 </div>

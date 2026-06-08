@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import Count, ProtectedError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -159,7 +159,7 @@ class PublicNominationCreateView(CreateView):
         return kwargs
 
     def form_valid(self, form):
-        if is_rate_limited(self.request, 'public-nomination-submit', 10, 3600):
+        if is_rate_limited(self.request, 'public-nomination-submit', 20, 3600):
             form.add_error(None, 'Too many nomination attempts from this network. Please try again later.')
             return self.form_invalid(form)
         if not self.event.accepts_nominations():
@@ -391,6 +391,7 @@ class DashboardNominationSubmissionListView(NomineeEventMixin, ListView):
     model = NominationSubmission
     template_name = 'dashboard/nominees/submissions.html'
     context_object_name = 'submissions'
+    paginate_by = 25
 
     def dispatch(self, request, *args, **kwargs):
         self.event = self.get_event()
@@ -408,10 +409,11 @@ class DashboardNominationSubmissionListView(NomineeEventMixin, ListView):
         context['event'] = self.event
         context['selected_status'] = self.selected_status
         context['status_choices'] = NominationSubmission.Status.choices
-        status_counts = {
-            status: self.event.nomination_submissions.filter(status=status).count()
-            for status, _label in NominationSubmission.Status.choices
-        }
+        status_counts = dict(
+            self.event.nomination_submissions.values('status').annotate(
+                count=Count('pk')
+            ).values_list('status', 'count')
+        )
         context['status_counts'] = status_counts
         context['status_tabs'] = [
             {'value': status, 'label': label, 'count': status_counts[status]}

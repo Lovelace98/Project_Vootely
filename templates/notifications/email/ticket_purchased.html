@@ -1,0 +1,21 @@
+{% extends 'notifications/email/base_email.html' %}
+
+{% block email_title %}Your tickets for {{ event_title }}{% endblock %}
+
+{% block email_content %}
+<p>Hi {{ ticket_purchase.buyer_name|default:"there" }},</p>
+<p>Your ticket payment for <strong>{{ event_title }}</strong> has been confirmed.</p>
+<p>
+    <strong>Ticket type:</strong> {{ ticket_type_name }}<br>
+    <strong>Quantity:</strong> {{ ticket_quantity }}<br>
+    <strong>Amount:</strong> {{ ticket_currency }} {{ ticket_amount }}<br>
+    <strong>Reference:</strong> {{ ticket_purchase_reference }}
+</p>
+<p>Open your tickets:</p>
+<ul>
+    {% for ticket_link in ticket_links %}
+        <li><a href="{{ ticket_link }}">{{ ticket_link }}</a></li>
+    {% endfor %}
+</ul>
+<p>Show the QR code at the gate for check-in.</p>
+{% endblock %}

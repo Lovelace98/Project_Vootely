@@ -1,7 +1,7 @@
 {% extends 'dashboard_base.html' %}
 
 {% block title %}Positions | {{ event.title }}{% endblock %}
-{% block nav_my_events %}active{% endblock %}
+{% block nav_elections %}active{% endblock %}
 
 {% block dashboard_content %}
 <div x-data="{ 
@@ -31,7 +31,8 @@
     <section class="grid gap-6 lg:grid-cols-2">
         <div class="vc-card p-6">
             <h1 class="vc-section-title">Add position</h1>
-            <form method="post" class="mt-6 space-y-4">
+            <form method="post" class="mt-6 space-y-4"
+                  x-data="{ loading: false }" @submit="loading = true">
                 {% csrf_token %}
                 {% if form.non_field_errors %}
                     <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
@@ -57,7 +58,13 @@
                         </div>
                     {% endif %}
                 {% endfor %}
-                <button class="vc-btn vc-btn-accent">Add position</button>
+                <button :disabled="loading" class="vc-btn vc-btn-accent">
+                    <span x-show="!loading">Add position</span>
+                    <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span>Adding...</span>
+                    </span>
+                </button>
             </form>
             <a href="{% url 'dashboard:election_candidates' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm mt-4 inline-block">Add candidates</a>
         </div>
@@ -122,7 +129,8 @@
                   
                   <h3 class="text-xl font-extrabold text-vc-dark dark:text-white">Edit Position</h3>
                   
-                  <form method="post" :action="actionUrl" class="mt-6 space-y-4">
+                  <form method="post" :action="actionUrl" class="mt-6 space-y-4"
+                        x-data="{ loading: false }" @submit="loading = true">
                       {% csrf_token %}
                       
                       <!-- Title input -->
@@ -156,7 +164,13 @@
 
                       <div class="mt-6 flex justify-end gap-3 pt-2">
                           <button type="button" @click="editOpen = false" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Cancel</button>
-                          <button type="submit" class="vc-btn vc-btn-accent vc-btn-sm">Save Changes</button>
+                          <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent vc-btn-sm">
+                              <span x-show="!loading">Save Changes</span>
+                              <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                                  <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                  <span>Saving...</span>
+                              </span>
+                          </button>
                       </div>
                   </form>
              </div>
@@ -195,11 +209,18 @@
                       Are you sure you want to delete <strong class="text-vc-danger" x-text="deleteTitle"></strong>? This action is permanent and will delete all associated candidates and votes.
                   </p>
                   
-                  <form method="post" :action="deleteUrl" class="mt-6">
+                  <form method="post" :action="deleteUrl" class="mt-6"
+                        x-data="{ loading: false }" @submit="loading = true">
                       {% csrf_token %}
                       <div class="flex justify-end gap-3">
                           <button type="button" @click="deleteOpen = false" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Cancel</button>
-                          <button type="submit" class="vc-btn vc-btn-danger vc-btn-sm text-white">Delete Position</button>
+                          <button type="submit" :disabled="loading" class="vc-btn vc-btn-danger vc-btn-sm text-white">
+                              <span x-show="!loading">Delete Position</span>
+                              <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                                  <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                  <span>Deleting...</span>
+                              </span>
+                          </button>
                       </div>
                   </form>
              </div>

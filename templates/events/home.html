@@ -1,54 +1,168 @@
 {% extends 'base.html' %}
 
-{% block title %}Active Events | Vootely{% endblock %}
-{% block meta_description %}Browse active paid competitions on Vootely. Vote for your favorite nominees with secure Paystack checkout.{% endblock %}
+{% block title %}Public Events | Vootely{% endblock %}
+{% block meta_description %}Browse active paid competitions and public events on Vootely. Search and vote for your favorite nominees.{% endblock %}
 
 {% block content %}
-<section class="space-y-8 vc-animate-in">
+<section 
+    class="space-y-8 vc-animate-in"
+    x-data="{ 
+        status: '{{ current_status }}', 
+        sort: '{{ current_sort }}', 
+        q: '{{ search_query }}',
+        kind: '{{ current_kind|default:'all' }}',
+        triggerFilter() {
+            const params = new URLSearchParams({
+                status: this.status,
+                sort: this.sort,
+                q: this.q,
+                kind: this.kind
+            });
+            const link = document.getElementById('htmx-filter-link');
+            link.setAttribute('hx-get', `{% url 'events:home' %}?${params.toString()}`);
+            htmx.process(link);
+            link.click();
+        }
+    }"
+>
+    <!-- Hidden link helper to process HTMX requests -->
+    <a 
+        id="htmx-filter-link" 
+        hx-get="{% url 'events:home' %}" 
+        hx-target="#events-grid"
+        hx-push-url="true"
+        style="display: none;"
+    ></a>
+
+    <!-- Title Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="vc-section-label">Public Events</p>
-            <h1 class="mt-1 vc-section-title">Active Competitions</h1>
+            <h1 class="mt-1 vc-section-title">Public Events</h1>
         </div>
         {% if user.is_authenticated %}
-            <a href="{% url 'dashboard:event_create' %}" class="vc-btn vc-btn-accent">
+            <a href="{% url 'dashboard:event_create' %}" class="vc-btn vc-btn-accent shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Event
             </a>
         {% endif %}
     </div>
 
-    {% if events %}
-        <div class="grid gap-6 sm:grid-cols-2">
-            {% for event in events %}
-                <article class="vc-card vc-card-interactive overflow-hidden vc-animate-in vc-stagger-{{ forloop.counter }}">
-                    <div class="h-44 bg-gradient-to-br from-vc-blue/15 via-vc-blue/5 to-transparent">
-                        {% if event.banner %}
-                            <img src="{{ event.banner.url }}" alt="{{ event.title }}" class="h-full w-full object-cover">
-                        {% endif %}
-                    </div>
-                    <div class="space-y-4 p-6">
-                        <div class="flex items-center justify-between text-sm text-vc-dark-400">
-                            <span class="vc-badge vc-badge-blue">{{ event.currency }} {{ event.vote_price|floatformat:2 }}/vote</span>
-                            <span>{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-vc-dark">{{ event.title }}</h2>
-                            <p class="mt-2 text-sm text-vc-dark-400 line-clamp-2">{{ event.description|default:"No event description yet."|truncatewords:24 }}</p>
-                        </div>
-                        <a href="{{ event.get_absolute_url }}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
-                            View Event
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </a>
-                    </div>
-                </article>
-            {% endfor %}
+    <!-- Filters and Search Bar -->
+    <div class="grid gap-4 lg:flex lg:items-center lg:justify-between bg-white dark:bg-vc-surface-raised p-4 sm:p-5 lg:p-3.5 lg:px-6 rounded-[2rem] lg:rounded-full shadow-sm">
+        
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <!-- Status Tabs -->
+            <div class="flex items-center bg-vc-surface dark:bg-slate-950 p-1 rounded-full gap-1">
+                <button 
+                    type="button"
+                    @click="status = 'active'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="status == 'active' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    Active
+                </button>
+                <button 
+                    type="button"
+                    @click="status = 'upcoming'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="status == 'upcoming' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    Upcoming
+                </button>
+                <button 
+                    type="button"
+                    @click="status = 'ended'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="status == 'ended' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    Concluded
+                </button>
+            </div>
+
+            <!-- Kind Tabs -->
+            <div class="flex items-center bg-vc-surface dark:bg-slate-950 p-1 rounded-full gap-1">
+                <button 
+                    type="button"
+                    @click="kind = 'all'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="kind == 'all' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    All
+                </button>
+                <button 
+                    type="button"
+                    @click="kind = 'ticketed_event'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="kind == 'ticketed_event' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    Tickets
+                </button>
+                <button 
+                    type="button"
+                    @click="kind = 'paid_competition'; $nextTick(() => triggerFilter())"
+                    class="px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all focus:outline-none"
+                    :class="kind == 'paid_competition' ? 'bg-vc-blue text-white shadow-sm' : 'text-vc-dark-400 hover:text-vc-dark dark:text-slate-400'"
+                >
+                    Paid
+                </button>
+            </div>
         </div>
-    {% else %}
-        <div class="vc-empty">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-vc-dark-300"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            No active events are live right now.
+
+        <!-- Search & Sorting controls -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch w-full lg:w-auto sm:items-center">
+            <!-- Search Input -->
+            <div class="flex-1 min-w-0 relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-vc-dark-300 dark:text-slate-500">
+                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </span>
+                <input 
+                    type="search" 
+                    placeholder="Search events..."
+                    x-model="q"
+                    @input.debounce.350ms="triggerFilter()"
+                    class="w-full vc-pill-control vc-pill-control-input text-xs font-semibold border border-slate-100 dark:border-slate-800 bg-vc-surface dark:bg-slate-900 text-vc-dark dark:text-white placeholder:text-ellipsis focus:outline-none focus:ring-2 focus:ring-vc-blue/20"
+                >
+            </div>
+
+            <!-- Sorting Dropdown -->
+            <div class="relative shrink-0">
+                <select 
+                    x-model="sort"
+                    @change="triggerFilter()"
+                    class="w-full sm:w-44 vc-pill-control vc-pill-control-select text-xs font-bold border border-slate-100 dark:border-slate-800 bg-vc-surface dark:bg-slate-900 text-vc-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-vc-blue/20 appearance-none cursor-pointer"
+                >
+                    <option value="newest">Newest</option>
+                    <option value="ending_soon">Ending Soon</option>
+                </select>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-vc-dark-300 dark:text-slate-500">
+                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </span>
+            </div>
         </div>
-    {% endif %}
+    </div>
+
+    <!-- Swappable events grid target -->
+    <div id="events-grid">
+        {% include 'events/includes/_events_grid.html' %}
+    </div>
 </section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .vc-pill-control {
+    border-radius: 9999px !important;
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
+  }
+  .vc-pill-control-input {
+    padding-left: 2.5rem !important;
+    padding-right: 1rem !important;
+  }
+  .vc-pill-control-select {
+    padding-left: 2rem !important;
+    padding-right: 2.5rem !important;
+  }
+</style>
 {% endblock %}

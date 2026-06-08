@@ -771,7 +771,7 @@ class NotificationFlowTests(TestCase):
             dedupe_key='dispatch-failure',
         )
 
-        with patch('notifications.tasks.send_notification.delay', side_effect=RuntimeError('Broker down')):
+        with patch('notifications.tasks.send_notification.delay', side_effect=ConnectionError('Broker down')):
             with self.captureOnCommitCallbacks(execute=True):
                 dispatch_notification(notification.pk)
 
@@ -851,42 +851,6 @@ class NotificationFlowTests(TestCase):
             ['+233241234567'],
         )
 
-    @override_settings(
-        SMS_PROVIDER='arkesel',
-        ARKESEL_API_KEY='arkesel-key-123',
-        ARKESEL_SMS_FROM='Vootely',
-    )
-    def test_sms_send_falls_back_to_v1_when_v2_returns_invalid_key(self):
-        notification = Notification.objects.create(
-            channel=Notification.Channel.SMS,
-            event_type=Notification.EventType.EVENT_PUBLISHED,
-            recipient_phone='+233241234567',
-            recipient_name='Owner',
-            subject='Published',
-            body_text='Your event is live.',
-            dedupe_key='arkesel-fallback-test',
-            provider='arkesel',
-        )
-
-        v2_response = mock.Mock()
-        v2_response.status_code = 401
-        v2_response.json.return_value = {'status': 'error', 'code': 401, 'message': 'Invalid key'}
-
-        v1_response = mock.Mock()
-        v1_response.status_code = 200
-        v1_response.json.return_value = {'code': 'OK', 'message': 'Successfully Sent', 'id': 'legacy-123'}
-
-        with patch('notifications.adapters.requests.post', side_effect=[v2_response, v1_response]) as mocked_post:
-            send_notification(notification.pk)
-
-        notification.refresh_from_db()
-        self.assertEqual(notification.status, Notification.Status.SENT)
-        self.assertEqual(notification.provider_message_id, 'legacy-123')
-        self.assertEqual(mocked_post.call_count, 2)
-        first_call = mocked_post.call_args_list[0]
-        second_call = mocked_post.call_args_list[1]
-        self.assertIn('/api/v2/sms/send', first_call.args[0])
-        self.assertIn('/sms/api', second_call.args[0])
 
     @override_settings(
         SMS_PROVIDER='arkesel',

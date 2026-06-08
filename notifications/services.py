@@ -72,6 +72,7 @@ def get_notification_context(
     *,
     event=None,
     payment_attempt=None,
+    ticket_purchase=None,
     withdrawal_request=None,
     voter=None,
     candidate=None,
@@ -90,10 +91,12 @@ def get_notification_context(
     return {
         'notification_event_type': event_type,
         'public_app_url': getattr(settings, 'PUBLIC_APP_URL', '').rstrip('/'),
-        'support_email': getattr(settings, 'SUPPORT_EMAIL', 'lovesdesigns1@gmail.com'),
-        'support_phone': getattr(settings, 'SUPPORT_PHONE', '+233 548988503'),
+        'support_email': settings.SUPPORT_EMAIL,
+        'support_phone': settings.SUPPORT_PHONE,
+        'support_name': getattr(settings, 'SUPPORT_NAME', 'Vootely'),
         'event': event,
         'payment_attempt': payment_attempt,
+        'ticket_purchase': ticket_purchase,
         'withdrawal_request': withdrawal_request,
         'voter': voter,
         'candidate': candidate,
@@ -124,6 +127,16 @@ def get_notification_context(
         'vote_quantity': payment_attempt.vote_quantity if payment_attempt else '',
         'payment_amount': payment_attempt.amount if payment_attempt else '',
         'payment_currency': payment_attempt.currency if payment_attempt else '',
+        'ticket_purchase_reference': ticket_purchase.gateway_reference if ticket_purchase else '',
+        'ticket_purchase_url': absolute_url(ticket_purchase.get_absolute_url()) if ticket_purchase else '',
+        'ticket_type_name': ticket_purchase.ticket_type.name if ticket_purchase else '',
+        'ticket_quantity': ticket_purchase.quantity if ticket_purchase else '',
+        'ticket_amount': ticket_purchase.amount if ticket_purchase else '',
+        'ticket_currency': ticket_purchase.currency if ticket_purchase else '',
+        'ticket_links': [
+            absolute_url(ticket.get_absolute_url())
+            for ticket in ticket_purchase.tickets.all()
+        ] if ticket_purchase else [],
         'withdrawal_amount': withdrawal_request.amount if withdrawal_request else '',
         'withdrawal_currency': withdrawal_request.currency if withdrawal_request else '',
         'withdrawal_dashboard_url': absolute_url(reverse('dashboard:withdrawals')),
@@ -144,7 +157,7 @@ def dispatch_notification(notification_id):
     def enqueue():
         try:
             send_notification.delay(notification_id)
-        except Exception as exc:
+        except OSError as exc:
             Notification.objects.filter(pk=notification_id).update(
                 status=Notification.Status.FAILED,
                 failure_reason=f'Queue dispatch failed: {exc}',
@@ -157,6 +170,43 @@ def dispatch_notification(notification_id):
         enqueue()
 
 
+def bulk_queue_notifications(notification_configs, event=None):
+    rendered = []
+    for config in notification_configs:
+        context = get_notification_context(
+            config['event_type'],
+            event=event or config.get('event'),
+            **{k: config[k] for k in ('voter', 'candidate', 'nominee', 'payment_attempt', 'ticket_purchase', 'withdrawal_request', 'nomination_submission', 'credential_token', 'vote_url') if k in config},
+        )
+        subject, body_text, body_html = render_notification_content(
+            config['channel'], config['event_type'], context,
+        )
+        dedupe_key = build_dedupe_key(
+            config['channel'], config['event_type'],
+            *config.get('dedupe_parts', ()),
+        )
+        rendered.append(Notification(
+            dedupe_key=dedupe_key,
+            channel=config['channel'],
+            event_type=config['event_type'],
+            recipient_email=config.get('recipient_email', ''),
+            recipient_phone=config.get('recipient_phone', ''),
+            recipient_name=config.get('recipient_name', ''),
+            event=event or config.get('event'),
+            subject=subject,
+            body_text=body_text,
+            body_html=body_html,
+            provider=resolve_sms_provider() if config['channel'] == Notification.Channel.SMS else resolve_email_provider(),
+        ))
+
+    created = Notification.objects.bulk_create(rendered, ignore_conflicts=True)
+
+    for notification in created:
+        dispatch_notification(notification.pk)
+
+    return created
+
+
 def queue_notification(
     *,
     channel=Notification.Channel.EMAIL,
@@ -166,6 +216,7 @@ def queue_notification(
     recipient_name='',
     event=None,
     payment_attempt=None,
+    ticket_purchase=None,
     withdrawal_request=None,
     voter=None,
     candidate=None,
@@ -184,6 +235,7 @@ def queue_notification(
         event_type,
         event=event,
         payment_attempt=payment_attempt,
+        ticket_purchase=ticket_purchase,
         withdrawal_request=withdrawal_request,
         voter=voter,
         candidate=candidate,
@@ -209,6 +261,7 @@ def queue_notification(
             'recipient_name': recipient_name,
             'event': event,
             'payment_attempt': payment_attempt,
+            'ticket_purchase': ticket_purchase,
             'withdrawal_request': withdrawal_request,
             'subject': subject,
             'body_text': body_text,
@@ -232,6 +285,7 @@ def queue_sms_notification(
     recipient_name='',
     event=None,
     payment_attempt=None,
+    ticket_purchase=None,
     withdrawal_request=None,
     voter=None,
     candidate=None,
@@ -251,6 +305,7 @@ def queue_sms_notification(
         recipient_name=recipient_name,
         event=event,
         payment_attempt=payment_attempt,
+        ticket_purchase=ticket_purchase,
         withdrawal_request=withdrawal_request,
         voter=voter,
         candidate=candidate,
@@ -339,6 +394,56 @@ def queue_payment_confirmed(payment_attempt):
     )
     if sms_notification is not None:
         notifications.append(sms_notification)
+    return notifications
+
+
+def queue_ticket_purchased(ticket_purchase):
+    notifications = []
+
+    create_in_app_notification(
+        user=ticket_purchase.event.owner,
+        title="New Ticket Purchase Confirmed",
+        message=f"Sold {ticket_purchase.quantity} {ticket_purchase.ticket_type.name} ticket(s) for '{ticket_purchase.event.title}'. Amount: {ticket_purchase.currency} {ticket_purchase.amount}.",
+        link=ticket_purchase.event.get_dashboard_url(),
+        level='success',
+        event=ticket_purchase.event,
+    )
+
+    email_notification = queue_notification(
+        event_type=Notification.EventType.TICKET_PURCHASED,
+        recipient_email=ticket_purchase.buyer_email,
+        recipient_name=ticket_purchase.buyer_name,
+        event=ticket_purchase.event,
+        ticket_purchase=ticket_purchase,
+        dedupe_parts=(ticket_purchase.pk,),
+    )
+    if email_notification is not None:
+        notifications.append(email_notification)
+
+    sms_notification = queue_sms_notification(
+        event_type=Notification.EventType.TICKET_PURCHASED,
+        recipient_phone=ticket_purchase.buyer_phone,
+        recipient_name=ticket_purchase.buyer_name,
+        event=ticket_purchase.event,
+        ticket_purchase=ticket_purchase,
+        dedupe_parts=(ticket_purchase.pk,),
+    )
+    if sms_notification is not None:
+        notifications.append(sms_notification)
+
+    recipient_phone = ticket_purchase.metadata.get('recipient_phone', '')
+    if recipient_phone and recipient_phone != ticket_purchase.buyer_phone:
+        sms_notification = queue_sms_notification(
+            event_type=Notification.EventType.TICKET_PURCHASED,
+            recipient_phone=recipient_phone,
+            recipient_name='',
+            event=ticket_purchase.event,
+            ticket_purchase=ticket_purchase,
+            dedupe_parts=(ticket_purchase.pk, 'recipient'),
+        )
+        if sms_notification is not None:
+            notifications.append(sms_notification)
+
     return notifications
 
 
@@ -582,8 +687,8 @@ def queue_event_notification(event, event_type):
 
 def queue_event_commission_setup_required(event):
     notifications = []
-    recipient_email = getattr(settings, 'SUPPORT_EMAIL', 'lovesdesigns1@gmail.com')
-    recipient_phone = getattr(settings, 'SUPPORT_PHONE', '+233 548988503')
+    recipient_email = settings.SUPPORT_EMAIL
+    recipient_phone = settings.SUPPORT_PHONE
 
     email_notification = queue_notification(
         event_type=Notification.EventType.EVENT_COMMISSION_SETUP_REQUIRED,

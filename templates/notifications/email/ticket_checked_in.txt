@@ -1,0 +1,1 @@
+A ticket has been checked in for {{ event_title }}.

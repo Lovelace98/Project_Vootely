@@ -81,6 +81,40 @@ def dashboard_page_meta(context):
         title = context.get('title') or 'Secure Elections'
         subtitle = context.get('subtitle') or 'Configure eligible voters, candidate positions, and secure tallies.'
         crumbs.append({'label': 'Elections', 'url': _reverse('dashboard:elections')})
+    elif url_name in {'tickets', 'ticketed_event_create', 'ticketed_event_detail', 'ticketed_event_edit', 'ticket_sales', 'ticket_attendees', 'ticket_check_in', 'ticket_check_in_launch', 'ticket_scanner_passes'}:
+        crumbs.append({'label': 'Tickets', 'url': _reverse('dashboard:tickets')})
+        title = 'Ticketed Events'
+        subtitle = 'Sell tickets, track attendees, and scan guests at the gate.'
+        if url_name == 'ticket_check_in_launch':
+            title = 'Start check-in'
+            subtitle = 'Lock a gate device to one event before scanning tickets.'
+            crumbs.append({'label': 'Check-in', 'url': _reverse('dashboard:ticket_check_in_launch')})
+        elif url_name == 'ticketed_event_create':
+            title = 'Create ticketed event'
+            subtitle = 'Set up ticket sales, event details, and check-in readiness.'
+            crumbs.append({'label': 'Create', 'url': _reverse('dashboard:ticketed_event_create')})
+            back_label = 'Back to tickets'
+        elif event:
+            event_label = _event_label(event, 'Ticketed event')
+            event_url = _reverse('dashboard:ticketed_event_detail', getattr(event, 'slug', ''))
+            crumbs.append({'label': event_label, 'url': event_url})
+            title = event_label
+            subtitle = 'Manage ticket types, paid attendees, and check-in operations.'
+            ticket_pages = {
+                'ticketed_event_edit': ('Edit ticketed event', 'Update event details, timeline, and ticket sales settings.', 'Edit'),
+                'ticket_sales': ('Ticket sales', 'Review ticket payment attempts and confirmed purchases.', 'Sales'),
+                'ticket_attendees': ('Paid attendees', 'Review confirmed attendees, ticket IDs, and check-in status.', 'Attendees'),
+                'ticket_check_in': ('Ticket check-in', 'Scan QR codes or manually check in attendees for this event.', 'Check-in'),
+                'ticket_scanner_passes': ('Gate access', 'Create and manage event-scoped scanner passes for gate staff.', 'Gate access'),
+            }
+            if url_name in ticket_pages:
+                title, subtitle, label = ticket_pages[url_name]
+                route_args = [getattr(event, 'slug', '')]
+                route = f'dashboard:{url_name}'
+                crumbs.append({'label': label, 'url': _reverse(route, *route_args)})
+                back_label = 'Back to ticketed event'
+            else:
+                back_label = 'Back to tickets'
     elif url_name in simple_pages:
         title, subtitle, route = simple_pages[url_name]
         if url_name == 'withdrawals':

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Live Results | {{ event.title }}{% endblock %}
+{% block body_class %}min-h-screen{% endblock %}
+
+{% block body %}
+<div id="live-results-app" class="min-h-screen flex flex-col" data-host="{{ request.get_host }}" data-slug="{{ event.slug }}">
+    <!-- Header -->
+    <header class="border-b border-vc-dark-200 px-6 py-5">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-vc-blue/20 text-vc-blue">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-vc-dark">{{ event.title }}</h1>
+                    <p class="text-xs text-vc-dark-400">Live Election Results</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="flex items-center gap-2 text-xs text-vc-dark-400">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    LIVE
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tally Results -->
+    <main class="flex-1 px-6 py-8">
+        <div class="max-w-3xl mx-auto space-y-6" id="tally-container">
+            {% include 'elections/_tally.html' %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-vc-dark-200 px-6 py-4">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <p class="text-xs text-vc-dark-300">Powered by Vootely</p>
+            <p class="text-xs text-vc-dark-300">Results update in real-time</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/live-leaderboard.js' %}"></script>
+<script>
+    (function () {
+        var el = document.getElementById('live-results-app');
+        if (!el) { console.warn('[Live] #live-results-app not found'); return; }
+        var host = el.dataset.host;
+        var slug = el.dataset.slug;
+        if (!host || !slug) { console.warn('[Live] Missing host or slug'); return; }
+        var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var wsUrl = protocol + '//' + host + '/ws/elections/' + slug + '/tally/';
+        console.log('[Live] Connecting to', wsUrl);
+        connectLiveView({
+            wsUrl: wsUrl,
+            containerId: 'tally-container',
+            reconnect: true,
+        });
+    })();
+</script>
+{% endblock %}

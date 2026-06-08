@@ -6,12 +6,13 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from allauth.account.views import confirm_email
 
-from events.sitemaps import StaticViewSitemap, EventSitemap, NomineeSitemap
+from events.sitemaps import StaticViewSitemap, EventSitemap, NomineeSitemap, BlogSitemap
 
 sitemaps = {
     'static': StaticViewSitemap,
     'events': EventSitemap,
     'nominees': NomineeSitemap,
+    'blog': BlogSitemap,
 }
 
 urlpatterns = [
@@ -24,6 +25,7 @@ urlpatterns = [
     path('accounts/confirm-email/<str:key>/', confirm_email, name='account_confirm_email'),
     path('accounts/', include('allauth.urls')),
     path('payments/', include('payments.urls')),
+    path('tickets/', include('ticketing.urls')),
     path('dashboard/', include('events.dashboard_urls')),
     path('', include('elections.urls')),
     path('', include('events.urls')),
@@ -32,4 +34,3 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

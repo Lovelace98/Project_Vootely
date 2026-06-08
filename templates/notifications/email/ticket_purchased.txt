@@ -1,0 +1,15 @@
+Hi {{ ticket_purchase.buyer_name|default:"there" }},
+
+Your ticket payment for {{ event_title }} has been confirmed.
+
+Ticket type: {{ ticket_type_name }}
+Quantity: {{ ticket_quantity }}
+Amount: {{ ticket_currency }} {{ ticket_amount }}
+Reference: {{ ticket_purchase_reference }}
+
+Open your tickets:
+{% for ticket_link in ticket_links %}
+{{ ticket_link }}
+{% endfor %}
+
+Show the QR code at the gate for check-in.

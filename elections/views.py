@@ -8,11 +8,15 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import escape
 from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, TemplateView, UpdateView
 
+from django.urls import reverse
+
 from events.models import Event
 from votecentral.mixins import SafeIntegrityMixin
+from votecentral.public_urls import build_public_url
 
 from .forms import (
     CredentialTokenForm,
@@ -138,6 +142,9 @@ class DashboardElectionDetailView(OrganizerElectionMixin, DetailView):
                 'can_open': can_open,
                 'open_errors': open_errors,
                 'paid_for_roster': has_paid_for_current_roster(event),
+                'live_results_url': build_public_url(
+                    reverse('elections:results_live', args=[event.slug])
+                ),
             }
         )
         return context
@@ -390,7 +397,14 @@ class DashboardElectionRosterView(OrganizerElectionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['event'] = self.event
-        context['voters'] = self.event.election_voters.all()[:100]
+        voters = self.event.election_voters.all().order_by('external_id', 'name')
+        from django.core.paginator import Paginator
+        paginator = Paginator(voters, 50)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['voters'] = page_obj.object_list
+        context['page_obj'] = page_obj
+        context['is_paginated'] = page_obj.has_other_pages()
         context['voter_count'] = eligible_voter_count(self.event)
         return context
 
@@ -524,7 +538,14 @@ class DashboardElectionCredentialsView(OrganizerElectionMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['event'] = self.event
         context['latest_export'] = self.event.credential_exports.first()
-        context['credentials'] = self.event.election_credentials.select_related('voter')[:100]
+        credentials = self.event.election_credentials.select_related('voter').order_by('voter__external_id', 'voter__name', 'id')
+        from django.core.paginator import Paginator
+        paginator = Paginator(credentials, 50)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['credentials'] = page_obj.object_list
+        context['page_obj'] = page_obj
+        context['is_paginated'] = page_obj.has_other_pages()
         return context
 
 
@@ -664,7 +685,7 @@ class PublicElectionResultsView(DetailView):
         public = results_are_public(event)
         context['results_public'] = public
         context['latest_tally'] = event.tally_snapshots.first()
-        context['live_totals'] = build_tally(event) if public and not context['latest_tally'] else None
+        context['live_totals'] = build_tally(event) if public else None
         if public:
             context['receipts'] = event.ballots.exclude(receipt__isnull=True).values_list('receipt__code', flat=True).order_by('receipt__code')
         return context
@@ -683,6 +704,7 @@ class PublicElectionVerifyReceiptView(View):
         if not code:
             return HttpResponse('<p class="text-sm text-vc-dark-400">Enter a code above.</p>')
         
+        safe_code = escape(code)
         exists = BallotReceipt.objects.filter(ballot__event=event, code=code).exists()
         if exists:
             return HttpResponse(f'''
@@ -692,7 +714,7 @@ class PublicElectionVerifyReceiptView(View):
                     </svg>
                     <div class="text-left">
                         <p class="font-bold text-sm">Ballot Counted & Verified</p>
-                        <p class="text-xs text-green-700 mt-0.5">Receipt <span class="font-mono bg-green-100/50 px-1.5 py-0.5 rounded font-semibold text-[11px]">{code}</span> is securely included in the final tallied results.</p>
+                        <p class="text-xs text-green-700 mt-0.5">Receipt <span class="font-mono bg-green-100/50 px-1.5 py-0.5 rounded font-semibold text-[11px]">{safe_code}</span> is securely included in the final tallied results.</p>
                     </div>
                 </div>
             ''')
@@ -704,7 +726,28 @@ class PublicElectionVerifyReceiptView(View):
                     </svg>
                     <div class="text-left">
                         <p class="font-bold text-sm">Receipt Code Not Found</p>
-                        <p class="text-xs text-red-700 mt-0.5">We could not find receipt <span class="font-mono bg-red-100/50 px-1.5 py-0.5 rounded font-semibold text-[11px]">{code}</span> in the tallied ballots. Please verify the code and try again.</p>
+                        <p class="text-xs text-red-700 mt-0.5">We could not find receipt <span class="font-mono bg-red-100/50 px-1.5 py-0.5 rounded font-semibold text-[11px]">{safe_code}</span> in the tallied ballots. Please verify the code and try again.</p>
                     </div>
                 </div>
             ''')
+
+
+class PublicElectionLiveResultsView(DetailView):
+    model = Event
+    template_name = 'elections/live_results.html'
+    context_object_name = 'event'
+
+    def get_queryset(self):
+        return Event.objects.filter(
+            kind=Event.Kind.SECURE_ELECTION,
+            is_public=True,
+        ).prefetch_related('election_positions__candidates')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event = self.object
+        from .services import build_tally, results_are_public
+        public = results_are_public(event)
+        context['results_public'] = public
+        context['live_totals'] = build_tally(event) if public else []
+        return context

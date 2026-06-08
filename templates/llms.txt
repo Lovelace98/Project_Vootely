@@ -1,10 +1,12 @@
 # Vootely
 
-> Vootely is a premium paid competitions and secure organizational elections platform based in Ghana, providing both modern web-based checkout and offline USSD voting channels.
+> Vootely is a premium paid competitions, secure organizational elections, and event ticketing platform based in Ghana, providing both modern web-based checkout and offline USSD voting channels.
 
 ## Core Features
 
 - **Paid Voting Campaigns**: Allows organizations, associations, and student bodies to host public contests. Supporters can purchase votes using standard payment channels.
+- **Platform Event Ticketing**: Allows event organizers to configure custom ticket tiers (VIP, Regular, Table, etc.), accept instant Mobile Money and credit card payments via Paystack, and deliver barcode ticket links to buyers via SMS/Email.
+- **Gate Check-In Application**: Provides a dedicated, responsive check-in web app for gate staff to securely verify tickets and prevent duplicate entry fraud.
 - **Mobile Money & Cards**: Fully integrated with secure checkout options allowing online payments via Mobile Money (MTN, Telecel, AirtelTigo) and Visa/Mastercard.
 - **USSD Offline Integration**: Supports dial-to-vote shortcodes (default: `*920*24#`) compatible with basic feature phones (no internet, data, or smartphone required). Triggers direct MoMo STK push authorization prompts to the voter's screen.
 - **Stateless Session Tracking**: Backend matches phone and menu states across asynchronous USSD callback loops.
@@ -13,9 +15,11 @@
 
 ## Dynamic Paths
 
-- **Landing Page**: `{{ request.scheme }}://{{ request.get_host }}/` - Features public overview, live events highlights, USSD mockup demonstration, and organizer contacts.
-- **Active Public Campaigns**: `{{ request.scheme }}://{{ request.get_host }}/events/` - Feed of currently active public voting events.
-- **Sitemap Index**: `{{ request.scheme }}://{{ request.get_host }}/sitemap.xml` - Dynamic list of all public events and nominee pages.
+- **Landing Page**: `{{ request.scheme }}://{{ request.get_host }}/` - Features public overview, live events highlights, USSD mockup demonstration, blogs feed, and organizer contacts.
+- **Blog Listing**: `{{ request.scheme }}://{{ request.get_host }}/blog/` - Guides and insights for event organizers in Ghana (e.g. running contests, offline voting, secure elections, and ticketing).
+- **Blog Article Detail**: `{{ request.scheme }}://{{ request.get_host }}/blog/<slug>/` - Individual detailed guide pages with Table of Contents sidebar.
+- **Active Public Campaigns**: `{{ request.scheme }}://{{ request.get_host }}/events/` - Feed of currently active public voting and ticketed events.
+- **Sitemap Index**: `{{ request.scheme }}://{{ request.get_host }}/sitemap.xml` - Dynamic list of all public events, nominee pages, and blog guides.
 - **Service Worker Configuration**: `{{ request.scheme }}://{{ request.get_host }}/service-worker.js` - Dynamic PWA management script.
 - **PWA Manifest Configuration**: `{{ request.scheme }}://{{ request.get_host }}/manifest.json` - PWA specifications file.
 

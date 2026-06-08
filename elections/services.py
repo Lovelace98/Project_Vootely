@@ -713,6 +713,9 @@ def cast_ballot(event, raw_token, selections, *, request=None):
             dedupe_parts=(event.pk, ballot.pk, 'cast_sms'),
         )
 
+    from events.performance import broadcast_election_tally_update
+    broadcast_election_tally_update(event.pk)
+
     return ballot
 
 
@@ -958,53 +961,53 @@ def publish_election_results(event, *, actor=None, request=None):
     audit(event, 'results_published', actor=actor, obj=snapshot, request=request)
 
     # Dispatch alerts to candidates and eligible voters
-    from notifications.services import queue_notification, queue_sms_notification
+    from notifications.services import bulk_queue_notifications
     from notifications.models import Notification
     from elections.models import ElectionVoter
 
-    # Notify candidates
+    configs = []
+
     for candidate in event.election_candidates.filter(is_active=True):
         if candidate.email:
-            queue_notification(
-                channel=Notification.Channel.EMAIL,
-                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
-                recipient_email=candidate.email,
-                recipient_name=candidate.name,
-                event=event,
-                candidate=candidate,
-                dedupe_parts=(event.pk, candidate.pk, 'results_email'),
-            )
+            configs.append({
+                'channel': Notification.Channel.EMAIL,
+                'event_type': Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                'recipient_email': candidate.email,
+                'recipient_name': candidate.name,
+                'candidate': candidate,
+                'dedupe_parts': (event.pk, candidate.pk, 'results_email'),
+            })
         if candidate.phone:
-            queue_sms_notification(
-                event_type=Notification.EventType.CANDIDATE_ELECTION_CLOSED,
-                recipient_phone=candidate.phone,
-                recipient_name=candidate.name,
-                event=event,
-                candidate=candidate,
-                dedupe_parts=(event.pk, candidate.pk, 'results_sms'),
-            )
+            configs.append({
+                'channel': Notification.Channel.SMS,
+                'event_type': Notification.EventType.CANDIDATE_ELECTION_CLOSED,
+                'recipient_phone': candidate.phone,
+                'recipient_name': candidate.name,
+                'candidate': candidate,
+                'dedupe_parts': (event.pk, candidate.pk, 'results_sms'),
+            })
 
-    # Notify eligible voters
     for voter in event.election_voters.filter(status=ElectionVoter.Status.ELIGIBLE):
         if voter.email:
-            queue_notification(
-                channel=Notification.Channel.EMAIL,
-                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
-                recipient_email=voter.email,
-                recipient_name=voter.name,
-                event=event,
-                voter=voter,
-                dedupe_parts=(event.pk, voter.pk, 'results_email'),
-            )
+            configs.append({
+                'channel': Notification.Channel.EMAIL,
+                'event_type': Notification.EventType.VOTER_ELECTION_CLOSED,
+                'recipient_email': voter.email,
+                'recipient_name': voter.name,
+                'voter': voter,
+                'dedupe_parts': (event.pk, voter.pk, 'results_email'),
+            })
         if voter.phone:
-            queue_sms_notification(
-                event_type=Notification.EventType.VOTER_ELECTION_CLOSED,
-                recipient_phone=voter.phone,
-                recipient_name=voter.name,
-                event=event,
-                voter=voter,
-                dedupe_parts=(event.pk, voter.pk, 'results_sms'),
-            )
+            configs.append({
+                'channel': Notification.Channel.SMS,
+                'event_type': Notification.EventType.VOTER_ELECTION_CLOSED,
+                'recipient_phone': voter.phone,
+                'recipient_name': voter.name,
+                'voter': voter,
+                'dedupe_parts': (event.pk, voter.pk, 'results_sms'),
+            })
+
+    bulk_queue_notifications(configs, event=event)
 
     return snapshot
 

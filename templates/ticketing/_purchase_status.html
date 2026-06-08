@@ -1,0 +1,20 @@
+{% if ticket_status %}
+    <div class="vc-card p-6">
+        <span class="vc-badge {% if ticket_status.variant == 'success' %}vc-badge-success{% elif ticket_status.variant == 'danger' %}vc-badge-danger{% else %}vc-badge-warning{% endif %}">
+            {{ ticket_status.badge }}
+        </span>
+        <h2 class="mt-3 text-2xl font-bold text-vc-dark">{{ ticket_status.title }}</h2>
+        <p class="mt-2 text-sm text-vc-dark-400">{{ ticket_status.message }}</p>
+        {% if ticket_status.should_poll %}
+            <div
+                class="mt-4 text-xs text-vc-dark-300"
+                hx-get="{{ status_panel_url }}"
+                hx-trigger="every 5s"
+                hx-target="#ticket-status-panel"
+                hx-swap="innerHTML"
+            >
+                Waiting for confirmation...
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

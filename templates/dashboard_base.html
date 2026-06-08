@@ -12,8 +12,8 @@
 <div id="vc-page-progress" class="vc-page-progress" aria-hidden="true"><div class="vc-page-progress-bar"></div></div>
 <div id="vc-dashboard-shell"
      class="vc-dashboard-shell flex min-h-screen bg-vc-surface transition-colors duration-300"
-     x-data="{ sidebarOpen: false, sidebarCollapsed: false, searchOpen: false, darkMode: localStorage.getItem('darkMode') === 'true' }"
-     x-init="sidebarCollapsed = localStorage.getItem('votecentral.dashboard.sidebarCollapsed') === 'true'; $watch('sidebarCollapsed', value => localStorage.setItem('votecentral.dashboard.sidebarCollapsed', value ? 'true' : 'false'))"
+     x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('votecentral.dashboard.sidebarCollapsed') === 'true', searchOpen: false, darkMode: localStorage.getItem('darkMode') === 'true' }"
+     x-init="$watch('sidebarCollapsed', value => { localStorage.setItem('votecentral.dashboard.sidebarCollapsed', value ? 'true' : 'false'); if (value) { document.documentElement.classList.add('sidebar-is-collapsed'); } else { document.documentElement.classList.remove('sidebar-is-collapsed'); } })"
      hx-boost="true"
      hx-target="#vc-dashboard-shell"
      hx-select="#vc-dashboard-shell"
@@ -22,7 +22,8 @@
     <!-- Mobile header -->
     <div class="vc-mobile-header w-full">
         <a href="{% url 'dashboard:home' %}" class="flex items-center">
-            <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-6 w-auto">
+            <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-6 w-auto" x-show="!darkMode">
+            <img src="{% static 'images/vootely_logo_dark.png' %}" alt="Vootely Logo" class="h-6 w-auto" x-show="darkMode" style="display: none;">
         </a>
         <button @click="sidebarOpen = !sidebarOpen" class="vc-mobile-toggle" aria-label="Toggle menu">
             <svg x-show="!sidebarOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -51,56 +52,63 @@
 
             <!-- Brand Logo -->
             <div class="px-2 mb-8 flex justify-center lg:justify-start">
-                <a href="{% url 'dashboard:home' %}" class="flex items-center" x-show="!sidebarCollapsed" x-transition>
+                <a href="{% url 'dashboard:home' %}" class="vc-sidebar-logo-full flex items-center" x-show="!sidebarCollapsed" x-transition>
                     <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-10 w-auto" x-show="!darkMode">
                     <img src="{% static 'images/vootely_logo_dark.png' %}" alt="Vootely Logo" class="h-10 w-auto" x-show="darkMode" style="display: none;">
                 </a>
-                <a href="{% url 'dashboard:home' %}" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" x-show="sidebarCollapsed" x-transition>
+                <a href="{% url 'dashboard:home' %}" class="vc-sidebar-logo-collapsed flex h-10 w-10 shrink-0 items-center justify-center rounded-full" x-show="sidebarCollapsed" x-transition>
                     <img src="{% static 'images/favicon.png' %}" alt="Vootely Icon" class="h-8 w-auto">
                 </a>
             </div>
 
             <!-- Navigation -->
             <nav class="vc-sidebar-nav space-y-1">
-                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mb-2" x-show="!sidebarCollapsed">Main</p>
+                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mb-2" x-show="!sidebarCollapsed">Dashboard</p>
 
                 <a href="{% url 'dashboard:home' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_dashboard %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Dashboard</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Dashboard</span>
                 </a>
 
-                <a href="{% url 'dashboard:analytics' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_analytics %}{% endblock %}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Analytics</span>
-                </a>
+                <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Events</p>
 
                 <a href="{% url 'dashboard:competitions' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_competitions %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Competitions</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Competitions</span>
                 </a>
 
                 <a href="{% url 'dashboard:elections' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_elections %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Elections</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Elections</span>
+                </a>
+
+                <a href="{% url 'dashboard:tickets' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_tickets %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Tickets</span>
                 </a>
 
                 <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Finance</p>
 
                 <a href="{% url 'dashboard:revenue' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_revenue %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Revenue</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Revenue</span>
                 </a>
 
                 <a href="{% url 'dashboard:withdrawals' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_withdrawals %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Withdrawals</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Withdrawals</span>
+                </a>
+
+                <a href="{% url 'dashboard:analytics' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_analytics %}{% endblock %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Analytics</span>
                 </a>
 
                 <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Settings</p>
 
                 <a href="{% url 'dashboard:notifications' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_notifications %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span x-show="!sidebarCollapsed" x-transition>Notifications</span>
+                    <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Notifications</span>
                 </a>
             </nav>
         </div>
@@ -109,11 +117,11 @@
         <div class="vc-sidebar-footer border-t border-gray-100 pt-4 mt-auto">
             <a href="{% url 'account_logout' %}" hx-boost="false" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-400 hover:text-vc-danger transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span x-show="!sidebarCollapsed" x-transition>Log out</span>
+                <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Log out</span>
             </a>
 
             <!-- Ambient Light/Dark Slider Toggle -->
-            <div class="mt-4 px-1" x-show="!sidebarCollapsed" x-transition>
+            <div class="vc-sidebar-theme-full mt-4 px-1" x-show="!sidebarCollapsed" x-transition>
                 <div class="flex h-10 w-full items-center rounded-full bg-vc-blue-50 p-1 gap-1 border border-vc-blue-100/50">
                     <button @click="darkMode = false; localStorage.setItem('darkMode', 'false'); document.documentElement.classList.remove('dark')" 
                             class="flex flex-1 items-center justify-center gap-2 rounded-full py-1 text-xs font-semibold transition-all focus:outline-none"
@@ -129,7 +137,7 @@
                     </button>
                 </div>
             </div>
-            <div class="mt-4 flex justify-center" x-show="sidebarCollapsed" x-transition>
+            <div class="vc-sidebar-theme-collapsed mt-4 flex justify-center" x-show="sidebarCollapsed" x-transition>
                 <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode); if (darkMode) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); }" 
                         class="flex h-10 w-10 items-center justify-center rounded-full bg-vc-blue-50 text-vc-blue hover:bg-vc-blue-100 transition-colors focus:outline-none">
                     <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>

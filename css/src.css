@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@source "../templates/**/*.html";
+@source "../**/views.py";
+@source "../**/forms.py";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ─────────────────────────────────────────────────────
@@ -308,10 +312,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
 
+.sidebar-is-collapsed .vc-sidebar,
 .vc-sidebar.vc-sidebar-collapsed {
   width: 88px;
 }
 
+.sidebar-is-collapsed .vc-sidebar .vc-sidebar-section,
 .vc-sidebar.vc-sidebar-collapsed .vc-sidebar-section {
   opacity: 0;
   height: 0;
@@ -319,6 +325,18 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+/* Sidebar collapsed state item visibility overrides to prevent flash/jank */
+.sidebar-is-collapsed .vc-sidebar-logo-full,
+.sidebar-is-collapsed .vc-sidebar-text,
+.sidebar-is-collapsed .vc-sidebar-theme-full {
+  display: none !important;
+}
+
+html:not(.sidebar-is-collapsed) .vc-sidebar-logo-collapsed,
+html:not(.sidebar-is-collapsed) .vc-sidebar-theme-collapsed {
+  display: none !important;
 }
 
 .vc-sidebar-brand {
@@ -426,6 +444,7 @@ h1, h2, h3, h4, h5, h6 {
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sidebar-is-collapsed .vc-main,
 .vc-main.vc-main-collapsed {
   margin-left: 88px;
 }
@@ -660,7 +679,7 @@ h1, h2, h3, h4, h5, h6 {
     position: fixed;
     left: max(0.9rem, env(safe-area-inset-left));
     right: max(0.9rem, env(safe-area-inset-right));
-    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
     z-index: 45;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -741,9 +760,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 767px) {
   body {
-    background:
-      radial-gradient(circle at 85% 8%, rgba(254, 104, 7, 0.08), transparent 28rem),
-      var(--color-vc-surface);
+    background: var(--color-vc-surface);
   }
 
   body .vc-card,
@@ -934,6 +951,29 @@ label {
   color: var(--color-vc-dark-500);
 }
 
+/* Date & Datetime local input styling fix for iOS Safari */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  min-width: 0;
+  display: block;
+  width: 100%;
+}
+
+.vc-pill-control {
+  border-radius: 9999px !important;
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
+}
+.vc-pill-control-input {
+  padding-left: 2.5rem !important;
+  padding-right: 1rem !important;
+}
+.vc-pill-control-select {
+  padding-left: 2rem !important;
+  padding-right: 2.5rem !important;
+}
+
 
 /* ─── Badge / Pill System ───────────────────────────── */
 
@@ -1013,17 +1053,17 @@ label {
 }
 
 .vc-rank-1 {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: #fbbf24;
   color: #ffffff;
 }
 
 .vc-rank-2 {
-  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  background: #d1d5db;
   color: #ffffff;
 }
 
 .vc-rank-3 {
-  background: linear-gradient(135deg, #d97706, #b45309);
+  background: #d97706;
   color: #ffffff;
 }
 
@@ -1332,10 +1372,7 @@ html {
   position: absolute;
   inset: 3.5rem 1.25rem 0;
   border-radius: 999px 999px 1.75rem 1.75rem;
-  background:
-    radial-gradient(circle at 35% 20%, rgba(25, 27, 223, 0.18), transparent 38%),
-    radial-gradient(circle at 52% 45%, rgba(25, 27, 223, 0.08), transparent 50%),
-    linear-gradient(180deg, rgba(244, 247, 255, 0.95), rgba(255, 255, 255, 0.98));
+  background: #f1f5f9;
   box-shadow: 0 28px 60px rgba(9, 8, 13, 0.08);
 }
 
@@ -1348,7 +1385,7 @@ html {
 
 .vc-hero-ambient-main {
   inset: 16% 12% 12%;
-  background: radial-gradient(circle, rgba(25, 27, 223, 0.14), rgba(25, 27, 223, 0.05) 45%, transparent 72%);
+  background: rgba(25, 27, 223, 0.08);
 }
 
 .vc-floating-card,
@@ -1458,19 +1495,14 @@ html {
 }
 
 .vc-story-panel {
-  background:
-    radial-gradient(circle at top left, rgba(25, 27, 223, 0.12), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(25, 27, 223, 0.08), transparent 34%),
-    #ffffff;
+  background: #ffffff;
   border: 1px solid rgba(9, 8, 13, 0.06);
   box-shadow: 0 24px 64px rgba(9, 8, 13, 0.06);
 }
 
 .vc-step-card {
   padding: 1.5rem;
-  background:
-    radial-gradient(circle at top left, rgba(25, 27, 223, 0.12), transparent 35%),
-    linear-gradient(180deg, rgba(243, 247, 255, 0.96), rgba(255, 255, 255, 0.98));
+  background: var(--color-vc-blue-50);
 }
 
 .vc-step-number {
@@ -1611,7 +1643,7 @@ html {
 .vc-live-event-media {
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(240, 244, 255, 0.95), rgba(255, 255, 255, 0.98));
+  background: var(--color-vc-blue-50);
 }
 
 .vc-live-event-placeholder {
@@ -1620,9 +1652,7 @@ html {
   width: 100%;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(circle at top left, rgba(25, 27, 223, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(240, 244, 255, 0.95), rgba(255, 255, 255, 0.98));
+  background: var(--color-vc-blue-light);
   color: var(--color-vc-blue);
   font-size: 0.75rem;
   font-weight: 800;
@@ -1687,19 +1717,14 @@ html {
   overflow: hidden;
   border-radius: 2rem;
   border: 1px solid rgba(9, 8, 13, 0.08);
-  background:
-    radial-gradient(circle at top right, rgba(25, 27, 223, 0.12), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(25, 27, 223, 0.07), transparent 30%),
-    #ffffff;
+  background: var(--color-vc-blue-50);
   padding: 2.5rem;
   box-shadow: 0 24px 60px rgba(9, 8, 13, 0.06);
 }
 
 .vc-contact-shell {
   border: 1px solid rgba(9, 8, 13, 0.08);
-  background:
-    radial-gradient(circle at top left, rgba(25, 27, 223, 0.09), transparent 28%),
-    #ffffff;
+  background: #ffffff;
   box-shadow: 0 24px 60px rgba(9, 8, 13, 0.06);
 }
 

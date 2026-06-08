@@ -1,0 +1,1 @@
+Your ticket payment for {{ event_title }} was not successful. Please try again from the event page.

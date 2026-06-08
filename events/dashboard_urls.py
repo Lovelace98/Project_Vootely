@@ -26,6 +26,24 @@ from wallets.views import (
     DashboardAnalyticsView,
     DashboardAnalyticsNomineesFragmentView,
 )
+from ticketing.views import (
+    DashboardTicketAttendeesView,
+    DashboardTicketCheckInLaunchView,
+    DashboardTicketCheckInProvisionalSyncView,
+    DashboardTicketCheckInScanView,
+    DashboardTicketCheckInView,
+    DashboardTicketScannerPassActionView,
+    DashboardTicketScannerPassListView,
+    DashboardTicketSalesView,
+    DashboardTicketTypeCreateView,
+    DashboardTicketTypeDeleteView,
+    DashboardTicketTypeUpdateView,
+    DashboardTicketedEventActionView,
+    DashboardTicketedEventCreateView,
+    DashboardTicketedEventDetailView,
+    DashboardTicketedEventUpdateView,
+    DashboardTicketedEventsListView,
+)
 from elections.views import (
     DashboardElectionActionView,
     DashboardElectionCandidatesView,
@@ -51,6 +69,8 @@ from .views import (
     DashboardSearchView,
     DashboardCompetitionsListView,
     DashboardElectionsListView,
+    DashboardVoteBundleCreateView,
+    DashboardVoteBundleDeleteView,
 )
 
 app_name = 'dashboard'
@@ -58,6 +78,7 @@ app_name = 'dashboard'
 urlpatterns = [
     path('', DashboardHomeView.as_view(), name='home'),
     path('competitions/', DashboardCompetitionsListView.as_view(), name='competitions'),
+    path('tickets/', DashboardTicketedEventsListView.as_view(), name='tickets'),
     path('elections/', DashboardElectionsListView.as_view(), name='elections'),
     path('my-events/', DashboardCompetitionsListView.as_view(), name='my_events'),
     path('profile/', DashboardProfileView.as_view(), name='profile'),
@@ -82,6 +103,15 @@ urlpatterns = [
         name='notification_settings',
     ),
     path('events/new/', DashboardEventCreateView.as_view(), name='event_create'),
+    path('tickets/new/', DashboardTicketedEventCreateView.as_view(), name='ticketed_event_create'),
+    path('tickets/check-in/', DashboardTicketCheckInLaunchView.as_view(), name='ticket_check_in_launch'),
+    path('tickets/<slug:slug>/', DashboardTicketedEventDetailView.as_view(), name='ticketed_event_detail'),
+    path('tickets/<slug:slug>/edit/', DashboardTicketedEventUpdateView.as_view(), name='ticketed_event_edit'),
+    path(
+        'tickets/<slug:slug>/actions/<str:action>/',
+        DashboardTicketedEventActionView.as_view(),
+        name='ticketed_event_action',
+    ),
     path('elections/new/', DashboardElectionCreateView.as_view(), name='election_create'),
     path('elections/<slug:slug>/', DashboardElectionDetailView.as_view(), name='election_detail'),
     path('elections/<slug:slug>/edit/', DashboardElectionUpdateView.as_view(), name='election_edit'),
@@ -161,5 +191,65 @@ urlpatterns = [
         'events/<slug:event_slug>/nominations/<int:pk>/',
         DashboardNominationReviewView.as_view(),
         name='nomination_review',
+    ),
+    path(
+        'events/<slug:event_slug>/bundles/new/',
+        DashboardVoteBundleCreateView.as_view(),
+        name='vote_bundle_create',
+    ),
+    path(
+        'events/<slug:event_slug>/bundles/<int:pk>/delete/',
+        DashboardVoteBundleDeleteView.as_view(),
+        name='vote_bundle_delete',
+    ),
+    path(
+        'events/<slug:event_slug>/ticket-types/new/',
+        DashboardTicketTypeCreateView.as_view(),
+        name='ticket_type_create',
+    ),
+    path(
+        'events/<slug:event_slug>/ticket-types/<int:pk>/edit/',
+        DashboardTicketTypeUpdateView.as_view(),
+        name='ticket_type_edit',
+    ),
+    path(
+        'events/<slug:event_slug>/ticket-types/<int:pk>/delete/',
+        DashboardTicketTypeDeleteView.as_view(),
+        name='ticket_type_delete',
+    ),
+    path(
+        'events/<slug:event_slug>/ticket-sales/',
+        DashboardTicketSalesView.as_view(),
+        name='ticket_sales',
+    ),
+    path(
+        'events/<slug:event_slug>/attendees/',
+        DashboardTicketAttendeesView.as_view(),
+        name='ticket_attendees',
+    ),
+    path(
+        'events/<slug:event_slug>/check-in/',
+        DashboardTicketCheckInView.as_view(),
+        name='ticket_check_in',
+    ),
+    path(
+        'events/<slug:event_slug>/check-in/access/',
+        DashboardTicketScannerPassListView.as_view(),
+        name='ticket_scanner_passes',
+    ),
+    path(
+        'events/<slug:event_slug>/check-in/access/<int:pk>/<str:action>/',
+        DashboardTicketScannerPassActionView.as_view(),
+        name='ticket_scanner_pass_action',
+    ),
+    path(
+        'events/<slug:event_slug>/check-in/scan/',
+        DashboardTicketCheckInScanView.as_view(),
+        name='ticket_check_in_scan',
+    ),
+    path(
+        'events/<slug:event_slug>/check-in/provisional-sync/',
+        DashboardTicketCheckInProvisionalSyncView.as_view(),
+        name='ticket_check_in_provisional_sync',
     ),
 ]

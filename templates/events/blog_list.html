@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vootely Blog | Guides &amp; Insights for Event Organizers{% endblock %}
+{% block meta_description %}Read clean, simple guides on running successful paid voting campaigns, secure student elections, and online ticketing in Ghana.{% endblock %}
+
+{% block content %}
+<div class="vc-card p-6 md:p-12 vc-animate-in relative overflow-hidden bg-gradient-to-br from-white via-vc-surface-raised to-vc-blue-50/20">
+    <!-- Ambient glowing circle -->
+    <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-vc-blue-100/20 blur-3xl pointer-events-none"></div>
+
+    <div class="mx-auto max-w-5xl">
+        <!-- Header -->
+        <div class="border-b border-vc-dark-100/50 pb-8 mb-12 text-center md:text-left">
+            <span class="vc-badge vc-badge-blue mb-3">Guides &amp; Advice</span>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-vc-dark">
+                Vootely <span class="text-vc-blue">Blog</span>
+            </h1>
+            <p class="mt-3 text-lg text-vc-dark-400 font-medium max-w-2xl">
+                Simple, step-by-step guides to help you run paid competitions, secure elections, and sell event tickets without stress.
+            </p>
+        </div>
+
+        <!-- Blog Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {% for post in posts %}
+                <article class="flex flex-col overflow-hidden rounded-[2rem] border border-vc-dark-100/50 bg-white shadow-[0_15px_40px_rgba(9,8,13,0.04)] hover:shadow-[0_25px_60px_rgba(9,8,13,0.08)] hover:-translate-y-1 transition duration-300">
+                    <!-- Image -->
+                    <div class="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                        <a href="{% url 'events:blog_detail' post.slug %}" class="block h-full w-full">
+                            <img src="{% static post.image_static_path %}" alt="{{ post.title }}" class="h-full w-full object-cover">
+                        </a>
+                        <div class="absolute top-4 left-4">
+                            <span class="inline-flex items-center rounded-full bg-vc-blue/10 backdrop-blur-md px-3 py-1 text-xs font-bold text-vc-blue border border-vc-blue/10">
+                                {{ post.category }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex flex-col flex-1 p-6 sm:p-8 justify-between">
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2 text-xs text-vc-dark-300 font-medium">
+                                <span>{{ post.published_date }}</span>
+                                <span>·</span>
+                                <span>{{ post.read_time }}</span>
+                            </div>
+                            <h2 class="text-xl font-bold text-vc-dark leading-snug hover:text-vc-blue transition-colors">
+                                <a href="{% url 'events:blog_detail' post.slug %}">
+                                    {{ post.title }}
+                                </a>
+                            </h2>
+                            <p class="text-sm text-vc-dark-400 leading-relaxed font-normal line-clamp-3">
+                                {{ post.excerpt }}
+                            </p>
+                        </div>
+
+                        <div class="mt-6 pt-5 border-t border-vc-dark-100/50 flex items-center justify-between">
+                            <span class="text-xs font-bold text-vc-dark-300">By {{ post.author }}</span>
+                            <a href="{% url 'events:blog_detail' post.slug %}" class="inline-flex items-center gap-1 text-xs font-bold text-vc-blue hover:text-vc-blue-600 hover:gap-1.5 transition-all">
+                                Read Guide
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

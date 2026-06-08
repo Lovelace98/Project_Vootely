@@ -1,0 +1,1 @@
+Ticket checked in for {{ event_title }}

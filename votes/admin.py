@@ -58,6 +58,8 @@ class USSDSessionAdmin(ModelAdmin):
         'phone_number',
         'current_state',
         'votes_count',
+        'ticket_quantity',
+        'purchase_for',
         'amount_due',
         'updated_at',
     )
@@ -65,6 +67,7 @@ class USSDSessionAdmin(ModelAdmin):
         'session_id',
         'phone_number',
         'current_state',
+        'recipient_phone',
     )
     list_filter = (
         'current_state',
@@ -75,7 +78,12 @@ class USSDSessionAdmin(ModelAdmin):
         'user_id',
         'current_state',
         'nominee_id',
+        'event_id',
+        'ticket_type_id',
         'votes_count',
+        'ticket_quantity',
+        'purchase_for',
+        'recipient_phone',
         'amount_due',
         'created_at',
         'updated_at',

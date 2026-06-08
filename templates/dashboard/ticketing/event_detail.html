@@ -1,0 +1,159 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}{{ event.title }} Tickets | Vootely{% endblock %}
+{% block nav_tickets %}active{% endblock %}
+
+{% block dashboard_content %}
+<section class="space-y-6 vc-animate-in" x-data="{ modalOpen: false, modalTitle: '', modalBody: '', formToSubmit: null, dangerMode: false }" @open-confirm-modal.window="modalTitle = $event.detail.title; modalBody = $event.detail.body; formToSubmit = $event.detail.form; dangerMode = $event.detail.danger || false; modalOpen = true">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="vc-badge {% if event.status == 'published' %}vc-badge-success{% elif event.status == 'closed' %}vc-badge-danger{% else %}vc-badge-neutral{% endif %}">{{ event.status }}</span>
+                <span class="vc-badge vc-badge-neutral text-xs font-bold">Event Code: {{ event.public_code }}</span>
+                {% if event.ussd_dial_code %}
+                    <span class="vc-badge vc-badge-blue text-xs font-bold">USSD: {{ event.ussd_dial_code }}</span>
+                {% endif %}
+            </div>
+            <h1 class="mt-2 vc-section-title dark:text-white">{{ event.title }}</h1>
+            <p class="mt-2 vc-section-subtitle dark:text-slate-400">{{ event.description|default:"No event description yet." }}</p>
+            
+            <!-- Event details: date & venue -->
+            <div class="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-vc-dark-400 dark:text-slate-400 font-medium">
+                <span class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Event Date: <strong class="text-vc-dark dark:text-white">{{ event.event_date_display }}</strong>
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-vc-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Venue: <strong class="text-vc-dark dark:text-white">{{ event.venue_display }}</strong>
+                </span>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'dashboard:ticketed_event_edit' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Edit</a>
+            <a href="{% url 'dashboard:ticket_type_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Add ticket type</a>
+            <a href="{% url 'dashboard:ticket_sales' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Sales</a>
+            <a href="{% url 'dashboard:ticket_attendees' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Attendees</a>
+            <a href="{% url 'dashboard:ticket_scanner_passes' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Gate access</a>
+            <a href="{% url 'dashboard:ticket_check_in' event.slug %}" class="vc-btn vc-btn-accent vc-btn-sm">Check in</a>
+            {% if event.status == 'draft' %}
+                {% if publish_ready %}
+                    <form id="publish-form" method="post" action="{% url 'dashboard:ticketed_event_action' event.slug 'publish' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Publish Event', body: 'Are you sure you want to publish this ticketed event to the public? Once published, guests will be able to buy tickets on your public event page immediately.', form: 'publish-form' })" class="vc-btn vc-btn-accent vc-btn-sm">Publish</button>
+                    </form>
+                {% else %}
+                    <button class="vc-btn vc-btn-accent vc-btn-sm opacity-50 cursor-not-allowed" disabled title="Please satisfy all checklist items first">Publish</button>
+                {% endif %}
+            {% elif event.status == 'published' %}
+                <form id="unpublish-form" method="post" action="{% url 'dashboard:ticketed_event_action' event.slug 'unpublish' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Unpublish Event', body: 'Are you sure you want to revert this event to draft? The public event page will be taken down and guests will no longer be able to buy tickets until you re-publish.', form: 'unpublish-form', danger: false })" class="vc-btn vc-btn-outline vc-btn-sm">Unpublish</button>
+                </form>
+                <form id="close-form" method="post" action="{% url 'dashboard:ticketed_event_action' event.slug 'close' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Close Event Permanently', body: 'Are you sure you want to close this event? Closing an event will permanently disable future ticket sales and stop Paystack processing for this event.', form: 'close-form', danger: true })" class="vc-btn vc-btn-danger vc-btn-sm">Close</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not publish_ready %}
+        <div class="vc-card border-l-4 border-l-vc-orange p-5">
+            <p class="font-semibold text-vc-orange">This ticketed event is not publish-ready yet.</p>
+            <ul class="mt-2 list-disc pl-5 text-sm text-vc-dark-400">
+                {% for error in publish_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="vc-stat"><p class="vc-stat-label">Tickets Sold</p><p class="vc-stat-value">{{ summary.total_tickets }}</p></div>
+        <div class="vc-stat vc-stat-accent"><p class="vc-stat-label">Revenue</p><p class="vc-stat-value">{{ event.currency }} {{ summary.total_revenue|floatformat:2 }}</p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Checked In</p><p class="vc-stat-value">{{ checked_in_count }}</p></div>
+        <div class="vc-stat"><p class="vc-stat-label">Ticket Commission</p><p class="vc-stat-value">{{ event.ticket_commission_percent|floatformat:2 }}%</p></div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        <div class="vc-card p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Ticket Types</h2>
+                <a href="{% url 'dashboard:ticket_type_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Add</a>
+            </div>
+            <div class="mt-4 space-y-3">
+                {% for ticket_type in ticket_types %}
+                    <div class="vc-status-row">
+                        <div>
+                            <p class="font-semibold text-vc-dark dark:text-white">{{ ticket_type.name }}</p>
+                            <p class="text-sm text-vc-dark-400">{{ event.currency }} {{ ticket_type.price|floatformat:2 }} · {{ ticket_type.quantity_sold }}/{{ ticket_type.quantity_available }} sold</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'dashboard:ticket_type_edit' event.slug ticket_type.pk %}" class="vc-btn vc-btn-outline vc-btn-sm">Edit</a>
+                            <form id="delete-ticket-type-{{ ticket_type.pk }}" method="post" action="{% url 'dashboard:ticket_type_delete' event.slug ticket_type.pk %}">
+                                {% csrf_token %}
+                                <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Delete Ticket Type', body: 'Are you sure you want to delete this ticket type? If it has existing sales, it will be deactivated instead.', form: 'delete-ticket-type-{{ ticket_type.pk }}', danger: true })" class="vc-btn vc-btn-danger vc-btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">Add ticket types before publishing.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="vc-card p-6">
+            <h2 class="text-lg font-semibold text-vc-dark dark:text-white">Recent Purchases</h2>
+            <div class="mt-4 space-y-3">
+                {% for purchase in latest_purchases %}
+                    <div class="vc-status-row">
+                        <div>
+                            <p class="font-semibold text-vc-dark dark:text-white">{{ purchase.buyer_name|default:purchase.buyer_email }}</p>
+                            <p class="text-sm text-vc-dark-400">{{ purchase.quantity }} {{ purchase.ticket_type.name }} · {{ purchase.currency }} {{ purchase.amount|floatformat:2 }}</p>
+                        </div>
+                        <span class="vc-badge {% if purchase.status == 'paid' %}vc-badge-success{% elif purchase.status == 'pending' or purchase.status == 'initialized' %}vc-badge-warning{% else %}vc-badge-danger{% endif %}">{{ purchase.status }}</span>
+                    </div>
+                {% empty %}
+                    <div class="vc-empty">No purchases yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Beautiful Confirmation Modal -->
+    <div x-show="modalOpen"
+         class="relative z-50 animate-fade-in"
+         style="display: none;">
+         
+         <!-- Backdrop -->
+         <div class="fixed inset-0 bg-vc-dark/50 backdrop-blur-md transition-opacity" 
+              x-show="modalOpen" 
+              x-transition:enter="ease-out duration-300"
+              x-transition:enter-start="opacity-0"
+              x-transition:enter-end="opacity-100"
+              x-transition:leave="ease-in duration-200"
+              x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0"></div>
+
+         <!-- Modal Wrapper -->
+         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+             <div class="relative w-full max-w-md transform rounded-[2rem] bg-white dark:bg-vc-surface-raised border border-gray-100 dark:border-vc-dark-600 p-8 shadow-2xl transition-all"
+                  x-show="modalOpen"
+                  x-transition:enter="ease-out duration-300"
+                  x-transition:enter-start="opacity-0 scale-95"
+                  x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200"
+                  x-transition:leave-start="opacity-100 scale-100"
+                  x-transition:leave-end="opacity-0 scale-95"
+                  @click.away="modalOpen = false">
+                  
+                  <h3 class="text-xl font-extrabold text-vc-dark dark:text-white" x-text="modalTitle">Confirm Action</h3>
+                  <p class="mt-3 text-sm text-vc-dark-500 dark:text-slate-400 leading-relaxed" x-text="modalBody">Are you sure you want to proceed?</p>
+                  
+                  <div class="mt-6 flex justify-end gap-3">
+                      <button @click="modalOpen = false" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Cancel</button>
+                      <button @click="document.getElementById(formToSubmit).submit(); modalOpen = false" class="vc-btn vc-btn-sm" :class="dangerMode ? 'bg-vc-danger hover:bg-red-700 text-white' : 'vc-btn-accent'">Confirm &amp; Proceed</button>
+                  </div>
+             </div>
+         </div>
+    </div>
+</section>
+{% endblock %}

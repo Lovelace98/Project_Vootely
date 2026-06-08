@@ -141,6 +141,79 @@ class RevenuePageTests(TestCase):
         self.assertContains(response, '7.50')
         self.assertContains(response, str(organizer_credits.first().amount))
 
+    def test_revenue_page_shows_dynamic_metrics_by_event_kind(self):
+        # 1. Create a paid competition event with votes
+        comp_event = self.create_event(self.organizer, 'Comp Event')
+        comp_nominee = self.create_nominee(comp_event, 'Candidate A')
+        self.create_paid_attempt(comp_event, comp_nominee, 'comp-ref', Decimal('10.00'), 4)
+
+        # 2. Create a secure election event with eligible voters
+        election_event = Event.objects.create(
+            owner=self.organizer,
+            title='Secure Election Event',
+            kind=Event.Kind.SECURE_ELECTION,
+            start_at=timezone.now() - timedelta(hours=1),
+            end_at=timezone.now() + timedelta(days=1),
+            status=Event.Status.PUBLISHED,
+        )
+        from elections.models import ElectionVoter
+        ElectionVoter.objects.create(
+            event=election_event,
+            external_id='V1',
+            name='Alice',
+            status=ElectionVoter.Status.ELIGIBLE,
+        )
+        ElectionVoter.objects.create(
+            event=election_event,
+            external_id='V2',
+            name='Bob',
+            status=ElectionVoter.Status.ELIGIBLE,
+        )
+
+        # 3. Create a ticketed event with tickets sold
+        ticketed_event = Event.objects.create(
+            owner=self.organizer,
+            title='Ticketed Event',
+            kind=Event.Kind.TICKETED_EVENT,
+            start_at=timezone.now() - timedelta(hours=1),
+            end_at=timezone.now() + timedelta(days=1),
+            status=Event.Status.PUBLISHED,
+        )
+        from ticketing.models import TicketType, TicketPurchase
+        ticket_type = TicketType.objects.create(
+            event=ticketed_event,
+            name='VIP',
+            price=Decimal('50.00'),
+            quantity_available=100,
+            sale_start_at=timezone.now() - timedelta(hours=1),
+            sale_end_at=timezone.now() + timedelta(days=1),
+        )
+        TicketPurchase.objects.create(
+            event=ticketed_event,
+            ticket_type=ticket_type,
+            quantity=2,
+            amount=Decimal('100.00'),
+            status=TicketPurchase.Status.PAID,
+            gateway_reference='ticket-ref',
+        )
+
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+        cache.clear() # Clear any cache to ensure the builder runs
+        response = self.client.get(reverse('dashboard:revenue'))
+
+        self.assertEqual(response.status_code, 200)
+
+        # Check paid competition: Shows "Votes" and the quantity (4)
+        self.assertContains(response, 'Votes')
+        self.assertContains(response, '4')
+
+        # Check secure election: Shows "Voters" and the count (2)
+        self.assertContains(response, 'Voters')
+        self.assertContains(response, '2')
+
+        # Check ticketed event: Shows "Tickets" and the count (2)
+        self.assertContains(response, 'Tickets')
+
     def test_analytics_context_applies_timeframe_to_nominee_rows(self):
         cache.clear()
         event = self.create_event(self.organizer, 'Analytics Event')
@@ -485,3 +558,35 @@ class WithdrawalFlowTests(TestCase):
 
         self.assertEqual(get_available_withdrawal_balance(self.organizer), Decimal('100.00'))
         self.assertEqual(approved_withdrawal.amount, Decimal('40.00'))
+
+    def test_multiple_pending_withdrawals_do_not_cause_approval_deadlock(self):
+        self.create_paid_attempt(amount=Decimal('20.00'))
+        req1 = WithdrawalRequest.objects.create(
+            organizer=self.organizer,
+            wallet_account=self.organizer.wallet_account,
+            amount=Decimal('10.00'),
+            currency='GHS',
+            payout_name='Ada Organizer',
+            bank_name='GCB',
+            bank_account_number='1234567890',
+            status=WithdrawalRequest.Status.PENDING,
+        )
+        req2 = WithdrawalRequest.objects.create(
+            organizer=self.organizer,
+            wallet_account=self.organizer.wallet_account,
+            amount=Decimal('10.00'),
+            currency='GHS',
+            payout_name='Ada Organizer',
+            bank_name='GCB',
+            bank_account_number='1234567890',
+            status=WithdrawalRequest.Status.PENDING,
+        )
+
+        req1.status = WithdrawalRequest.Status.APPROVED
+        req1.full_clean()
+        req1.save()
+
+        req2.status = WithdrawalRequest.Status.APPROVED
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            req2.full_clean()

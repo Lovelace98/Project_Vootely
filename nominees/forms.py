@@ -123,6 +123,7 @@ class NominationSubmissionForm(forms.ModelForm):
         self.event = kwargs.pop('event', None)
         super().__init__(*args, **kwargs)
         if self.event is not None:
+            self.instance.event = self.event
             self.fields['category'].queryset = CompetitionCategory.objects.filter(
                 event=self.event,
                 is_active=True,

@@ -1,14 +1,15 @@
 {% extends 'dashboard_base.html' %}
 
 {% block title %}{% if object %}Edit {{ object.title }}{% else %}Create Secure Election{% endif %} | Vootely{% endblock %}
-{% block nav_my_events %}active{% endblock %}
+{% block nav_elections %}active{% endblock %}
 
 {% block dashboard_content %}
 <section class="mx-auto max-w-3xl vc-animate-in">
     <div class="vc-card p-8">
         <p class="vc-section-label">Secure election</p>
         <h1 class="mt-1 vc-section-title">{% if object %}Edit election{% else %}Create a secure election{% endif %}</h1>
-        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-5">
+        <form method="post" enctype="multipart/form-data" class="mt-8 space-y-5"
+              x-data="{ loading: false }" @submit="loading = true">
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-vc-danger font-medium">
@@ -34,7 +35,13 @@
                     </div>
                 {% endif %}
             {% endfor %}
-            <button type="submit" class="vc-btn vc-btn-accent vc-btn-lg">Save election</button>
+            <button type="submit" :disabled="loading" class="vc-btn vc-btn-accent vc-btn-lg">
+                <span x-show="!loading">Save election</span>
+                <span x-cloak x-show="loading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span>Saving...</span>
+                </span>
+            </button>
         </form>
     </div>
 </section>

@@ -39,6 +39,9 @@ class Notification(models.Model):
         VOTER_ELECTION_CLOSED = 'voter_election_closed', 'Voter Election Closed'
         VOTER_BALLOT_CAST = 'voter_ballot_cast', 'Voter Ballot Cast'
         VOTER_TURNOUT_REMINDER = 'voter_turnout_reminder', 'Voter Turnout Reminder'
+        TICKET_PURCHASED = 'ticket_purchased', 'Ticket Purchased'
+        TICKET_PAYMENT_FAILED = 'ticket_payment_failed', 'Ticket Payment Failed'
+        TICKET_CHECKED_IN = 'ticket_checked_in', 'Ticket Checked In'
 
     channel = models.CharField(
         max_length=16,
@@ -75,6 +78,13 @@ class Notification(models.Model):
         null=True,
         blank=True,
     )
+    ticket_purchase = models.ForeignKey(
+        'ticketing.TicketPurchase',
+        on_delete=models.SET_NULL,
+        related_name='notifications',
+        null=True,
+        blank=True,
+    )
     subject = models.CharField(max_length=255)
     body_text = models.TextField()
     body_html = models.TextField(blank=True)
@@ -92,6 +102,10 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ('-queued_at',)
+        indexes = [
+            models.Index(fields=('status', 'queued_at'), name='notif_status_queued'),
+            models.Index(fields=('channel', 'status'), name='notif_channel_status'),
+        ]
 
     def __str__(self):
         recipient = self.recipient_email or self.recipient_phone or 'unknown-recipient'

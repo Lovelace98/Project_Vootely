@@ -3,8 +3,19 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import DecimalField, Sum, Value
+from django.db.models import DecimalField, QuerySet, Sum, Value
 from django.db.models.functions import Coalesce
+
+
+class WalletAccountQuerySet(QuerySet):
+    def annotate_balance(self):
+        return self.annotate(
+            _balance=Coalesce(
+                Sum('entries__amount'),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )
 
 
 class WalletAccount(models.Model):
@@ -24,6 +35,8 @@ class WalletAccount(models.Model):
     name = models.CharField(max_length=120)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = WalletAccountQuerySet.as_manager()
+
     class Meta:
         ordering = ('name',)
 
@@ -32,6 +45,8 @@ class WalletAccount(models.Model):
 
     @property
     def balance(self):
+        if hasattr(self, '_balance'):
+            return self._balance
         return self.entries.aggregate(
             total=Coalesce(
                 Sum('amount'),
@@ -45,6 +60,13 @@ class LedgerTransaction(models.Model):
     reference = models.CharField(max_length=100, unique=True)
     payment_attempt = models.OneToOneField(
         'payments.PaymentAttempt',
+        on_delete=models.PROTECT,
+        related_name='ledger_transaction',
+        null=True,
+        blank=True,
+    )
+    ticket_purchase = models.OneToOneField(
+        'ticketing.TicketPurchase',
         on_delete=models.PROTECT,
         related_name='ledger_transaction',
         null=True,
@@ -78,6 +100,19 @@ class LedgerTransaction(models.Model):
         )['total']
         return total == Decimal('0.00')
 
+    def ensure_balanced(self):
+        total = self.entries.aggregate(
+            total=Coalesce(
+                Sum('amount'),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            )
+        )['total']
+        if abs(total) > Decimal('0.001'):
+            raise ValidationError(
+                f'Ledger transaction {self.reference} is unbalanced: entries sum to {total}',
+            )
+
 
 class LedgerEntry(models.Model):
     class Kind(models.TextChoices):
@@ -90,7 +125,7 @@ class LedgerEntry(models.Model):
 
     transaction = models.ForeignKey(
         LedgerTransaction,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='entries',
     )
     account = models.ForeignKey(
@@ -200,6 +235,7 @@ class WithdrawalRequest(models.Model):
             available_balance = get_available_withdrawal_balance(
                 self.organizer,
                 exclude_withdrawal=self,
+                exclude_pending=True,
             )
             if self.amount > available_balance:
                 raise ValidationError(
