@@ -463,7 +463,7 @@ TAILWIND_CLI_DIST_CSS = 'css/tailwind.css'
 
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY', default='')
-PAYSTACK_WEBHOOK_SECRET = env('PAYSTACK_WEBHOOK_SECRET')
+PAYSTACK_WEBHOOK_SECRET = env('PAYSTACK_WEBHOOK_SECRET', default='')
 PAYSTACK_INITIALIZE_URL = env(
     'PAYSTACK_INITIALIZE_URL',
     default='https://api.paystack.co/transaction/initialize',
