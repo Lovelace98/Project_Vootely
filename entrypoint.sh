@@ -58,4 +58,4 @@ python manage.py collectstatic --noinput --clear --ignore=src.css
 
 # Start application
 echo "Starting daphne server..."
-exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log --verbosity 2 votecentral.asgi:application
+exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log - --verbosity 2 votecentral.asgi:application
