@@ -6,11 +6,20 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from allauth.account.views import confirm_email
 
-from events.sitemaps import StaticViewSitemap, EventSitemap, NomineeSitemap, BlogSitemap
+from events.sitemaps import (
+    StaticViewSitemap,
+    CompetitionSitemap,
+    TicketedEventSitemap,
+    ElectionSitemap,
+    NomineeSitemap,
+    BlogSitemap,
+)
 
 sitemaps = {
     'static': StaticViewSitemap,
-    'events': EventSitemap,
+    'competitions': CompetitionSitemap,
+    'ticketed_events': TicketedEventSitemap,
+    'elections': ElectionSitemap,
     'nominees': NomineeSitemap,
     'blog': BlogSitemap,
 }

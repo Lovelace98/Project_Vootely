@@ -24,6 +24,7 @@ class StaticViewSitemap(VootelySitemap):
         return [
             'events:landing',
             'events:home',
+            'events:blog_list',
             'events:privacy_policy',
             'events:terms_of_service',
             'events:organizer_agreement',
@@ -32,7 +33,7 @@ class StaticViewSitemap(VootelySitemap):
     def location(self, item):
         return reverse(item)
 
-class EventSitemap(VootelySitemap):
+class CompetitionSitemap(VootelySitemap):
     changefreq = 'daily'
     priority = 0.8
 
@@ -45,6 +46,37 @@ class EventSitemap(VootelySitemap):
 
     def lastmod(self, obj):
         return obj.updated_at
+
+class TicketedEventSitemap(VootelySitemap):
+    changefreq = 'weekly'
+    priority = 0.7
+
+    def items(self):
+        return Event.objects.filter(
+            kind=Event.Kind.TICKETED_EVENT,
+            is_public=True,
+            status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
+        )
+
+    def lastmod(self, obj):
+        return obj.updated_at
+
+class ElectionSitemap(VootelySitemap):
+    changefreq = 'weekly'
+    priority = 0.7
+
+    def items(self):
+        return Event.objects.filter(
+            kind=Event.Kind.SECURE_ELECTION,
+            is_public=True,
+            status__in=[Event.Status.OPEN, Event.Status.CLOSED, Event.Status.TALLIED, Event.Status.CERTIFIED],
+        )
+
+    def lastmod(self, obj):
+        return obj.updated_at
+
+    def location(self, obj):
+        return reverse('elections:detail', args=[obj.slug])
 
 class NomineeSitemap(VootelySitemap):
     changefreq = 'daily'

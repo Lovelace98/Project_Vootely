@@ -1,30 +1,41 @@
 # Vootely
 
-> Vootely is a premium paid competitions, secure organizational elections, and event ticketing platform based in Ghana, providing both modern web-based checkout and offline USSD voting channels.
+> Vootely is Ghana's all-in-one platform for paid competitions, secure organizational elections, and event ticketing. Supports web-based Paystack checkout and offline USSD voting (*920*24#) with real-time leaderboards and wallet-based organizer payouts.
 
 ## Core Features
 
-- **Paid Voting Campaigns**: Allows organizations, associations, and student bodies to host public contests. Supporters can purchase votes using standard payment channels.
-- **Platform Event Ticketing**: Allows event organizers to configure custom ticket tiers (VIP, Regular, Table, etc.), accept instant Mobile Money and credit card payments via Paystack, and deliver barcode ticket links to buyers via SMS/Email.
-- **Gate Check-In Application**: Provides a dedicated, responsive check-in web app for gate staff to securely verify tickets and prevent duplicate entry fraud.
-- **Mobile Money & Cards**: Fully integrated with secure checkout options allowing online payments via Mobile Money (MTN, Telecel, AirtelTigo) and Visa/Mastercard.
-- **USSD Offline Integration**: Supports dial-to-vote shortcodes (default: `*920*24#`) compatible with basic feature phones (no internet, data, or smartphone required). Triggers direct MoMo STK push authorization prompts to the voter's screen.
-- **Stateless Session Tracking**: Backend matches phone and menu states across asynchronous USSD callback loops.
-- **Real-Time leaderboards**: Web leaderboards sync instantly with both web and USSD votes, ensuring clear standing visibility from launch to final certification.
-- **Structured Election Ballots**: Formal ballot structures allowing voter roster locking, credential-based secure access, and controlled results visibility.
+- **Paid Voting Campaigns**: Organizations, associations, and student bodies host public contests where supporters buy votes via Paystack (MoMo, Visa/Mastercard). Votes count only after payment confirmation.
+- **Secure Organizational Elections**: Structured ballots with voter roster locking, credential-based one-time access tokens, encrypted secret ballots, and automated tallying. Supports positions, candidates, and results visibility controls.
+- **Event Ticketing**: Custom ticket tiers (VIP, Regular, Early Bird, Table), instant MoMo/card payments, barcode ticket delivery via SMS/Email, and wallet-based revenue tracking.
+- **Gate Check-In App**: Browser-based scanner (no app download). Verifies tickets via barcode scan, works offline with auto-sync, and auto-revokes usher passes after events.
+- **USSD Offline Voting**: Shared shortcode *920*24# for all events. Voters dial from any phone (no internet), enter nominee code + quantity, complete via MoMo STK push. Synced instantly with web leaderboards.
+- **Real-Time Leaderboards**: Public leaderboards update instantly on both web and USSD votes via HTMX polling.
+- **Discounted Vote Bundles**: Custom bulk vote packages (e.g. 50 votes for GH₵40) to increase per-nominee revenue.
+- **Organizer Dashboard**: KPI stats, CSV exports, revenue analytics, withdrawal requests, and event management.
+- **Ledger-Backed Wallets**: Every vote payment credited to organizer wallet. Withdrawals processed to bank or MoMo.
 
 ## Dynamic Paths
 
-- **Landing Page**: `{{ request.scheme }}://{{ request.get_host }}/` - Features public overview, live events highlights, USSD mockup demonstration, blogs feed, and organizer contacts.
-- **Blog Listing**: `{{ request.scheme }}://{{ request.get_host }}/blog/` - Guides and insights for event organizers in Ghana (e.g. running contests, offline voting, secure elections, and ticketing).
-- **Blog Article Detail**: `{{ request.scheme }}://{{ request.get_host }}/blog/<slug>/` - Individual detailed guide pages with Table of Contents sidebar.
-- **Active Public Campaigns**: `{{ request.scheme }}://{{ request.get_host }}/events/` - Feed of currently active public voting and ticketed events.
-- **Sitemap Index**: `{{ request.scheme }}://{{ request.get_host }}/sitemap.xml` - Dynamic list of all public events, nominee pages, and blog guides.
-- **Service Worker Configuration**: `{{ request.scheme }}://{{ request.get_host }}/service-worker.js` - Dynamic PWA management script.
-- **PWA Manifest Configuration**: `{{ request.scheme }}://{{ request.get_host }}/manifest.json` - PWA specifications file.
+- **Landing Page**: `{{ request.scheme }}://{{ request.get_host }}/` - Hero, live events carousel, features, USSD showcase, how-it-works, election support, FAQ, client reviews, blog preview, contact form, WhatsApp CTA.
+- **Browse Events**: `{{ request.scheme }}://{{ request.get_host }}/events/` - Filterable grid of active/upcoming/ended paid competitions and ticketed events.
+- **Event Detail**: `{{ request.scheme }}://{{ request.get_host }}/events/<slug>/` - Public microsite with event info, nominees, leaderboard, and purchase flow.
+- **Nominee Detail**: `{{ request.scheme }}://{{ request.get_host }}/events/<slug>/nominees/<ref>/` - Individual nominee profile with photo, bio, vote codes, and direct voting path.
+- **Public Nomination**: `{{ request.scheme }}://{{ request.get_host }}/events/<slug>/nominate/` - Allow supporters to submit nominee entries for review.
+- **Election Detail**: `{{ request.scheme }}://{{ request.get_host }}/elections/<slug>/` - Public election overview with positions, candidates, and results (visibility depends on config).
+- **Election Vote**: `{{ request.scheme }}://{{ request.get_host }}/elections/<slug>/vote/` - Ballot casting page accessible via credential tokens.
+- **Election Results**: `{{ request.scheme }}://{{ request.get_host }}/elections/<slug>/results/` - Live or final election tallies.
+- **Ticket Detail**: `{{ request.scheme }}://{{ request.get_host }}/tickets/<code>/` - Public ticket page with barcode, event info, and transfer options.
+- **Ticket Purchase**: `{{ request.scheme }}://{{ request.get_host }}/tickets/<code>/` - Checkout and purchase flow.
+- **Blog Listing**: `{{ request.scheme }}://{{ request.get_host }}/blog/` - Guides on running contests, offline voting, secure elections, ticketing, and competitor comparisons (Vootely vs Veetickets, Egotickets, Ayatickets).
+- **Blog Article Detail**: `{{ request.scheme }}://{{ request.get_host }}/blog/<slug>/` - Individual articles with table of contents, recommended reads, and CTAs.
+- **Contact**: `{{ request.scheme }}://{{ request.get_host }}/contact/` - Inquiry form for organizers planning competitions, elections, or events.
+- **Sitemap Index**: `{{ request.scheme }}://{{ request.get_host }}/sitemap.xml` - XML sitemap covering static pages, paid competitions, ticketed events, secure elections, nominee pages, and blog posts.
+- **Robots**: `{{ request.scheme }}://{{ request.get_host }}/robots.txt` - Crawl directives (disallows /admin/, /dashboard/, /accounts/).
+- **Service Worker**: `{{ request.scheme }}://{{ request.get_host }}/service-worker.js` - PWA offline caching and install prompt.
+- **Manifest**: `{{ request.scheme }}://{{ request.get_host }}/manifest.json` - PWA install configuration.
 
 ## Legal & Compliance
 
-- **Privacy Policy**: `{{ request.scheme }}://{{ request.get_host }}/privacy/` - Data governance and storage policies.
-- **Terms of Service**: `{{ request.scheme }}://{{ request.get_host }}/terms/` - Terms and agreements.
-- **Organizer Agreement**: `{{ request.scheme }}://{{ request.get_host }}/organizer-agreement/` - Platform fees, platform commission structures, and payout rules for campaign organizers.
+- **Privacy Policy**: `{{ request.scheme }}://{{ request.get_host }}/privacy/` - Data governance and storage policies compliant with Ghana Data Protection Act.
+- **Terms of Service**: `{{ request.scheme }}://{{ request.get_host }}/terms/` - User terms and acceptable use.
+- **Organizer Agreement**: `{{ request.scheme }}://{{ request.get_host }}/organizer-agreement/` - Platform fees, commission structures, payout rules, and merchant terms.
