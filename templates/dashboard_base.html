@@ -365,17 +365,17 @@
                 </span>
                 <span class="vc-bottom-nav-label">Home</span>
             </a>
+            <a href="{% url 'dashboard:tickets' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'tickets' or request.resolver_match.url_name == 'ticketed_event_detail' or request.resolver_match.url_name == 'ticketed_event_create' or request.resolver_match.url_name == 'ticketed_event_edit' or request.resolver_match.url_name == 'ticket_type_create' or request.resolver_match.url_name == 'ticket_type_edit' or request.resolver_match.url_name == 'ticket_sales' or request.resolver_match.url_name == 'ticket_attendees' or request.resolver_match.url_name == 'ticket_check_in_launch' or request.resolver_match.url_name == 'ticket_check_in' or request.resolver_match.url_name == 'ticket_scanner_passes' %}active{% endif %}">
+                <span class="vc-bottom-nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                </span>
+                <span class="vc-bottom-nav-label">Tickets</span>
+            </a>
             <a href="{% url 'dashboard:revenue' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'revenue' or request.resolver_match.url_name == 'withdrawals' %}active{% endif %}">
                 <span class="vc-bottom-nav-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M7 15h.01"/><path d="M11 15h2"/></svg>
                 </span>
                 <span class="vc-bottom-nav-label">Revenue</span>
-            </a>
-            <a href="{% url 'dashboard:profile' %}" class="vc-bottom-nav-item {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'notifications' or request.resolver_match.url_name == 'notification_settings' %}active{% endif %}">
-                <span class="vc-bottom-nav-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[1.35rem] w-[1.35rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-                </span>
-                <span class="vc-bottom-nav-label">Me</span>
             </a>
         </nav>
     </div>
