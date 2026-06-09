@@ -267,7 +267,7 @@
                     formData.append('action', 'pay');
                 }
 
-                fetch(this.formElement.action || window.location.href, {
+                fetch(this.formElement.getAttribute('action') || window.location.href, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',

@@ -61,6 +61,10 @@ class User(AbstractUser):
         null=True,
         help_text="Organizer avatar image",
     )
+    has_seen_onboarding_tour = models.BooleanField(
+        default=False,
+        help_text="Designates whether the user has completed the interactive onboarding tour."
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

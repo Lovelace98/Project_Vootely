@@ -28,11 +28,15 @@ def initialize_paystack_ticket_transaction(ticket_purchase):
     if not settings.PAYSTACK_SECRET_KEY:
         raise RuntimeError('PAYSTACK_SECRET_KEY is not configured.')
 
+    email = ticket_purchase.buyer_email
+    if not email or '@' not in email or email.endswith('.local'):
+        email = 'buyer@vootely.com'
+
     payload = {
         'reference': ticket_purchase.gateway_reference,
         'amount': amount_to_minor_units(ticket_purchase.amount),
         'currency': ticket_purchase.currency,
-        'email': ticket_purchase.buyer_email,
+        'email': email,
         'callback_url': settings.PAYSTACK_CALLBACK_URL,
         'metadata': {
             'ticket_purchase_id': ticket_purchase.pk,
@@ -75,11 +79,15 @@ def charge_ticket_momo_stk_push(ticket_purchase):
         phone = '0' + phone[3:]
 
     provider = detect_momo_provider(phone)
+    email = ticket_purchase.buyer_email or f'ussd_{phone}@vootely.com'
+    if not email or '@' not in email or email.endswith('.local'):
+        email = 'buyer@vootely.com'
+
     payload = {
         'reference': ticket_purchase.gateway_reference,
         'amount': amount_to_minor_units(ticket_purchase.amount),
         'currency': ticket_purchase.currency,
-        'email': ticket_purchase.buyer_email or f'ussd_{phone}@vootely.com',
+        'email': email,
         'mobile_money': {
             'phone': phone,
             'provider': provider,

@@ -33,7 +33,7 @@ class PaystackInitiateView(View):
 
         form = PaymentInitiationForm(request.POST)
         if not form.is_valid():
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Please provide valid payment details.'
@@ -45,7 +45,7 @@ class PaystackInitiateView(View):
         try:
             nominee = Nominee.resolve_for_event(event, form.cleaned_data['nominee_ref'])
         except Nominee.DoesNotExist:
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Nominee not found.'
@@ -54,7 +54,7 @@ class PaystackInitiateView(View):
             return redirect(event.get_absolute_url())
 
         if not event.has_platform_commission():
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': 'This event is not ready to accept votes yet.'
@@ -63,7 +63,7 @@ class PaystackInitiateView(View):
             return redirect(event.get_absolute_url())
 
         if not nominee.is_active or not event.accepts_votes():
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Voting is not available for this event right now.'
@@ -112,7 +112,7 @@ class PaystackInitiateView(View):
                     'gateway_response',
                 ]
             )
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Unable to initialize payment right now.'
@@ -134,7 +134,7 @@ class PaystackInitiateView(View):
             ]
         )
 
-        if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+        if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
             return JsonResponse({
                 'status': 'success',
                 'access_code': payment_attempt.gateway_access_code,

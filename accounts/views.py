@@ -3,7 +3,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import UpdateView
@@ -183,3 +183,11 @@ class MarkNotificationReadView(LoginRequiredMixin, View):
         </span>
         '''
         return HttpResponse(response_html)
+
+
+class CompleteOnboardingView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        request.user.has_seen_onboarding_tour = True
+        request.user.save(update_fields=['has_seen_onboarding_tour'])
+        return JsonResponse({'status': 'success'})
+

@@ -294,8 +294,8 @@ class DashboardElectionPositionDeleteView(OrganizerElectionMixin, View):
             ensure_setup_can_change(event)
             position = get_object_or_404(ElectionPosition, event=event, pk=kwargs['pk'])
             title = position.title
+            audit(event, 'position_deleted', actor=self.request.user, obj=position, metadata={'title': title}, request=request)
             position.delete()
-            audit(event, 'position_deleted', actor=self.request.user, obj_id=kwargs['pk'], metadata={'title': title}, request=request)
             messages.success(request, f'Position "{title}" deleted.')
         except ValidationError as exc:
             for message in exc.messages:
@@ -346,8 +346,8 @@ class DashboardElectionCandidateDeleteView(OrganizerElectionMixin, View):
             ensure_setup_can_change(event)
             candidate = get_object_or_404(ElectionCandidate, event=event, pk=kwargs['pk'])
             name = candidate.name
+            audit(event, 'candidate_deleted', actor=self.request.user, obj=candidate, metadata={'name': name}, request=request)
             candidate.delete()
-            audit(event, 'candidate_deleted', actor=self.request.user, obj_id=kwargs['pk'], metadata={'name': name}, request=request)
             messages.success(request, f'Candidate "{name}" deleted.')
         except ValidationError as exc:
             for message in exc.messages:
@@ -434,7 +434,7 @@ class DashboardElectionInvoiceView(OrganizerElectionMixin, TemplateView):
                 if invoice and invoice.status != ElectionInvoice.Status.PAID:
                     attempt = create_organizer_payment_attempt(invoice, owner=request.user)
                     if attempt.status == OrganizerPaymentAttempt.Status.PENDING and attempt.gateway_checkout_url:
-                        if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                        if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                             return JsonResponse({
                                 'status': 'success',
                                 'access_code': attempt.gateway_access_code,
@@ -463,7 +463,7 @@ class DashboardElectionInvoiceView(OrganizerElectionMixin, TemplateView):
                                 'gateway_response',
                             ]
                         )
-                    if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+                    if request.headers.get('Accept') and 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                         return JsonResponse({
                             'status': 'success',
                             'access_code': attempt.gateway_access_code,
@@ -481,7 +481,7 @@ class DashboardElectionInvoiceView(OrganizerElectionMixin, TemplateView):
                 invoice = generate_invoice(self.event, actor=request.user, request=request)
                 messages.success(request, 'Election invoice generated.')
         except Exception as exc:
-            if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
+            if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
                     'message': str(exc)
@@ -520,8 +520,16 @@ class DashboardElectionCredentialsView(OrganizerElectionMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('download') == 'csv':
+            if self.event.status in {
+                Event.Status.OPEN,
+                Event.Status.CLOSED,
+                Event.Status.TALLIED,
+                Event.Status.CERTIFIED,
+                Event.Status.ARCHIVED,
+            }:
+                raise Http404('Credential exports are unavailable after the election has opened.')
             export = self.event.credential_exports.first()
-            if not export:
+            if not export or not export.rows:
                 raise Http404
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="{self.event.slug}-credentials.csv"'
@@ -536,9 +544,28 @@ class DashboardElectionCredentialsView(OrganizerElectionMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['event'] = self.event
-        context['latest_export'] = self.event.credential_exports.first()
-        credentials = self.event.election_credentials.select_related('voter').order_by('voter__external_id', 'voter__name', 'id')
+        event = self.event
+        context['event'] = event
+        context['latest_export'] = event.credential_exports.first()
+
+        errors = []
+        voter_count = eligible_voter_count(event)
+        if event.status in {
+            Event.Status.OPEN,
+            Event.Status.CLOSED,
+            Event.Status.TALLIED,
+            Event.Status.CERTIFIED,
+            Event.Status.ARCHIVED,
+        }:
+            errors.append('Credentials cannot be issued after the election has opened.')
+        if voter_count <= 0:
+            errors.append('Upload at least one eligible voter before issuing credentials.')
+        if voter_count > 0 and not has_paid_for_current_roster(event):
+            errors.append('Pay the election invoice before issuing credentials.')
+        context['can_issue_credentials'] = len(errors) == 0
+        context['credential_errors'] = errors
+
+        credentials = event.election_credentials.select_related('voter').order_by('voter__external_id', 'voter__name', 'id')
         from django.core.paginator import Paginator
         paginator = Paginator(credentials, 50)
         page_number = self.request.GET.get('page')

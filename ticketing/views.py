@@ -147,7 +147,7 @@ class TicketPurchaseInitiateView(View):
 
         form = TicketPurchaseForm(request.POST)
         wants_json = (
-            request.headers.get('Accept') == 'application/json'
+            (request.headers.get('Accept') and 'application/json' in request.headers.get('Accept', ''))
             or request.headers.get('x-requested-with') == 'XMLHttpRequest'
             or request.POST.get('inline') == 'true'
         )

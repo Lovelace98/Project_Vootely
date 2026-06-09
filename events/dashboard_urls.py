@@ -6,6 +6,7 @@ from accounts.views import (
     DashboardNotificationsView,
     MarkAllNotificationsReadView,
     MarkNotificationReadView,
+    CompleteOnboardingView,
 )
 from nominees.views import (
     DashboardCategoryCreateView,
@@ -101,6 +102,11 @@ urlpatterns = [
         'settings/notifications/',
         DashboardNotificationSettingsView.as_view(),
         name='notification_settings',
+    ),
+    path(
+        'accounts/complete-onboarding/',
+        CompleteOnboardingView.as_view(),
+        name='complete_onboarding',
     ),
     path('events/new/', DashboardEventCreateView.as_view(), name='event_create'),
     path('tickets/new/', DashboardTicketedEventCreateView.as_view(), name='ticketed_event_create'),

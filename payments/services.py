@@ -29,11 +29,15 @@ def initialize_paystack_transaction(payment_attempt):
     if not settings.PAYSTACK_SECRET_KEY:
         raise RuntimeError('PAYSTACK_SECRET_KEY is not configured.')
 
+    email = payment_attempt.voter_email
+    if not email or '@' not in email or email.endswith('.local'):
+        email = 'voter@vootely.com'
+
     payload = {
         'reference': payment_attempt.gateway_reference,
         'amount': amount_to_minor_units(payment_attempt.amount),
         'currency': payment_attempt.currency,
-        'email': payment_attempt.voter_email,
+        'email': email,
         'callback_url': settings.PAYSTACK_CALLBACK_URL,
         'metadata': {
             'payment_attempt_id': payment_attempt.pk,
@@ -582,11 +586,15 @@ def charge_momo_stk_push(payment_attempt):
 
     provider = detect_momo_provider(phone)
     
+    email = payment_attempt.voter_email or settings.USSD_VOTER_EMAIL
+    if not email or '@' not in email or email.endswith('.local'):
+        email = 'voter@vootely.com'
+
     payload = {
         'reference': payment_attempt.gateway_reference,
         'amount': amount_to_minor_units(payment_attempt.amount),
         'currency': payment_attempt.currency,  # GHS
-        'email': payment_attempt.voter_email or settings.USSD_VOTER_EMAIL,
+        'email': email,
         'mobile_money': {
             'phone': phone,
             'provider': provider

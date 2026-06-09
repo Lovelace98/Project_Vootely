@@ -4,6 +4,9 @@
 
 {% block extra_css %}
 {{ block.super }}
+{% if not request.user.has_seen_onboarding_tour %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+{% endif %}
 <link rel="stylesheet" href="{% static 'css/performance.css' %}">
 {% endblock %}
 
@@ -51,7 +54,7 @@
             </button>
 
             <!-- Brand Logo -->
-            <div class="px-2 mb-8 flex justify-center lg:justify-start">
+            <div id="tour-brand-logo" class="px-2 mb-8 flex justify-center lg:justify-start">
                 <a href="{% url 'dashboard:home' %}" class="vc-sidebar-logo-full flex items-center" x-show="!sidebarCollapsed" x-transition>
                     <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely Logo" class="h-10 w-auto" x-show="!darkMode">
                     <img src="{% static 'images/vootely_logo_dark.png' %}" alt="Vootely Logo" class="h-10 w-auto" x-show="darkMode" style="display: none;">
@@ -65,36 +68,36 @@
             <nav class="vc-sidebar-nav space-y-1">
                 <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mb-2" x-show="!sidebarCollapsed">Dashboard</p>
 
-                <a href="{% url 'dashboard:home' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_dashboard %}{% endblock %}">
+                <a id="tour-nav-dashboard" href="{% url 'dashboard:home' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_dashboard %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Dashboard</span>
                 </a>
 
                 <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Events</p>
 
-                <a href="{% url 'dashboard:competitions' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_competitions %}{% endblock %}">
+                <a id="tour-nav-competitions" href="{% url 'dashboard:competitions' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_competitions %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Competitions</span>
                 </a>
 
-                <a href="{% url 'dashboard:elections' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_elections %}{% endblock %}">
+                <a id="tour-nav-elections" href="{% url 'dashboard:elections' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_elections %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Elections</span>
                 </a>
 
-                <a href="{% url 'dashboard:tickets' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_tickets %}{% endblock %}">
+                <a id="tour-nav-tickets" href="{% url 'dashboard:tickets' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_tickets %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Tickets</span>
                 </a>
 
                 <p class="vc-sidebar-section text-xs tracking-wider text-vc-dark-300 font-semibold mt-4 mb-2" x-show="!sidebarCollapsed">Finance</p>
 
-                <a href="{% url 'dashboard:revenue' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_revenue %}{% endblock %}">
+                <a id="tour-nav-revenue" href="{% url 'dashboard:revenue' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_revenue %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Revenue</span>
                 </a>
 
-                <a href="{% url 'dashboard:withdrawals' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_withdrawals %}{% endblock %}">
+                <a id="tour-nav-withdrawals" href="{% url 'dashboard:withdrawals' %}" class="vc-sidebar-link flex items-center gap-3 p-2.5 rounded-full text-vc-dark-500 hover:text-vc-blue transition-colors {% block nav_withdrawals %}{% endblock %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                     <span class="vc-sidebar-text" x-show="!sidebarCollapsed" x-transition>Withdrawals</span>
                 </a>
@@ -188,14 +191,14 @@
                 <!-- Right Header Utilities (Search, Bell, Profile Card) -->
                 <div class="vc-dashboard-actions flex items-center gap-4 sm:gap-6 shrink-0 self-end md:self-center">
                     <!-- Search Button / Desktop Search Pill -->
-                    <button type="button" @click="searchOpen = true; $nextTick(() => $refs.searchInput.focus());" class="vc-dashboard-search-trigger flex h-11 items-center justify-center gap-3 rounded-full bg-white text-gray-500 shadow-sm border border-gray-100 hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600 dark:text-slate-400">
+                    <button id="tour-search-trigger" type="button" @click="searchOpen = true; $nextTick(() => $refs.searchInput.focus());" class="vc-dashboard-search-trigger flex h-11 items-center justify-center gap-3 rounded-full bg-white text-gray-500 shadow-sm border border-gray-100 hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600 dark:text-slate-400">
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         <span class="vc-dashboard-search-label hidden lg:inline">Search workspace</span>
                         <span class="vc-dashboard-search-shortcut hidden lg:inline-flex">⌘K</span>
                     </button>
                     
                     <!-- Notification Bell & Dropdown -->
-                    <div class="relative" x-data="{ notificationsOpen: false }">
+                    <div id="tour-notifications-bell" class="relative" x-data="{ notificationsOpen: false }">
                         <button @click="notificationsOpen = !notificationsOpen" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm border border-gray-100 hover:text-vc-blue hover:shadow-md transition-all focus:outline-none dark:bg-vc-surface-raised dark:border-vc-dark-600">
                             <span id="header-bell-badge" class="absolute right-2 top-2">
                                 {% if unread_notifications_count > 0 %}
@@ -305,7 +308,7 @@
                     </div>
 
                     <!-- User Profile Pill -->
-                    <a href="{% url 'dashboard:profile' %}" class="flex items-center gap-3 bg-white pl-2.5 pr-4 py-1.5 rounded-full shadow-sm border border-gray-100 hover:shadow-md transition-all dark:bg-vc-surface-raised dark:border-vc-dark-600">
+                    <a id="tour-profile-pill" href="{% url 'dashboard:profile' %}" class="flex items-center gap-3 bg-white pl-2.5 pr-4 py-1.5 rounded-full shadow-sm border border-gray-100 hover:shadow-md transition-all dark:bg-vc-surface-raised dark:border-vc-dark-600">
                         <div class="flex h-8 w-8 items-center justify-center rounded-full bg-vc-blue text-sm font-bold text-white shadow-sm shrink-0 uppercase overflow-hidden">
                             {% if request.user.avatar %}
                                 <img src="{{ request.user.avatar.url }}" alt="Avatar" class="h-full w-full object-cover">
@@ -386,4 +389,12 @@
 <script src="{% static 'js/dashboard-progress.js' %}" defer></script>
 <script src="{% static 'js/lazy-sections.js' %}" defer></script>
 <script src="{% static 'js/dashboard-charts.js' %}" defer></script>
+{% if not request.user.has_seen_onboarding_tour %}
+<script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+<script>
+  window.VOOTELY_ONBOARDING_URL = "{% url 'dashboard:complete_onboarding' %}";
+  window.VOOTELY_ONBOARDING_CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/dashboard-tour.js' %}" defer></script>
+{% endif %}
 {% endblock %}

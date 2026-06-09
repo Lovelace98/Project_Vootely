@@ -460,6 +460,8 @@ def issue_credentials(event, *, actor=None, request=None, email=True):
             }
         )
 
+    if not rows:
+        raise ValidationError('All eligible voters already have active credentials.')
     export = ElectionCredentialExport.objects.create(
         event=event,
         generated_by=actor,
@@ -758,12 +760,16 @@ def initialize_organizer_paystack_transaction(payment_attempt):
     if not settings.PAYSTACK_SECRET_KEY:
         raise RuntimeError('PAYSTACK_SECRET_KEY is not configured.')
 
+    email = payment_attempt.payer_email
+    if not email or '@' not in email or email.endswith('.local'):
+        email = 'demo@vootely.com'
+
     callback_url = settings.PAYSTACK_CALLBACK_URL
     payload = {
         'reference': payment_attempt.gateway_reference,
         'amount': amount_to_minor_units(payment_attempt.amount),
         'currency': payment_attempt.currency,
-        'email': payment_attempt.payer_email,
+        'email': email,
         'callback_url': callback_url,
         'metadata': {
             'payment_type': 'secure_election_invoice',

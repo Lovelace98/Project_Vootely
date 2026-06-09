@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from events.models import Event
 
 
+@override_settings(ACCOUNT_RATE_LIMITS={})
 class CustomUserAuthTests(TestCase):
     def test_login_with_email_only_credentials(self):
         user_model = get_user_model()
@@ -118,5 +119,28 @@ class CustomUserAuthTests(TestCase):
         # Verify that no user was created
         user_model = get_user_model()
         self.assertFalse(user_model.objects.filter(email='terms_fail_org@example.com').exists())
+
+    def test_onboarding_tour_default_and_view(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            email='tour_test@example.com',
+            password='strong-pass-123',
+        )
+        # Default should be False
+        self.assertFalse(user.has_seen_onboarding_tour)
+
+        # POST to complete onboarding requires login
+        response = self.client.post(reverse('dashboard:complete_onboarding'))
+        self.assertEqual(response.status_code, 302)
+
+        # Log in and post to complete the onboarding
+        self.client.login(email='tour_test@example.com', password='strong-pass-123')
+        response = self.client.post(reverse('dashboard:complete_onboarding'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'status': 'success'})
+
+        user.refresh_from_db()
+        self.assertTrue(user.has_seen_onboarding_tour)
+
 
 
