@@ -232,6 +232,26 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0.75rem;
 }
 
+/* Compact Stats Grid (for pages with many stats like Revenue) */
+.vc-stat-compact-grid .vc-stat {
+  padding: 1.15rem 1rem;
+  min-height: 110px;
+}
+
+.vc-stat-compact-grid .vc-stat-label {
+  font-size: 0.7rem;
+}
+
+.vc-stat-compact-grid .vc-stat-value {
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.vc-stat-compact-grid .vc-info-tooltip-container {
+  top: 0.55rem;
+  right: 0.55rem;
+}
+
 /* Pastel Variants */
 .vc-stat-green {
   background-color: #e8f5e9;
