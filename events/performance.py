@@ -854,6 +854,7 @@ def withdrawal_summary_fast(user):
                 'amount',
                 filter=Q(
                     status__in=[
+                        WithdrawalRequest.Status.PENDING,
                         WithdrawalRequest.Status.APPROVED,
                         WithdrawalRequest.Status.PROCESSING,
                         WithdrawalRequest.Status.COMPLETED,

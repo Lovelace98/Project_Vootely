@@ -17,3 +17,19 @@ def support_contact(request):
         'support_phone': settings.SUPPORT_PHONE,
         'support_name': getattr(settings, 'SUPPORT_NAME', 'Vootely'),
     }
+
+def dashboard_greeting(request):
+    from django.utils import timezone
+    if not request.user.is_authenticated:
+        return {}
+    now = timezone.localtime(timezone.now())
+    hour = now.hour
+    if hour < 12:
+        greeting = 'Good morning'
+    elif hour < 17:
+        greeting = 'Good afternoon'
+    else:
+        greeting = 'Good evening'
+    return {
+        'dashboard_greeting': greeting,
+    }

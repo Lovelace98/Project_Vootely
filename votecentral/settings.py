@@ -246,6 +246,7 @@ TEMPLATES = [
                 'payments.context_processors.paystack_settings',
                 'votecentral.context_processors.canonical_url',
                 'votecentral.context_processors.support_contact',
+                'votecentral.context_processors.dashboard_greeting',
             ],
         },
     },

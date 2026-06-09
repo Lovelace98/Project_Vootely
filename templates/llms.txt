@@ -1,6 +1,6 @@
 # Vootely
 
-> Vootely is Ghana's all-in-one platform for paid competitions, secure organizational elections, and event ticketing. Supports web-based Paystack checkout and offline USSD voting (*920*24#) with real-time leaderboards and wallet-based organizer payouts.
+> Vootely is Ghana's all-in-one platform for paid competitions, secure organizational elections, and event ticketing. Supports web-based Paystack checkout and offline USSD voting (*928*419#) with real-time leaderboards and wallet-based organizer payouts.
 
 ## Core Features
 

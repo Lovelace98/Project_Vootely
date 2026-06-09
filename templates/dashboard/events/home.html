@@ -4,7 +4,7 @@
 {% block nav_dashboard %}active{% endblock %}
 
 {% block dashboard_header_text %}
-<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight">Welcome back, {{ request.user.first_name|default:request.user.email|truncatechars:18 }}!</h1>
+<h1 class="text-3xl font-extrabold text-vc-dark tracking-tight leading-tight">{{ dashboard_greeting }}, {{ request.user.first_name|default:request.user.email|truncatechars:18 }}!</h1>
 <p class="mt-1 text-sm text-vc-dark-400 font-medium">Here's what's happening with your events today.</p>
 {% endblock %}
 
