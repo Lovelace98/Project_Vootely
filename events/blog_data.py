@@ -62,6 +62,7 @@ BLOG_POSTS = [
                         <li><strong>Instant Leaderboards:</strong> When a voter pays, the vote is counted instantly. The public leaderboard updates in real-time. Everyone can see who is winning.</li>
                         <li><strong>Safe Mobile Checkout:</strong> Voters pay securely online using Mobile Money or Visa/Mastercard. Vootely checks the payment automatically. No fake screenshots!</li>
                         <li><strong>USSD Offline Voting:</strong> Voters can dial a simple shortcode (like *920*24#) on any basic phone to vote without internet.</li>
+                        <li><strong>Live Stream Results Page:</strong> Stream or project the dedicated live results page on big screens at the venue so everyone can watch the leaderboard change in real-time.</li>
                         <li><strong>Discounted Vote Bundles:</strong> Set up custom voting packages where votes are cheaper when bought in bulk (e.g., 50 votes for GH₵40 instead of GH₵50). This encourages fans to support their nominees more and increases your revenue.</li>
                     </ul>
                 </div>
@@ -216,6 +217,7 @@ BLOG_POSTS = [
                         <li><strong>Voter Roster Lock:</strong> Upload your voter list (emails and phone numbers). Only people on this list get entry tokens.</li>
                         <li><strong>One-Time Links:</strong> Once a ballot is submitted, the voter's token is disabled. No double voting is possible.</li>
                         <li><strong>Private Ballots:</strong> Votes are encrypted. Nobody (not even the organizer) can see who a specific voter selected. The secret ballot stays secret.</li>
+                        <li><strong>Live Stream Results:</strong> Organizers can share or project the live, real-time results screen onto monitors at the venue to keep candidates and voters updated as outcomes settle.</li>
                         <li><strong>Instant Auditing:</strong> As soon as the election time ends, results are calculated instantly. No human hand touches the tallies.</li>
                     </ul>
                 </div>
@@ -374,7 +376,7 @@ BLOG_POSTS = [
                     Even worse, Kojo's fans have to visit two different websites: one to buy their tickets, and another to vote. This is confusing and takes too much time.
                 </p>
                 <p>
-                    If Kojo uses <strong>Vootely</strong>, he gets an <strong>all-in-one platform</strong>. He can set up his ticket sales and his voting contest on the very same dashboard in less than 10 minutes. His fans only visit one link to buy tickets and cast votes, and Kojo can track all his earnings in one clean dashboard. <strong>Vootely also lets Kojo set up discounted vote bundles (like 50 votes for GH₵40), which helps him sell more votes in bulk and raises more money for his event.</strong>
+                    If Kojo uses <strong>Vootely</strong>, he gets an <strong>all-in-one platform</strong>. He can set up his ticket sales and his voting contest on the very same dashboard in less than 10 minutes. His fans only visit one link to buy tickets and cast votes, and Kojo can track all his earnings in one clean dashboard. <strong>Vootely also lets Kojo set up discounted vote bundles (like 50 votes for GH₵40), which helps him sell more votes in bulk and raises more money for his event. Additionally, Vootely includes a dedicated live results screen that Kojo can stream or project on large monitors at the venue, allowing everyone to see vote tallies update in real-time.</strong>
                 </p>
             </section>
 
@@ -578,7 +580,7 @@ BLOG_POSTS = [
                     If you do not mind your buyers seeing pre-selected insurance checkmarks, and your ushers are happy downloading a separate app like Checkpoint by Egotickets, then Egotickets is a solid option.
                 </p>
                 <p>
-                    But if Abena wants a platform with direct USSD codes, cheaper buyer fees, no hidden insurance popups, and a secure browser-based gate check-in system that auto-revokes access once the pageant is over, <strong>Vootely</strong> is the clear choice.
+                    But if Abena wants a platform with direct USSD codes, cheaper buyer fees, no hidden insurance popups, a secure browser-based gate check-in system that auto-revokes access, and the ability to stream the live results screen directly onto the pageant stage projection monitors, <strong>Vootely</strong> is the clear choice.
                 </p>
                 <div class="mt-6">
                     <a href="/accounts/signup/" class="vc-btn vc-btn-accent font-bold">Start Your Event on Vootely</a>
@@ -669,7 +671,7 @@ BLOG_POSTS = [
                     <strong>Ayatickets:</strong> Ayatickets is built only for selling tickets. Yaw cannot run his election on Ayatickets. He will have to print paper ballots (which is expensive and takes hours to count) or use Google Forms (where students can cheat by voting multiple times).
                 </p>
                 <p>
-                    <strong>Vootely:</strong> Vootely has a built-in <strong>Secure Elections</strong> tool. Yaw can upload his list of eligible student voters. Vootely sends a secure, one-time voting token to each student's phone or email. Students can cast their vote securely on the same platform, and the system guarantees that each student votes exactly once. Counting is automated, instant, and 100% fair. <strong>If Yaw also wanted to run a paid nominee contest alongside the seminar, Vootely would let him set up discounted vote bundles (like 50 votes for GH₵40) so students can buy votes in bulk at cheaper rates.</strong>
+                    <strong>Vootely:</strong> Vootely has a built-in <strong>Secure Elections</strong> tool. Yaw can upload his list of eligible student voters. Vootely sends a secure, one-time voting token to each student's phone or email. Students can cast their vote securely on the same platform, and the system guarantees that each student votes exactly once. Counting is automated, instant, and 100% fair. <strong>If Yaw also wanted to run a paid nominee contest alongside the seminar, Vootely would let him set up discounted vote bundles (like 50 votes for GH₵40) so students can buy votes in bulk at cheaper rates. He can even stream the live results screen directly onto the main hall screen so students can watch the election counts update transparently in real-time.</strong>
                 </p>
             </section>
 
