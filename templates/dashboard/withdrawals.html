@@ -14,19 +14,51 @@
 
     <!-- KPI Stats -->
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="vc-stat vc-stat-accent vc-animate-in vc-stagger-1">
+        <div class="vc-stat vc-stat-accent vc-animate-in vc-stagger-1" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The maximum amount you can request a payout for right now. Calculated as Confirmed Earnings minus Reserved Funds.
+                </div>
+            </div>
             <p class="vc-stat-label">Available to Withdraw</p>
             <p class="vc-stat-value text-vc-orange text-base sm:text-xl">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat vc-stat-blue vc-animate-in vc-stagger-2">
+        <div class="vc-stat vc-stat-blue vc-animate-in vc-stagger-2" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total amount earned from completed ticket sales and vote purchases, after platform fees are deducted.
+                </div>
+            </div>
             <p class="vc-stat-label">Confirmed Earnings</p>
             <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat vc-animate-in vc-stagger-3">
+        <div class="vc-stat vc-animate-in vc-stagger-3" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total value of withdrawal requests that are currently Approved or Processing.
+                </div>
+            </div>
             <p class="vc-stat-label">In Progress</p>
             <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat vc-animate-in vc-stagger-4">
+        <div class="vc-stat vc-animate-in vc-stagger-4" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total amount that has successfully been paid out to your account.
+                </div>
+            </div>
             <p class="vc-stat-label">Total Withdrawn</p>
             <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
         </div>

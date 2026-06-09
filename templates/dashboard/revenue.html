@@ -16,31 +16,87 @@
 
     <!-- KPI Stats Grid -->
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
-        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total amount paid by voters and ticket buyers before any platform fees or commissions are deducted.
+                </div>
+            </div>
             <p class="vc-stat-label">Gross Revenue</p>
             <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.confirmed_gross_revenue|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    Your share of the revenue (Gross Revenue minus Platform Commissions) from completed transactions.
+                </div>
+            </div>
             <p class="vc-stat-label text-vc-blue">Net Earnings</p>
             <p class="vc-stat-value text-base sm:text-xl text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ summary.net_earnings|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total platform commission fees deducted by Vootely.
+                </div>
+            </div>
             <p class="vc-stat-label">Commission</p>
             <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.commission_total|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    Revenue from transactions that are currently pending or unconfirmed.
+                </div>
+            </div>
             <p class="vc-stat-label">Pending</p>
             <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.pending_amount|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat vc-stat-accent dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat vc-stat-accent dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The maximum amount you can request a payout for right now. Calculated as Confirmed Earnings minus Reserved Funds.
+                </div>
+            </div>
             <p class="vc-stat-label text-vc-orange">Available to Withdraw</p>
             <p class="vc-stat-value text-base sm:text-xl text-vc-orange dark:text-vc-orange-100">{{ default_currency }} {{ summary.available_to_withdraw|floatformat:2 }}</p>
         </div>
-        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total number of successful votes cast across all your paid competitions.
+                </div>
+            </div>
             <p class="vc-stat-label">Votes</p>
             <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ summary.confirmed_vote_total }}</p>
         </div>
-        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600">
+        <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
+            <div class="vc-info-tooltip-container">
+                <button type="button" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open" @click.away="open = false" class="vc-info-icon focus:outline-none" aria-label="Card Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div x-show="open" x-cloak x-transition class="vc-info-tooltip-text" style="display: none;">
+                    The total number of tickets sold across all your events.
+                </div>
+            </div>
             <p class="vc-stat-label">Tickets</p>
             <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ summary.confirmed_ticket_total }}</p>
         </div>
