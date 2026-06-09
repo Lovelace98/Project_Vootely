@@ -219,17 +219,17 @@ h1, h2, h3, h4, h5, h6 {
 
 
 .vc-stat-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-vc-dark-500);
 }
 
 .vc-stat-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-vc-dark);
   line-height: 1.1;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 /* Pastel Variants */
@@ -858,12 +858,12 @@ html:not(.sidebar-is-collapsed) .vc-sidebar-theme-collapsed {
   }
 
   .vc-stat-label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
   }
 
   .vc-stat-value {
-    margin-top: 0.7rem;
-    font-size: 1.35rem;
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
     line-height: 1.15;
     word-break: break-word;
   }

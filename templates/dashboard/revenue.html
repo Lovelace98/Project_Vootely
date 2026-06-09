@@ -26,7 +26,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Gross Revenue</p>
-            <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.confirmed_gross_revenue|floatformat:2 }}</p>
+            <p class="vc-stat-value dark:text-white">{{ default_currency }} {{ summary.confirmed_gross_revenue|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-stat-blue dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -38,7 +38,7 @@
                 </div>
             </div>
             <p class="vc-stat-label text-vc-blue">Net Earnings</p>
-            <p class="vc-stat-value text-base sm:text-xl text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ summary.net_earnings|floatformat:2 }}</p>
+            <p class="vc-stat-value text-vc-blue dark:text-vc-blue-200">{{ default_currency }} {{ summary.net_earnings|floatformat:2 }}</p>
         </div>
         <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -50,7 +50,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Commission</p>
-            <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.commission_total|floatformat:2 }}</p>
+            <p class="vc-stat-value dark:text-white">{{ default_currency }} {{ summary.commission_total|floatformat:2 }}</p>
         </div>
         <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Pending</p>
-            <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ default_currency }} {{ summary.pending_amount|floatformat:2 }}</p>
+            <p class="vc-stat-value dark:text-white">{{ default_currency }} {{ summary.pending_amount|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-stat-accent dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -74,7 +74,7 @@
                 </div>
             </div>
             <p class="vc-stat-label text-vc-orange">Available to Withdraw</p>
-            <p class="vc-stat-value text-base sm:text-xl text-vc-orange dark:text-vc-orange-100">{{ default_currency }} {{ summary.available_to_withdraw|floatformat:2 }}</p>
+            <p class="vc-stat-value text-vc-orange dark:text-vc-orange-100">{{ default_currency }} {{ summary.available_to_withdraw|floatformat:2 }}</p>
         </div>
         <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -86,7 +86,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Votes</p>
-            <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ summary.confirmed_vote_total }}</p>
+            <p class="vc-stat-value dark:text-white">{{ summary.confirmed_vote_total }}</p>
         </div>
         <div class="vc-stat dark:bg-vc-surface-raised dark:border-vc-dark-600" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -98,7 +98,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Tickets</p>
-            <p class="vc-stat-value text-base sm:text-xl dark:text-white">{{ summary.confirmed_ticket_total }}</p>
+            <p class="vc-stat-value dark:text-white">{{ summary.confirmed_ticket_total }}</p>
         </div>
     </div>
 

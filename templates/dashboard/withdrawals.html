@@ -24,7 +24,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Available to Withdraw</p>
-            <p class="vc-stat-value text-vc-orange text-base sm:text-xl">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
+            <p class="vc-stat-value text-vc-orange">GHS {{ summary.available_to_withdraw|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-stat-blue vc-animate-in vc-stagger-2" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -36,7 +36,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Confirmed Earnings</p>
-            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
+            <p class="vc-stat-value">GHS {{ summary.confirmed_earnings|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-animate-in vc-stagger-3" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -48,7 +48,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">In Progress</p>
-            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
+            <p class="vc-stat-value">GHS {{ summary.in_progress_total|floatformat:2 }}</p>
         </div>
         <div class="vc-stat vc-animate-in vc-stagger-4" x-data="{ open: false }">
             <div class="vc-info-tooltip-container">
@@ -60,7 +60,7 @@
                 </div>
             </div>
             <p class="vc-stat-label">Total Withdrawn</p>
-            <p class="vc-stat-value text-base sm:text-xl">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
+            <p class="vc-stat-value">GHS {{ summary.total_withdrawn|floatformat:2 }}</p>
         </div>
     </div>
 
