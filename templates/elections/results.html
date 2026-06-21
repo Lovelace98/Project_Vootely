@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Results | {{ event.title }}{% endblock %}
 
@@ -11,7 +10,7 @@
             <p class="mt-3 text-vc-dark-400">Results are not public yet.</p>
         {% endif %}
     </div>
-    <div id="tally-container" data-ws-url="ws{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/ws/elections/{{ event.slug }}/tally/">
+    <div id="tally-container">
         {% include 'elections/_tally.html' %}
     </div>
 
@@ -98,20 +97,4 @@
         </div>
     {% endif %}
 </section>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/live-leaderboard.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var el = document.getElementById('tally-container');
-        if (el && el.dataset.wsUrl) {
-            connectLiveView({
-                wsUrl: el.dataset.wsUrl,
-                containerId: 'tally-container',
-                reconnect: true,
-            });
-        }
-    });
-</script>
 {% endblock %}

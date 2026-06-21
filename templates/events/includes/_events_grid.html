@@ -27,10 +27,10 @@
                         <div class="flex items-center justify-between text-xs text-vc-dark-400">
                             {% if event.kind == 'ticketed_event' %}
                                 <span class="vc-badge vc-badge-orange">Tickets</span>
-                                <span class="font-semibold">{{ event.ticket_types.count }} ticket type{{ event.ticket_types.count|pluralize }}</span>
+                                <span class="font-semibold">{{ event.ticket_types.all|length }} ticket type{{ event.ticket_types.all|length|pluralize }}</span>
                             {% else %}
                                 <span class="vc-badge vc-badge-blue">{{ event.currency }} {{ event.vote_price|floatformat:2 }}/vote</span>
-                                <span class="font-semibold">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
+                                <span class="font-semibold">{{ event.nominees.all|length }} nominee{{ event.nominees.all|length|pluralize }}</span>
                             {% endif %}
                         </div>
                         <div>

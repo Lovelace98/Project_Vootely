@@ -76,7 +76,7 @@
                     <div class="vc-status-row flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="font-semibold text-vc-dark dark:text-white">{{ position.title }}</span>
-                            <span class="vc-badge vc-badge-neutral">{{ position.candidates.count }} candidates</span>
+                            <span class="vc-badge vc-badge-neutral">{{ position.candidates.all|length }} candidate{{ position.candidates.all|length|pluralize }}</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <button type="button" 

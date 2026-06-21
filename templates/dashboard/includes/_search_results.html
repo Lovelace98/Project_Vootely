@@ -53,7 +53,7 @@
                     <a href="{% url 'dashboard:election_positions' position.event.slug %}" class="flex items-center justify-between gap-4 p-3 rounded-2xl bg-vc-surface hover:bg-vc-blue-50 dark:bg-vc-dark-50 dark:hover:bg-vc-dark-100 transition-colors border border-gray-100/50 dark:border-vc-dark-600">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-vc-dark dark:text-white">{{ position.title }}</p>
-                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Position · {{ position.event.title }} · {{ position.candidates.count }} candidate{{ position.candidates.count|pluralize }}</p>
+                            <p class="text-xs text-vc-dark-400 dark:text-slate-400">Position · {{ position.event.title }} · {{ position.candidates.all|length }} candidate{{ position.candidates.all|length|pluralize }}</p>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-vc-dark-300"><polyline points="9 18 15 12 9 6"/></svg>
                     </a>

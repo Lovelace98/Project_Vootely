@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.db import OperationalError
+
 
 def canonical_url(request):
     base = getattr(settings, 'PUBLIC_APP_URL', '') or ''
@@ -20,7 +22,10 @@ def support_contact(request):
 
 def dashboard_greeting(request):
     from django.utils import timezone
-    if not request.user.is_authenticated:
+    try:
+        if not request.user.is_authenticated:
+            return {}
+    except OperationalError:
         return {}
     now = timezone.localtime(timezone.now())
     hour = now.hour

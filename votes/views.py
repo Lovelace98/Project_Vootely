@@ -338,30 +338,30 @@ def arkesel_ussd_callback(request):
 
     elif session.current_state == 'SELECT_TICKET_TYPE':
         try:
-            choice = int(user_data)
             event = Event.objects.get(id=session.event_id)
+        except Event.DoesNotExist:
+            message = "Ticket event not found. Please start again."
+            continue_session = False
+            session.delete()
+        else:
             ticket_types = ticket_types_available_for_ussd(event)
             cancel_choice = min(len(ticket_types), 8) + 1
-            if choice == cancel_choice:
-                message = "Ticket purchase cancelled. Thank you for using Vootely."
-                continue_session = False
-                session.delete()
-            elif not (1 <= choice <= len(ticket_types[:8])):
-                raise ValueError()
-            else:
-                ticket_type = ticket_types[choice - 1]
-                session.ticket_type_id = ticket_type.id
-                session.current_state = 'ENTER_TICKET_QUANTITY'
-                session.save()
-                message = f"Enter quantity for {ticket_type.name} (max {ticket_type.max_per_order}):"
-        except (ValueError, Event.DoesNotExist):
             try:
-                event = Event.objects.get(id=session.event_id)
+                choice = int(user_data)
+                if choice == cancel_choice:
+                    message = "Ticket purchase cancelled. Thank you for using Vootely."
+                    continue_session = False
+                    session.delete()
+                elif not (1 <= choice <= len(ticket_types[:8])):
+                    raise ValueError()
+                else:
+                    ticket_type = ticket_types[choice - 1]
+                    session.ticket_type_id = ticket_type.id
+                    session.current_state = 'ENTER_TICKET_QUANTITY'
+                    session.save()
+                    message = f"Enter quantity for {ticket_type.name} (max {ticket_type.max_per_order}):"
+            except (ValueError, TypeError):
                 message = f"Invalid option.\n{render_ticket_type_menu(event)}"
-            except Event.DoesNotExist:
-                message = "Ticket event not found. Please start again."
-                continue_session = False
-                session.delete()
 
     elif session.current_state == 'ENTER_TICKET_QUANTITY':
         try:

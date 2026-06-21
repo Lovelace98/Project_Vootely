@@ -246,7 +246,7 @@ class HomeView(ListView):
     paginate_by = 6
 
     def get_queryset(self):
-        queryset = Event.objects.published().select_related('owner').prefetch_related('nominees').annotate(
+        queryset = Event.objects.published().select_related('owner').prefetch_related('nominees', 'ticket_types').annotate(
             starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True))
         )
         
@@ -346,8 +346,8 @@ class EventDetailView(DetailView):
         context['state'] = event.public_state()
         category_sections = []
         if event.kind == Event.Kind.PAID_COMPETITION:
-            for category in event.competition_categories.filter(is_active=True).order_by('display_order', 'name'):
-                nominees = list(category.nominees.filter(is_active=True).order_by('display_order', 'name'))
+            for category in event.competition_categories.all():
+                nominees = list(category.nominees.all())
                 category_sections.append({'category': category, 'nominees': nominees})
         context['category_sections'] = category_sections
         context['nominees'] = event.nominees.filter(is_active=True).select_related('category') if event.kind == Event.Kind.PAID_COMPETITION else []
@@ -446,8 +446,8 @@ class DashboardEventDetailView(OrganizerEventMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.object
-        payments = PaymentAttempt.objects.filter(event=event).order_by('-initiated_at')[:10]
-        purchases = VotePurchase.objects.filter(event=event)
+        payments = PaymentAttempt.objects.filter(event=event).defer('gateway_response', 'webhook_payload', 'metadata').order_by('-initiated_at')[:10]
+        purchases = VotePurchase.objects.filter(event=event).defer('metadata')
         totals = purchases.aggregate(
             total_votes=Coalesce(
                 Sum('quantity'),
@@ -577,7 +577,7 @@ class DashboardSearchView(LoginRequiredMixin, View):
             Q(title__icontains=query)
             | Q(slug__icontains=query)
             | Q(event__title__icontains=query)
-        ).select_related('event')[:6]
+        ).select_related('event').prefetch_related('candidates')[:6]
 
         election_voters = ElectionVoter.objects.filter(
             event__owner=request.user

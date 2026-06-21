@@ -94,10 +94,18 @@
                 <section id="service-desc" class="scroll-mt-24 space-y-3">
                     <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">2. Description of the Vootely Service</h2>
                     <p>
-                        Vootely provides a digital paid-competition platform. The Platform enables organizers to create public voting competitions, manage nominees, and configure vote prices (in GHS), and allows voters to purchase packages of votes for nominees using Paystack (Mobile Money &amp; Card networks).
+                        Vootely provides a digital voting and event ticketing platform. The Platform enables:
                     </p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Organizers to create public voting competitions, secure elections, and ticketed events, manage nominees/ticket types, and configure prices (in GHS).</li>
+                        <li>Voters to purchase packages of votes for nominees, or buyers to purchase event tickets using Paystack (Mobile Money &amp; Card networks).</li>
+                        <li>Real-time leaderboard updates on public event pages.</li>
+                        <li>Organizer wallet accounts that track total sales, platform commissions, and ledger-backed payouts.</li>
+                        <li>Automated SMS and Email confirmations containing direct ticket links or receipts for successful transactions.</li>
+                        <li>Gate scanning check-in interfaces for event gatekeepers to verify ticket validity.</li>
+                    </ul>
                     <p>
-                        Vootely is a technology service operator. Vootely is not a bank, financial institution, or licensed depository. The funds held in organizer wallets represent collected competition revenues less the commission rate agreed for that event, awaiting payout processing under this agreement.
+                        Vootely is a technology service operator. Vootely is not a bank, financial institution, or licensed depository. The funds held in organizer wallets represent collected revenues (less platform commissions) awaiting payout processing under this agreement.
                     </p>
                 </section>
 
@@ -119,38 +127,61 @@
 
                     <div class="space-y-2">
                         <h3 class="font-bold text-vc-dark text-base">3.3 Organizer Obligations</h3>
-                        <p>You agree to comply with Ghana's Data Protection Act 2012 (Act 843) as the data controller of your competition and nominees, and you warrant that your competitions are genuine, legally authorized, and do not manipulate transaction records.</p>
+                        <p>You agree to comply with Ghana's Data Protection Act 2012 (Act 843) as the data controller of your competition and nominees, and you warrant that your competitions are genuine, legally authorized, and do not manipulate transaction records. You further agree to comply with the Cybersecurity Act 2020 (Act 1038) regarding fraud prevention.</p>
                     </div>
 
                     <div class="space-y-2">
                         <h3 class="font-bold text-vc-dark text-base">3.4 Platform Fees &amp; Commission Model</h3>
                         <p>
-                            Vootely operates on a commission-based fee structure. Each paid competition receives a commission percentage set by Vootely before the event can be published. The remaining balance from each successful vote purchase is credited to the organizer's wallet ledger, and payouts remain subject to admin review and ledger-backed posting.
+                            Vootely does not charge a fixed monthly subscription. Instead, Vootely operates on a <strong>commission-based fee structure</strong> where fees are auto-deducted from successful checkout transactions:
+                        </p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Paid Competitions:</strong> A negotiated platform commission agreed upon for each specific event before it goes live.</li>
+                            <li><strong>Ticketed Events:</strong> A standard <strong>7% platform commission</strong> automatically deducted from each ticket purchase.</li>
+                        </ul>
+                        <p>
+                            The remaining net revenues are credited to the organizer's wallet ledger. Withdrawal payouts can be requested through the organizer dashboard and are subject to prompt admin review and ledger-backed posting, targeting settlement within 24 hours of approval.
                         </p>
                     </div>
                 </section>
 
                 <hr class="border-vc-dark-100/50">
 
-                <!-- 4. Voter Terms and Conditions (Finality) -->
+                <!-- 4. Voter and Ticket Buyer Terms (Guest Checkout) -->
                 <section id="voter-terms" class="scroll-mt-24 space-y-3">
-                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">4. Voter Terms and Conditions</h2>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">4. Voter and Ticket Buyer Terms (Guest Checkout)</h2>
+                    
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">4.1 Nature of Votes and Tickets</h3>
+                        <p>Purchases made on the Vootely Platform:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Votes:</strong> Are immediately applied to the selected nominee and rendered instantly by updating the leaderboard.</li>
+                            <li><strong>Tickets:</strong> Are issued as unique digital verification links sent via SMS and Email to the buyer, which must be scanned and validated at the event gate for entry.</li>
+                            <li>All votes and tickets have no secondary monetary value, are non-transferable, and cannot be exchanged for cash, mobile money, or bank credit.</li>
+                            <li><strong>All transactions are completely final and non-refundable</strong> once the payment is completed via Paystack.</li>
+                        </ul>
+                    </div>
+
                     <div class="bg-vc-orange-50 border border-vc-orange-100 rounded-2xl p-6 space-y-3">
                         <h3 class="font-bold text-vc-orange text-base flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            Strict Finality &amp; Non-Refundability of Vote Purchases
+                            Strict Finality &amp; Non-Refundability of All Purchases
                         </h3>
                         <p class="text-vc-dark-600 text-sm">
                             Votes purchased on the Vootely Platform are immediately applied to the selected nominee and updated on the real-time public leaderboard. Because the service is rendered instantaneously:
                         </p>
                         <ul class="list-disc pl-5 space-y-1 text-vc-dark-600 text-sm font-semibold">
                             <li>All transactions are final and 100% non-refundable.</li>
-                            <li>Votes have no secondary cash/monetary value and cannot be exchanged, reversed, or transferred.</li>
+                            <li>Votes and tickets have no secondary cash/monetary value and cannot be exchanged, reversed, or transferred.</li>
                         </ul>
                     </div>
-                    <p class="mt-3">
-                        Voters must not attempt to bypass payment gateways or introduce automated scripts to manipulate vote tallies. Suspicious or fraudulent checkout attempts will result in the immediate cancellation of related votes and potential reporting to payment providers.
-                    </p>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">4.2 Voting Integrity</h3>
+                        <p>
+                            Voters must not attempt to bypass payment gateways, execute chargebacks, or introduce automated scripting to manipulate vote tallies. Any detected fraudulent checkout attempts will result in the immediate cancellation of related votes and potential reporting to payment providers and authorities.
+                        </p>
+                    </div>
                 </section>
 
                 <hr class="border-vc-dark-100/50">
@@ -165,6 +196,7 @@
                         <li>Access other organizers' dashboard statistics without explicit authorization.</li>
                         <li>Attempt to reverse engineer, copy, or replicate any part of the Vootely software.</li>
                         <li>Use the Platform in connection with any illegal lotteries, gambling, or unregulated raffles.</li>
+                        <li>Introduce malware, viruses, or harmful scripts into the Platform.</li>
                     </ul>
                 </section>
 
@@ -184,7 +216,7 @@
                 <section id="availability" class="scroll-mt-24 space-y-3">
                     <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">7. Service Uptime &amp; Performance</h2>
                     <p>
-                        Vootely targets a 99.9% uptime for public event microsites. Vootely is not liable for any losses, missed votes, or visual lag during periods of telecom network outages, Paystack gateway downtime, or external network failures.
+                        Vootely targets a 99.9% uptime for public event microsites. Planned maintenance will be communicated with advance notice where practicable. Vootely is not liable for any losses, missed votes, or visual lag during periods of telecom network outages, Paystack gateway downtime, or external network failures.
                     </p>
                 </section>
 
@@ -194,7 +226,7 @@
                 <section id="liability" class="scroll-mt-24 space-y-3">
                     <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">8. Limitation of Liability</h2>
                     <p>
-                        To the maximum extent permitted by the laws of Ghana, Vootely's total aggregate liability to an organizer shall not exceed the total platform commission retained by Vootely from the organizer's competition in the 3-month period immediately preceding the event giving rise to the claim. Vootely is not liable for any indirect, special, incidental, consequential, or punitive losses.
+                        To the maximum extent permitted by the laws of Ghana, Vootely's total aggregate liability to an organizer shall not exceed the total platform commission retained by Vootely from the organizer's competition in the 3-month period immediately preceding the event giving rise to the claim. Vootely is not liable for any indirect, special, incidental, consequential, or punitive losses, including loss of competition revenue, profit, or data. Vootely is not liable for SMS delivery delays caused by telecom operators.
                     </p>
                 </section>
 

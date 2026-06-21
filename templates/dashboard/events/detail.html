@@ -175,7 +175,7 @@
                     <div class="vc-status-row dark:border-vc-dark-600">
                         <div class="min-w-0">
                             <p class="font-semibold text-vc-dark dark:text-white">{{ category.name }}</p>
-                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ category.nominees.count }} nominee{{ category.nominees.count|pluralize }}{% if not category.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
+                            <p class="text-sm text-vc-dark-400 dark:text-slate-400">{{ category.nominees.all|length }} nominee{{ category.nominees.all|length|pluralize }}{% if not category.is_active %} · <span class="text-vc-danger">inactive</span>{% endif %}</p>
                         </div>
                         <div class="flex gap-2">
                             <a href="{% url 'dashboard:category_edit' event.slug category.slug %}" class="vc-btn vc-btn-outline vc-btn-sm dark:border-vc-dark-600 dark:text-slate-200">Edit</a>

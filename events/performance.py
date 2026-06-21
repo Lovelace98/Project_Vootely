@@ -784,9 +784,13 @@ def dashboard_revenue_lists_context(user, request_get):
 
     payment_attempts = PaymentAttempt.objects.filter(event__owner=user).select_related(
         'event', 'nominee'
+    ).defer(
+        'gateway_response', 'webhook_payload', 'metadata'
     ).order_by('-initiated_at')
     ticket_purchases = TicketPurchase.objects.filter(event__owner=user).select_related(
         'event', 'ticket_type'
+    ).defer(
+        'gateway_response', 'webhook_payload', 'metadata'
     ).order_by('-initiated_at')
     ledger_transactions = LedgerTransaction.objects.filter(
         Q(payment_attempt__event__owner=user) | Q(ticket_purchase__event__owner=user)

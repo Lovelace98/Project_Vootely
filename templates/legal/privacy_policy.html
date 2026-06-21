@@ -140,13 +140,13 @@
                     </div>
 
                     <div class="space-y-2">
-                        <h3 class="font-bold text-vc-dark text-base">3.2 Data collected from Voters (Guest Checkout)</h3>
-                        <p>Vootely operates a guest-first voting flow where voters do not need to create accounts. When a voter purchases votes for a nominee, we collect:</p>
+                        <h3 class="font-bold text-vc-dark text-base">3.2 Data collected from Voters &amp; Ticket Buyers (Guest Checkout)</h3>
+                        <p>Vootely operates a guest-first checkout flow where users do not need to create accounts to purchase votes or event tickets. We collect:</p>
                         <ul class="list-disc pl-5 space-y-1">
-                            <li>Voter's full name.</li>
-                            <li>Voter's email address.</li>
-                            <li>Voter's phone number (used for Paystack checkout and Hubtel-backed payment/vote confirmations).</li>
-                            <li>Vote details (event name, chosen nominee, purchase quantity, amount paid).</li>
+                            <li>Buyer's full name.</li>
+                            <li>Buyer's email address.</li>
+                            <li>Buyer's phone number (used for Paystack checkout and Hubtel-backed payment/receipt confirmations).</li>
+                            <li>Transaction details (event name, nominee selection or ticket type, purchase quantity, amount paid).</li>
                             <li>Payment details (handled securely by our licensed payment partner, Paystack — we do not store credit card numbers or Mobile Money PINs on our servers).</li>
                         </ul>
                     </div>
@@ -163,7 +163,18 @@
 
                     <div class="space-y-2">
                         <h3 class="font-bold text-vc-dark text-base">3.4 Technical and usage data</h3>
-                        <p>When you visit the Vootely website, we automatically collect IP addresses, device types, browser types, page interaction logs, and error diagnostics for platform security and performance audit tracks.</p>
+                        <p>When you visit the Vootely website, we automatically collect IP addresses, device types, browser types and versions, pages visited, interactions, time spent on the platform, and error diagnostics for platform security, performance monitoring, and fraud prevention.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-vc-dark text-base">3.5 Data collected from Organizer Staff / Gate Scanners</h3>
+                        <p>When an organizer's staff logs in to scan tickets and verify gate entry on our check-in interface, we collect:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Staff device details (IP address, user-agent, browser settings).</li>
+                            <li>Session authentication tokens and keys.</li>
+                            <li>Scan activity logs (scanned ticket ID, scanning event ID, ticket check-in timestamp).</li>
+                        </ul>
+                        <p>This data is processed to authenticate staff users, prevent gate entry fraud, and track legitimate check-in logs under Ghana's data protection rules.</p>
                     </div>
                 </section>
 
@@ -186,29 +197,34 @@
                             </thead>
                             <tbody>
                                 <tr class="border-b border-vc-dark-100/50">
-                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Providing voting services</td>
-                                    <td class="p-3">Organizer details, voter purchases, nominee profiles</td>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Providing voting, ticketing, and check-in services</td>
+                                    <td class="p-3">Organizer/Staff accounts, transactions, nominee/ticket records</td>
                                     <td class="p-3 whitespace-nowrap">Contract performance</td>
                                 </tr>
                                 <tr class="border-b border-vc-dark-100/50">
-                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Processing payment checkouts</td>
-                                    <td class="p-3">Voter name, email, phone number, GHS amount</td>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Processing Paystack payments &amp; issuing votes/tickets</td>
+                                    <td class="p-3">Phone number, email, amount, nominee/ticket selection</td>
                                     <td class="p-3 whitespace-nowrap">Contract performance</td>
                                 </tr>
                                 <tr class="border-b border-vc-dark-100/50">
-                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Sending transaction confirmations</td>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Sending transactional notifications &amp; ticket links</td>
                                     <td class="p-3">Phone number, email</td>
                                     <td class="p-3 whitespace-nowrap">Contract performance / Consent</td>
                                 </tr>
                                 <tr class="border-b border-vc-dark-100/50">
-                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Organizer payout withdrawals</td>
-                                    <td class="p-3">Organizer bank name, account number, wallet ledgers</td>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Processing wallet withdrawals for organizers</td>
+                                    <td class="p-3">Bank details, ledger records</td>
                                     <td class="p-3 whitespace-nowrap">Contract performance</td>
                                 </tr>
+                                <tr class="border-b border-vc-dark-100/50">
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Platform security, staff check-in auth &amp; anti-fraud</td>
+                                    <td class="p-3">Usage data, IP, user-agent, transaction/scan logs</td>
+                                    <td class="p-3 whitespace-nowrap">Legitimate interest / Legal obligation</td>
+                                </tr>
                                 <tr>
-                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Anti-fraud &amp; Platform audits</td>
-                                    <td class="p-3">IP logs, transaction activity ledgers</td>
-                                    <td class="p-3 whitespace-nowrap">Legitimate interest / Legal duty</td>
+                                    <td class="p-3 font-semibold text-vc-dark whitespace-nowrap">Legal compliance and record-keeping</td>
+                                    <td class="p-3">All transaction records</td>
+                                    <td class="p-3 whitespace-nowrap">Legal obligation</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -234,7 +250,7 @@
                             <strong class="text-vc-dark">With Payment Processors:</strong> Payment details are shared securely with Paystack for the sole purpose of executing the checkout process. Vootely never stores or has access to full card details or Mobile Money PINs.
                         </li>
                         <li>
-                            <strong class="text-vc-dark">With Regulators &amp; Law Enforcement:</strong> We disclose personal data where required by Ghanaian law, a valid court order, or regulatory commissions.
+                            <strong class="text-vc-dark">With Regulators &amp; Law Enforcement:</strong> We may disclose personal data where required by Ghanaian law, a valid court order, or a lawful request from a regulatory authority, including the Data Protection Commission (DPC), the Cyber Security Authority (CSA), or the Ghana Police Service.
                         </li>
                     </ul>
                 </section>

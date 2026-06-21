@@ -16,7 +16,6 @@ from django.urls import reverse
 
 from events.models import Event
 from votecentral.mixins import SafeIntegrityMixin
-from votecentral.public_urls import build_public_url
 
 from .forms import (
     CredentialTokenForm,
@@ -126,7 +125,7 @@ class DashboardElectionDetailView(OrganizerElectionMixin, DetailView):
         event = self.object
         can_open, open_errors = can_open_election(event)
         latest_invoice = event.election_invoices.first()
-        latest_tally = event.tally_snapshots.first()
+        latest_tally = event.tally_snapshots.defer('totals').first()
         context.update(
             {
                 'positions': event.election_positions.prefetch_related('candidates'),
@@ -137,14 +136,11 @@ class DashboardElectionDetailView(OrganizerElectionMixin, DetailView):
                 ).count(),
                 'ballot_count': event.ballots.count(),
                 'latest_invoice': latest_invoice,
-                'latest_export': event.credential_exports.first(),
+                'latest_export': event.credential_exports.defer('rows').first(),
                 'latest_tally': latest_tally,
                 'can_open': can_open,
                 'open_errors': open_errors,
                 'paid_for_roster': has_paid_for_current_roster(event),
-                'live_results_url': build_public_url(
-                    reverse('elections:results_live', args=[event.slug])
-                ),
             }
         )
         return context
@@ -397,7 +393,7 @@ class DashboardElectionRosterView(OrganizerElectionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['event'] = self.event
-        voters = self.event.election_voters.all().order_by('external_id', 'name')
+        voters = self.event.election_voters.all().defer('metadata').order_by('external_id', 'name')
         from django.core.paginator import Paginator
         paginator = Paginator(voters, 50)
         page_number = self.request.GET.get('page')
@@ -546,7 +542,7 @@ class DashboardElectionCredentialsView(OrganizerElectionMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         event = self.event
         context['event'] = event
-        context['latest_export'] = event.credential_exports.first()
+        context['latest_export'] = event.credential_exports.defer('rows').first()
 
         errors = []
         voter_count = eligible_voter_count(event)
@@ -625,7 +621,7 @@ class PublicElectionDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['positions'] = self.object.election_positions.filter(is_active=True).prefetch_related('candidates')
         context['results_public'] = results_are_public(self.object)
-        context['latest_tally'] = self.object.tally_snapshots.first()
+        context['latest_tally'] = self.object.tally_snapshots.defer('totals').first()
         return context
 
 
@@ -711,7 +707,7 @@ class PublicElectionResultsView(DetailView):
         event = self.object
         public = results_are_public(event)
         context['results_public'] = public
-        context['latest_tally'] = event.tally_snapshots.first()
+        context['latest_tally'] = event.tally_snapshots.defer('totals').first()
         context['live_totals'] = build_tally(event) if public else None
         if public:
             context['receipts'] = event.ballots.exclude(receipt__isnull=True).values_list('receipt__code', flat=True).order_by('receipt__code')

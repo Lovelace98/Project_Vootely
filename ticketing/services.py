@@ -206,22 +206,26 @@ def issue_tickets(ticket_purchase):
     if existing >= ticket_purchase.quantity:
         return list(ticket_purchase.tickets.all())
 
-    for _idx in range(ticket_purchase.quantity - existing):
+    to_create = ticket_purchase.quantity - existing
+    tickets = []
+    existing_codes = set(ticket_purchase.tickets.values_list('code', flat=True))
+    for _ in range(to_create):
         for _attempt in range(5):
             code = Ticket.generate_unique_code()
-            try:
-                Ticket.objects.create(
+            if code not in existing_codes:
+                existing_codes.add(code)
+                tickets.append(Ticket(
                     purchase=ticket_purchase,
                     ticket_type=ticket_purchase.ticket_type,
                     event=ticket_purchase.event,
                     code=code,
                     qr_data=code,
                     status=Ticket.Status.ACTIVE,
-                )
+                ))
                 break
-            except IntegrityError:
-                if _attempt == 4:
-                    raise
+        else:
+            raise IntegrityError('Could not generate unique ticket code after 5 attempts.')
+    Ticket.objects.bulk_create(tickets)
     return list(ticket_purchase.tickets.all())
 
 

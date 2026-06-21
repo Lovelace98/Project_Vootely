@@ -91,12 +91,16 @@ def build_dashboard_context(request):
     event_filter = Q(event__kind=kind) if kind != 'all' else Q()
 
     vote_purchases = VotePurchase.objects.filter(event_filter)
-    ballots = Ballot.objects.filter(event_filter)
-    payments = PaymentAttempt.objects.filter(event_filter)
-    organizer_payments = OrganizerPaymentAttempt.objects.filter(event_filter)
+    ballots = Ballot.objects.filter(event_filter).defer('user_agent', 'metadata')
+    payments = PaymentAttempt.objects.filter(event_filter).defer(
+        'gateway_response', 'webhook_payload', 'metadata'
+    )
+    organizer_payments = OrganizerPaymentAttempt.objects.filter(event_filter).defer(
+        'gateway_response', 'webhook_payload', 'metadata'
+    )
     ledger_entries = LedgerEntry.objects.all()
     withdrawals = WithdrawalRequest.objects.all()
-    notifications = Notification.objects.all()
+    notifications = Notification.objects.all().defer('body_text', 'body_html')
 
     if start:
         events = events.filter(created_at__gte=start)

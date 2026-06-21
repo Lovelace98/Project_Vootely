@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 
 from events.forms import StyledModelForm
 from events.models import Event
@@ -118,20 +119,14 @@ class ElectionCandidateForm(StyledModelForm):
                 position=position,
                 name__iexact=name,
             )
-            is_duplicate = False
-            for dup in duplicate_qs:
-                dup_email = dup.email.strip().lower()
-                dup_phone = dup.phone.strip()
-                
-                email_match = email and dup_email and email == dup_email
-                phone_match = phone and dup_phone and phone == dup_phone
-                both_empty = not email and not phone and not dup_email and not dup_phone
-                
-                if email_match or phone_match or both_empty:
-                    is_duplicate = True
-                    break
-            
-            if is_duplicate:
+            duplicate_query = Q()
+            if email:
+                duplicate_query |= Q(email__iexact=email)
+            if phone:
+                duplicate_query |= Q(phone=phone)
+            if not email and not phone:
+                duplicate_query = Q(email='', phone='')
+            if duplicate_qs.filter(duplicate_query).exists():
                 self.add_error('name', 'A candidate with this name and contact details already exists for the selected position.')
         return cleaned_data
 

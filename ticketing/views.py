@@ -309,6 +309,8 @@ class DashboardTicketedEventsListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return (
             Event.objects.filter(owner=self.request.user, kind=Event.Kind.TICKETED_EVENT)
+            .select_related('owner')
+            .prefetch_related('ticket_types', 'nominees')
             .annotate(
                 ticket_count=Count('tickets', distinct=True),
                 checked_in_count=Count('tickets', filter=Q(tickets__status=Ticket.Status.USED), distinct=True),
@@ -381,7 +383,7 @@ class DashboardTicketedEventDetailView(OrganizerTicketEventMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.object
-        purchases = TicketPurchase.objects.filter(event=event).select_related('ticket_type').order_by('-initiated_at')[:10]
+        purchases = TicketPurchase.objects.filter(event=event).select_related('ticket_type').defer('gateway_response', 'webhook_payload', 'metadata').order_by('-initiated_at')[:10]
         totals = TicketPurchase.objects.filter(event=event, status=TicketPurchase.Status.PAID).aggregate(
             total_tickets=Coalesce(Sum('quantity'), Value(0)),
             total_revenue=Coalesce(
@@ -505,7 +507,7 @@ class DashboardTicketSalesView(OrganizerTicketEventMixin, ListView):
     def get_queryset(self):
         return (
             TicketPurchase.objects.filter(event=self.get_event())
-            .select_related('ticket_type')
+            .select_related('ticket_type', 'event')
             .prefetch_related('tickets')
             .order_by('-initiated_at')
         )
@@ -526,7 +528,7 @@ class DashboardTicketAttendeesView(OrganizerTicketEventMixin, ListView):
         query = (self.request.GET.get('q') or '').strip()
         queryset = (
             TicketPurchase.objects.filter(event=self.get_event(), status=TicketPurchase.Status.PAID)
-            .select_related('ticket_type')
+            .select_related('ticket_type', 'event')
             .prefetch_related('tickets')
             .annotate(
                 ticket_count=Count('tickets', distinct=True),

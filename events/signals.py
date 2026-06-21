@@ -8,7 +8,7 @@ from nominees.models import CompetitionCategory, NominationSubmission, Nominee
 from notifications.models import InAppNotification
 from payments.models import PaymentAttempt
 from votes.models import VotePurchase
-from wallets.models import LedgerEntry, WithdrawalRequest
+from wallets.models import LedgerEntry, WalletAccount, WithdrawalRequest
 
 
 def _bump_event_and_owner(event):
@@ -50,12 +50,16 @@ def invalidate_vote_purchase_cache(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=LedgerEntry, dispatch_uid='ledger_entry_perf_cache_invalidation')
 def invalidate_ledger_cache(sender, instance, **kwargs):
-    owner_id = getattr(instance.account, 'owner_id', None)
-    if owner_id:
-        bump_organizer_cache(owner_id)
-    payment_attempt = getattr(instance.transaction, 'payment_attempt', None)
-    if payment_attempt:
-        _bump_event_and_owner(payment_attempt.event)
+    if instance.account_id:
+        owner_id = WalletAccount.objects.filter(pk=instance.account_id).values_list('owner_id', flat=True).first()
+        if owner_id:
+            bump_organizer_cache(owner_id)
+    if instance.transaction_id:
+        event = Event.objects.filter(
+            payment_attempts__ledger_transaction=instance.transaction_id
+        ).only('pk', 'owner_id').first()
+        if event:
+            _bump_event_and_owner(event)
 
 
 @receiver([post_save, post_delete], sender=WithdrawalRequest, dispatch_uid='withdrawal_perf_cache_invalidation')
@@ -70,7 +74,12 @@ def invalidate_ballot_cache(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=BallotSelection, dispatch_uid='ballot_selection_perf_cache_invalidation')
 def invalidate_ballot_selection_cache(sender, instance, **kwargs):
-    _bump_event_and_owner(instance.position.event)
+    if instance.position_id:
+        event = Event.objects.filter(
+            election_positions=instance.position_id
+        ).only('pk', 'owner_id').first()
+        if event:
+            _bump_event_and_owner(event)
 
 
 @receiver([post_save, post_delete], sender=InAppNotification, dispatch_uid='notification_perf_cache_invalidation')

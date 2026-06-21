@@ -77,11 +77,11 @@
                         <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50 dark:border-vc-dark-600 text-xs">
                             <div>
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Eligible Voters</span>
-                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_voters.count }} voter{{ event.election_voters.count|pluralize }}</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_voters.all|length }} voter{{ event.election_voters.all|length|pluralize }}</span>
                             </div>
                             <div>
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Structure</span>
-                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_positions.count }} position{{ event.election_positions.count|pluralize }}</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.election_positions.all|length }} position{{ event.election_positions.all|length|pluralize }}</span>
                             </div>
                             <div class="col-span-2">
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Timeline</span>
@@ -149,7 +149,7 @@
                             </div>
                             <div>
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Active Nominees</span>
-                                <span class="font-bold text-vc-dark dark:text-white">{{ event.nominees.count }} nominee{{ event.nominees.count|pluralize }}</span>
+                                <span class="font-bold text-vc-dark dark:text-white">{{ event.nominees.all|length }} nominee{{ event.nominees.all|length|pluralize }}</span>
                             </div>
                             <div>
                                 <span class="text-vc-dark-300 font-semibold uppercase text-[9px] tracking-wider block">Categories</span>

@@ -588,150 +588,159 @@ BLOG_POSTS = [
             </section>
         """
     },
-    {
-        'slug': 'vootely-vs-ayatickets-best-ticketing-ghana',
-        'title': 'Vootely vs Ayatickets: Best Event Ticketing Platform in Ghana?',
-        'meta_description': 'Which is better: Vootely or Ayatickets? Read our detailed guide comparing organizer rates, check-in apps, and all-in-one voting features.',
-        'published_date': 'June 8, 2026',
-        'read_time': '6 min read',
-        'author': 'Vootely Team',
-        'category': 'Comparisons',
-        'image_static_path': 'images/blog_vs_ayatickets.png',
-        'excerpt': 'How does Vootely compare to Ayatickets? Let us look at a seminar scenario comparing ticketing commissions, check-in apps, and built-in elections.',
-        'toc': [
-            {'id': 'scenario', 'title': 'The Event Scenario: Yaw\'s Student Seminar & Election'},
-            {'id': 'rates-compared', 'title': 'Commission Rates Compared'},
-            {'id': 'gating-comparison', 'title': 'Gate Gating: App vs Web Scanners'},
-            {'id': 'all-in-one', 'title': 'The All-in-One Advantage'},
-            {'id': 'summary', 'title': 'Summary and Choice'},
-        ],
-        'content_html': """
-            <section id="scenario" class="scroll-mt-24 space-y-4">
-                <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">The Event Scenario: Yaw's Student Seminar & Election</h2>
-                <p>
-                    Let us look at a real-life scenario to compare Vootely and Ayatickets.
-                </p>
-                <p>
-                    Imagine <strong>Yaw</strong> is a student leader at his university. He is organizing a student seminar called the <em>"Future Leaders Forum"</em>. He expects 500 students to buy tickets to attend. 
-                </p>
-                <p>
-                    At the end of the seminar, Yaw also needs to run a secure election to choose the next President of the Student Association. Yaw wants his students to buy tickets easily, check in fast, and vote securely without cheating. Let us compare Ayatickets and Vootely for Yaw's event.
-                </p>
-            </section>
-
-            <hr class="border-vc-dark-100/50 my-8">
-
-            <section id="rates-compared" class="scroll-mt-24 space-y-4">
-                <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Commission Rates Compared</h2>
-                <p>
-                    Students have limited budgets, so keeping fees low is very important to Yaw.
-                </p>
-                <p>
-                    <strong>Ayatickets Fees:</strong> Ayatickets charges organizers a 5% commission. However, they charge buyers a <strong>4.0% processing fee</strong> for mobile money and card checkouts.
-                </p>
-                <p>
-                    <strong>Vootely Fees:</strong> Vootely charges organizers 7% commission, and buyers pay a <strong>2.5% flat handling fee</strong> to cover secure payments. 
-                </p>
-                <p>
-                    For online student buyers, Vootely is cheaper because the buyer fee is only 2.5% compared to Ayatickets' 4.0%. This makes Vootely more attractive for students on a tight budget.
-                </p>
-            </section>
-
-            <hr class="border-vc-dark-100/50 my-8">
-
-            <section id="gating-comparison" class="scroll-mt-24 space-y-4">
-                <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Gate Gating: App vs Web Scanners</h2>
-                <p>
-                    Yaw needs to check in 500 students quickly at the door to prevent long lines. He assigns 3 student ushers to scan tickets.
-                </p>
-                <p>
-                    <strong>Ayatickets Gating:</strong> Ayatickets requires ushers to download a separate mobile application called <strong>"Aya Logbook"</strong>. If an usher's phone has no storage space, or they have a weak network signal to download the app at the gate, they cannot scan, leaving Yaw short-handed.
-                </p>
-                <p>
-                    <strong>Vootely Gating:</strong> Vootely uses the <strong>same system</strong> for everything, so there are no extra app downloads. Yaw simply generates gate scanner passes on his dashboard. His ushers open a secure URL in their phone's standard web browser to start scanning.
-                </p>
-                <div class="bg-vc-surface border border-vc-dark-100/50 rounded-2xl p-6 space-y-3">
-                    <p class="font-bold text-vc-dark text-base">Why Vootely Gating Works Better for Yaw:</p>
-                    <ul class="list-disc pl-5 space-y-2 text-sm">
-                        <li><strong>Scan on Any Phone:</strong> Ushers open the gate link on any Android or iPhone web browser. No download is needed.</li>
-                        <li><strong>Offline Support:</strong> If the university Wi-Fi or mobile internet drops, the scanner keeps working perfectly. The scans are saved and uploaded automatically when the network returns.</li>
-                        <li><strong>Auto-Revocation:</strong> As soon as the seminar ends, Vootely automatically revokes all usher gate passes. The ushers can no longer access Yaw's attendee database or see student names and phone numbers, keeping student data secure.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <hr class="border-vc-dark-100/50 my-8">
-
-            <section id="all-in-one" class="scroll-mt-24 space-y-4">
-                <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">The All-in-One Advantage</h2>
-                <p>
-                    The biggest difference is what happens at the end of the seminar when Yaw needs to run the President election.
-                </p>
-                <p>
-                    <strong>Ayatickets:</strong> Ayatickets is built only for selling tickets. Yaw cannot run his election on Ayatickets. He will have to print paper ballots (which is expensive and takes hours to count) or use Google Forms (where students can cheat by voting multiple times).
-                </p>
-                <p>
-                    <strong>Vootely:</strong> Vootely has a built-in <strong>Secure Elections</strong> tool. Yaw can upload his list of eligible student voters. Vootely sends a secure, one-time voting token to each student's phone or email. Students can cast their vote securely on the same platform, and the system guarantees that each student votes exactly once. Counting is automated, instant, and 100% fair. <strong>If Yaw also wanted to run a paid nominee contest alongside the seminar, Vootely would let him set up discounted vote bundles (like 50 votes for GH₵40) so students can buy votes in bulk at cheaper rates. He can even stream the live results screen directly onto the main hall screen so students can watch the election counts update transparently in real-time.</strong>
-                </p>
-            </section>
-
-            <hr class="border-vc-dark-100/50 my-8">
-
-            <section id="summary" class="scroll-mt-24 space-y-4">
-                <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Summary and Choice</h2>
-                <p>
-                    Here is a quick summary of the features:
-                </p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse border border-slate-200">
-                        <thead>
-                            <tr class="bg-slate-50">
-                                <th class="p-3 border border-slate-200 font-bold">Feature</th>
-                                <th class="p-3 border border-slate-200 font-bold">Vootely</th>
-                                <th class="p-3 border border-slate-200 font-bold">Ayatickets</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="p-3 border border-slate-200 font-semibold">Organizer Fee</td>
-                                <td class="p-3 border border-slate-200 font-bold text-vc-blue">7.0%</td>
-                                <td class="p-3 border border-slate-200">5.0%</td>
-                            </tr>
-                            <tr class="bg-slate-50/50">
-                                <td class="p-3 border border-slate-200 font-semibold">Buyer Fee (Web/MoMo)</td>
-                                <td class="p-3 border border-slate-200 font-bold text-vc-blue">2.5%</td>
-                                <td class="p-3 border border-slate-200">4.0%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 border border-slate-200 font-semibold">Check-In Method</td>
-                                <td class="p-3 border border-slate-200 font-bold text-green-600">Web Browser (No-App)</td>
-                                <td class="p-3 border border-slate-200">App Download (Aya Logbook)</td>
-                            </tr>
-                            <tr class="bg-slate-50/50">
-                                <td class="p-3 border border-slate-200 font-semibold">Secure Group Elections</td>
-                                <td class="p-3 border border-slate-200 font-bold text-green-600">Yes</td>
-                                <td class="p-3 border border-slate-200 text-red-500">No</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 border border-slate-200 font-semibold">Discounted Vote Bundles</td>
-                                <td class="p-3 border border-slate-200 font-bold text-green-600">Yes</td>
-                                <td class="p-3 border border-slate-200 text-red-500">No</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p class="mt-4">
-                    If you only want standard ticketing and do not mind your ushers downloading the Aya Logbook app, Ayatickets is a fine option.
-                </p>
-                <p>
-                    But if you want cheaper buyer fees, a secure no-app gate check-in system that auto-revokes access, and the ability to run secure student association elections or nominee voting on the same platform, <strong>Vootely</strong> is the clear winner.
-                </p>
-                <div class="mt-6">
-                    <a href="/accounts/signup/" class="vc-btn vc-btn-accent font-bold">Launch Your Event on Vootely</a>
-                </div>
-            </section>
-        """
-    },
+    # ===========================================================================
+    # PAUSED: Ayatickets comparison blog post.
+    # Reason: Ayatickets reached out claiming misrepresentation.
+    # The check-in app name has been corrected from "Aya Logbook" to
+    # "Ayatickets Check-Ins" (their actual app on Google Play / App Store).
+    # "Ayalogbook" is a separate product in their ecosystem for corporate
+    # event registration & badge printing, not their gate scanner app.
+    # Status: Commented out pending their reply with verified details.
+    # ===========================================================================
+    # {
+    #     'slug': 'vootely-vs-ayatickets-best-ticketing-ghana',
+    #     'title': 'Vootely vs Ayatickets: Best Event Ticketing Platform in Ghana?',
+    #     'meta_description': 'Which is better: Vootely or Ayatickets? Read our detailed guide comparing organizer rates, check-in apps, and all-in-one voting features.',
+    #     'published_date': 'June 8, 2026',
+    #     'read_time': '6 min read',
+    #     'author': 'Vootely Team',
+    #     'category': 'Comparisons',
+    #     'image_static_path': 'images/blog_vs_ayatickets.png',
+    #     'excerpt': 'How does Vootely compare to Ayatickets? Let us look at a seminar scenario comparing ticketing commissions, check-in apps, and built-in elections.',
+    #     'toc': [
+    #         {'id': 'scenario', 'title': 'The Event Scenario: Yaw\'s Student Seminar & Election'},
+    #         {'id': 'rates-compared', 'title': 'Commission Rates Compared'},
+    #         {'id': 'gating-comparison', 'title': 'Gate Gating: App vs Web Scanners'},
+    #         {'id': 'all-in-one', 'title': 'The All-in-One Advantage'},
+    #         {'id': 'summary', 'title': 'Summary and Choice'},
+    #     ],
+    #     'content_html': """
+    #         <section id="scenario" class="scroll-mt-24 space-y-4">
+    #             <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">The Event Scenario: Yaw's Student Seminar & Election</h2>
+    #             <p>
+    #                 Let us look at a real-life scenario to compare Vootely and Ayatickets.
+    #             </p>
+    #             <p>
+    #                 Imagine <strong>Yaw</strong> is a student leader at his university. He is organizing a student seminar called the <em>"Future Leaders Forum"</em>. He expects 500 students to buy tickets to attend.
+    #             </p>
+    #             <p>
+    #                 At the end of the seminar, Yaw also needs to run a secure election to choose the next President of the Student Association. Yaw wants his students to buy tickets easily, check in fast, and vote securely without cheating. Let us compare Ayatickets and Vootely for Yaw's event.
+    #             </p>
+    #         </section>
+    #
+    #         <hr class="border-vc-dark-100/50 my-8">
+    #
+    #         <section id="rates-compared" class="scroll-mt-24 space-y-4">
+    #             <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Commission Rates Compared</h2>
+    #             <p>
+    #                 Students have limited budgets, so keeping fees low is very important to Yaw.
+    #             </p>
+    #             <p>
+    #                 <strong>Ayatickets Fees:</strong> Ayatickets charges organizers a 5% commission. However, they charge buyers a <strong>4.0% processing fee</strong> for mobile money and card checkouts.
+    #             </p>
+    #             <p>
+    #                 <strong>Vootely Fees:</strong> Vootely charges organizers 7% commission, and buyers pay a <strong>2.5% flat handling fee</strong> to cover secure payments.
+    #             </p>
+    #             <p>
+    #                 For online student buyers, Vootely is cheaper because the buyer fee is only 2.5% compared to Ayatickets' 4.0%. This makes Vootely more attractive for students on a tight budget.
+    #             </p>
+    #         </section>
+    #
+    #         <hr class="border-vc-dark-100/50 my-8">
+    #
+    #         <section id="gating-comparison" class="scroll-mt-24 space-y-4">
+    #             <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Gate Gating: App vs Web Scanners</h2>
+    #             <p>
+    #                 Yaw needs to check in 500 students quickly at the door to prevent long lines. He assigns 3 student ushers to scan tickets.
+    #             </p>
+    #             <p>
+    #                 <strong>Ayatickets Gating:</strong> Ayatickets requires ushers to download a separate mobile application called <strong>"Ayatickets Check-Ins"</strong>. If an usher's phone has no storage space, or they have a weak network signal to download the app at the gate, they cannot scan, leaving Yaw short-handed.
+    #             </p>
+    #             <p>
+    #                 <strong>Vootely Gating:</strong> Vootely uses the <strong>same system</strong> for everything, so there are no extra app downloads. Yaw simply generates gate scanner passes on his dashboard. His ushers open a secure URL in their phone's standard web browser to start scanning.
+    #             </p>
+    #             <div class="bg-vc-surface border border-vc-dark-100/50 rounded-2xl p-6 space-y-3">
+    #                 <p class="font-bold text-vc-dark text-base">Why Vootely Gating Works Better for Yaw:</p>
+    #                 <ul class="list-disc pl-5 space-y-2 text-sm">
+    #                     <li><strong>Scan on Any Phone:</strong> Ushers open the gate link on any Android or iPhone web browser. No download is needed.</li>
+    #                     <li><strong>Offline Support:</strong> If the university Wi-Fi or mobile internet drops, the scanner keeps working perfectly. The scans are saved and uploaded automatically when the network returns.</li>
+    #                     <li><strong>Auto-Revocation:</strong> As soon as the seminar ends, Vootely automatically revokes all usher gate passes. The ushers can no longer access Yaw's attendee database or see student names and phone numbers, keeping student data secure.</li>
+    #                 </ul>
+    #             </div>
+    #         </section>
+    #
+    #         <hr class="border-vc-dark-100/50 my-8">
+    #
+    #         <section id="all-in-one" class="scroll-mt-24 space-y-4">
+    #             <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">The All-in-One Advantage</h2>
+    #             <p>
+    #                 The biggest difference is what happens at the end of the seminar when Yaw needs to run the President election.
+    #             </p>
+    #             <p>
+    #                 <strong>Ayatickets:</strong> Ayatickets is built only for selling tickets. Yaw cannot run his election on Ayatickets. He will have to print paper ballots (which is expensive and takes hours to count) or use Google Forms (where students can cheat by voting multiple times).
+    #             </p>
+    #             <p>
+    #                 <strong>Vootely:</strong> Vootely has a built-in <strong>Secure Elections</strong> tool. Yaw can upload his list of eligible student voters. Vootely sends a secure, one-time voting token to each student's phone or email. Students can cast their vote securely on the same platform, and the system guarantees that each student votes exactly once. Counting is automated, instant, and 100% fair. <strong>If Yaw also wanted to run a paid nominee contest alongside the seminar, Vootely would let him set up discounted vote bundles (like 50 votes for GH₵40) so students can buy votes in bulk at cheaper rates. Results are tallied automatically once the election closes, and Yaw can publish the verified tally along with an anonymous audit registry of all ballot receipts so students can verify their votes were counted.</strong>
+    #             </p>
+    #         </section>
+    #
+    #         <hr class="border-vc-dark-100/50 my-8">
+    #
+    #         <section id="summary" class="scroll-mt-24 space-y-4">
+    #             <h2 class="text-xl md:text-2xl font-extrabold text-vc-dark">Summary and Choice</h2>
+    #             <p>
+    #                 Here is a quick summary of the features:
+    #             </p>
+    #             <div class="overflow-x-auto">
+    #                 <table class="w-full text-left text-xs border-collapse border border-slate-200">
+    #                     <thead>
+    #                         <tr class="bg-slate-50">
+    #                             <th class="p-3 border border-slate-200 font-bold">Feature</th>
+    #                             <th class="p-3 border border-slate-200 font-bold">Vootely</th>
+    #                             <th class="p-3 border border-slate-200 font-bold">Ayatickets</th>
+    #                         </tr>
+    #                     </thead>
+    #                     <tbody>
+    #                         <tr>
+    #                             <td class="p-3 border border-slate-200 font-semibold">Organizer Fee</td>
+    #                             <td class="p-3 border border-slate-200 font-bold text-vc-blue">7.0%</td>
+    #                             <td class="p-3 border border-slate-200">5.0%</td>
+    #                         </tr>
+    #                         <tr class="bg-slate-50/50">
+    #                             <td class="p-3 border border-slate-200 font-semibold">Buyer Fee (Web/MoMo)</td>
+    #                             <td class="p-3 border border-slate-200 font-bold text-vc-blue">2.5%</td>
+    #                             <td class="p-3 border border-slate-200">4.0%</td>
+    #                         </tr>
+    #                         <tr>
+    #                             <td class="p-3 border border-slate-200 font-semibold">Check-In Method</td>
+    #                             <td class="p-3 border border-slate-200 font-bold text-green-600">Web Browser (No-App)</td>
+    #                             <td class="p-3 border border-slate-200">App Download (Ayatickets Check-Ins)</td>
+    #                         </tr>
+    #                         <tr class="bg-slate-50/50">
+    #                             <td class="p-3 border border-slate-200 font-semibold">Secure Group Elections</td>
+    #                             <td class="p-3 border border-slate-200 font-bold text-green-600">Yes</td>
+    #                             <td class="p-3 border border-slate-200 text-red-500">No</td>
+    #                         </tr>
+    #                         <tr>
+    #                             <td class="p-3 border border-slate-200 font-semibold">Discounted Vote Bundles</td>
+    #                             <td class="p-3 border border-slate-200 font-bold text-green-600">Yes</td>
+    #                             <td class="p-3 border border-slate-200 text-red-500">No</td>
+    #                         </tr>
+    #                     </tbody>
+    #                 </table>
+    #             </div>
+    #             <p class="mt-4">
+    #                 If you only want standard ticketing and do not mind your ushers downloading the Ayatickets Check-Ins app, Ayatickets is a fine option.
+    #             </p>
+    #             <p>
+    #                 But if you want cheaper buyer fees, a secure no-app gate check-in system that auto-revokes access, and the ability to run secure student association elections or nominee voting on the same platform, <strong>Vootely</strong> is the clear winner.
+    #             </p>
+    #             <div class="mt-6">
+    #                 <a href="/accounts/signup/" class="vc-btn vc-btn-accent font-bold">Launch Your Event on Vootely</a>
+    #             </div>
+    #         </section>
+    #     """
+    # },
     {
         'slug': 'how-to-host-rapperholic-style-concert-kumasi-sports-stadium',
         'title': 'How to Host a 1,000-Attendee Concert Like Rapperholic Effortlessly in Kumasi',

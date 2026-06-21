@@ -418,7 +418,9 @@ def issue_credentials(event, *, actor=None, request=None, email=True):
         Event.Status.ARCHIVED,
     }:
         raise ValidationError('Credentials cannot be bulk-issued after the election has opened.')
-    voters = event.election_voters.filter(status=ElectionVoter.Status.ELIGIBLE).order_by('external_id')
+    voters = event.election_voters.filter(
+        status=ElectionVoter.Status.ELIGIBLE
+    ).order_by('external_id').prefetch_related('credentials')
     if not voters.exists():
         raise ValidationError('Upload eligible voters before issuing credentials.')
     if not has_paid_for_current_roster(event):
@@ -427,11 +429,13 @@ def issue_credentials(event, *, actor=None, request=None, email=True):
     rows = []
     now = timezone.now()
     for voter in voters:
-        if voter.credentials.filter(status=ElectionCredential.Status.USED).exists():
+        voter_creds = list(voter.credentials.all())
+        if any(c.status == ElectionCredential.Status.USED for c in voter_creds):
             continue
-        existing_active = voter.credentials.filter(
-            status__in=[ElectionCredential.Status.ISSUED, ElectionCredential.Status.OPENED]
-        ).first()
+        existing_active = next(
+            (c for c in voter_creds if c.status in {ElectionCredential.Status.ISSUED, ElectionCredential.Status.OPENED}),
+            None
+        )
         if existing_active:
             continue
         raw_token = secrets.token_urlsafe(24)
@@ -539,11 +543,11 @@ def can_open_election(event):
         errors.append('Provide a valid voting window.')
     if not event.is_public:
         errors.append('Make the election public before opening it.')
-    positions = event.election_positions.filter(is_active=True)
+    positions = event.election_positions.filter(is_active=True).prefetch_related('candidates')
     if not positions.exists():
         errors.append('Add at least one active position.')
     for position in positions:
-        if not position.candidates.filter(is_active=True).exists():
+        if not any(c.is_active for c in position.candidates.all()):
             errors.append(f'Add at least one active candidate for {position.title}.')
     if eligible_voter_count(event) <= 0:
         errors.append('Upload at least one eligible voter.')
@@ -630,6 +634,8 @@ def cast_ballot(event, raw_token, selections, *, request=None):
         user_agent=(request.META.get('HTTP_USER_AGENT', '') if request else ''),
     )
 
+    selections_to_create = []
+
     for position in positions:
         # Retrieve potential list of candidate IDs
         if hasattr(selections, 'getlist'):
@@ -657,24 +663,20 @@ def cast_ballot(event, raw_token, selections, *, request=None):
         if not candidate_ids:
             if not allow_abstain:
                 raise ValidationError(f'Select a candidate for {position.title}.')
-            # Create an empty/abstain BallotSelection
-            BallotSelection.objects.create(ballot=ballot, position=position, candidate=None)
+            selections_to_create.append(BallotSelection(ballot=ballot, position=position, candidate=None))
         else:
             if len(candidate_ids) > position.max_choices:
                 raise ValidationError(
                     f'You can select at most {position.max_choices} candidates for {position.title}.'
                 )
+            candidates_by_id = {str(c.id): c for c in position.candidates.all() if c.is_active}
             for candidate_id in candidate_ids:
-                try:
-                    candidate = ElectionCandidate.objects.get(
-                        id=candidate_id,
-                        event=event,
-                        position=position,
-                        is_active=True,
-                    )
-                except (ElectionCandidate.DoesNotExist, ValueError):
+                candidate = candidates_by_id.get(candidate_id)
+                if candidate is None:
                     raise ValidationError(f'Invalid candidate selected for {position.title}.')
-                BallotSelection.objects.create(ballot=ballot, position=position, candidate=candidate)
+                selections_to_create.append(BallotSelection(ballot=ballot, position=position, candidate=candidate))
+
+    BallotSelection.objects.bulk_create(selections_to_create)
 
     BallotReceipt.objects.create(ballot=ballot, code=receipt_code, code_hash=token_hash(receipt_code))
     credential.status = ElectionCredential.Status.USED
