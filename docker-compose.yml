@@ -1,5 +1,5 @@
 services:
-  # PostgreSQL Database (for local dev / fallback; in production Dokploy provides this externally)
+  # PostgreSQL Database
   votecentral_postgres_service:
     image: postgres:16-alpine
     container_name: votecentral_postgres
@@ -12,28 +12,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-votecentral}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U votecentral -d votecentral"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - votecentral_internal
-
-  # MinIO S3-compatible Object Storage (replaces Supabase Storage)
-  votecentral_minio_service:
-    image: minio/minio:latest
-    container_name: votecentral_minio
-    restart: always
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    expose:
-      - "9000"
-      - "9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-votecentral}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-votecentral}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -121,7 +99,6 @@ networks:
 
 volumes:
   postgres_data:
-  minio_data:
   static_volume:
   media_volume:
   redis_data:
