@@ -261,7 +261,7 @@ DATABASES = {
             'DATABASE_URL',
             default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         ),
-        conn_max_age=600,
+        conn_max_age=0,
         conn_health_checks=True,
     )
 }
@@ -306,6 +306,7 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+SERVE_LOCAL_MEDIA = env.bool('SERVE_LOCAL_MEDIA', default=False)
 
 # Supabase / S3 Media Storage Settings
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default=None)

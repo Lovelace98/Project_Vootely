@@ -57,5 +57,17 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear --ignore=src.css
 
 # Start application
-echo "Starting daphne server..."
-exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log - --verbosity 2 votecentral.asgi:application
+if [ "$ASGI_SERVER" = "daphne" ]; then
+    echo "Starting daphne server..."
+    exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log - --verbosity 2 votecentral.asgi:application
+else
+    WORKERS=${ASGI_WORKERS:-3}
+    echo "Starting ASGI application with Gunicorn + Uvicorn workers ($WORKERS workers)..."
+    exec gunicorn votecentral.asgi:application \
+        --workers "$WORKERS" \
+        --worker-class uvicorn.workers.UvicornWorker \
+        --bind 0.0.0.0:8000 \
+        --access-logfile - \
+        --error-logfile - \
+        --forwarded-allow-ips "*"
+fi

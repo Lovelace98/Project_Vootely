@@ -490,6 +490,39 @@ class EventFlowTests(TestCase):
         self.assertEqual(refreshed_context['summary']['confirmed_votes'], 3)
         self.assertEqual(refreshed_context['summary']['confirmed_revenue'], Decimal('7.50'))
 
+    def test_vote_purchase_does_not_bust_home_listing_or_event_shell_cache(self):
+        from events.performance import get_cache_version, get_home_listing_version
+        cache.clear()
+        event = self.create_event(status=Event.Status.PUBLISHED)
+        nominee = self.create_nominee(event)
+
+        initial_home_version = get_home_listing_version()
+        initial_event_version = get_cache_version('event', event.pk)
+
+        attempt = PaymentAttempt.objects.create(
+            event=event,
+            nominee=nominee,
+            amount=Decimal('5.00'),
+            currency='GHS',
+            platform_commission_percent=event.platform_commission_percent,
+            vote_quantity=2,
+            voter_email='vote-nobust@example.com',
+            gateway_reference='vote-nobust-ref',
+            status=PaymentAttempt.Status.PAID,
+        )
+        VotePurchase.objects.create(
+            event=event,
+            nominee=nominee,
+            payment_attempt=attempt,
+            quantity=2,
+            amount_paid=Decimal('5.00'),
+            currency='GHS',
+            payment_reference='vote-nobust-ref',
+        )
+
+        self.assertEqual(get_home_listing_version(), initial_home_version)
+        self.assertEqual(get_cache_version('event', event.pk), initial_event_version)
+
     def test_dashboard_summary_cache_is_scoped_by_organizer(self):
         cache.clear()
         own_event = self.create_event(status=Event.Status.PUBLISHED)

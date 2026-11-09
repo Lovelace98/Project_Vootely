@@ -122,6 +122,7 @@ pyenv/
 # VoteCentral Custom/Private Environment Variables
 .env
 .env.*
+!.env.example
 .secrets
 secrets.json
 

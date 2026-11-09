@@ -63,10 +63,7 @@
                         class="mt-4"
                         id="leaderboard-container"
                         data-ws-url="ws{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/ws/events/{{ event.slug }}/leaderboard/"
-                        hx-get="{% url 'events:leaderboard' event.slug %}"
-                        hx-trigger="load, every 15s"
-                        hx-target="this"
-                        hx-swap="innerHTML"
+                        data-fallback-url="{% url 'events:leaderboard' event.slug %}"
                     >
                         {% include 'events/_leaderboard.html' %}
                     </div>

@@ -18,6 +18,36 @@ function connectLiveView(options) {
     var reconnectAttempt = 0;
     var reconnectTimer = null;
     var closed = false;
+    var fallbackTimer = null;
+    var fallbackUrl = container.dataset.fallbackUrl || options.fallbackUrl || null;
+
+    function startFallbackPoll() {
+        if (!fallbackUrl || fallbackTimer || closed) return;
+        var jitter = Math.floor(Math.random() * 15000);
+        var interval = 30000 + jitter;
+        fallbackTimer = setTimeout(function () {
+            fallbackTimer = null;
+            if (closed || (ws && ws.readyState === WebSocket.OPEN)) return;
+            fetch(fallbackUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (res) { return res.text(); })
+                .then(function (html) {
+                    if (html && (!ws || ws.readyState !== WebSocket.OPEN)) {
+                        animateSwap(container, html);
+                    }
+                    startFallbackPoll();
+                })
+                .catch(function () {
+                    startFallbackPoll();
+                });
+        }, interval);
+    }
+
+    function stopFallbackPoll() {
+        if (fallbackTimer) {
+            clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+        }
+    }
 
     function connect() {
         if (closed) return;
@@ -26,6 +56,7 @@ function connectLiveView(options) {
             ws = new WebSocket(opts.wsUrl);
         } catch (e) {
             console.warn('[LiveView] WebSocket connection failed:', e);
+            startFallbackPoll();
             scheduleReconnect();
             return;
         }
@@ -33,6 +64,7 @@ function connectLiveView(options) {
         ws.onopen = function () {
             console.log('[LiveView] Connected');
             reconnectAttempt = 0;
+            stopFallbackPoll();
             container.classList.remove('live-view-disconnected');
             container.classList.add('live-view-connected');
         };
@@ -55,11 +87,13 @@ function connectLiveView(options) {
             container.classList.remove('live-view-connected');
             container.classList.add('live-view-disconnected');
             console.log('[LiveView] Disconnected');
+            startFallbackPoll();
             scheduleReconnect();
         };
 
         ws.onerror = function () {
             console.warn('[LiveView] Error');
+            startFallbackPoll();
         };
     }
 
@@ -92,6 +126,7 @@ function connectLiveView(options) {
 
     function disconnect() {
         closed = true;
+        stopFallbackPoll();
         if (reconnectTimer) {
             clearTimeout(reconnectTimer);
             reconnectTimer = null;

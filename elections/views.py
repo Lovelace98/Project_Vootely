@@ -33,6 +33,8 @@ from .models import (
     ElectionPosition,
     ElectionCandidate,
 )
+from events.performance import public_election_detail_context, public_election_results_context
+
 from .services import (
     audit,
     build_tally,
@@ -619,9 +621,8 @@ class PublicElectionDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['positions'] = self.object.election_positions.filter(is_active=True).prefetch_related('candidates')
-        context['results_public'] = results_are_public(self.object)
-        context['latest_tally'] = self.object.tally_snapshots.defer('totals').first()
+        extra = public_election_detail_context(self.object)
+        context.update(extra)
         return context
 
 
@@ -704,13 +705,8 @@ class PublicElectionResultsView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        event = self.object
-        public = results_are_public(event)
-        context['results_public'] = public
-        context['latest_tally'] = event.tally_snapshots.defer('totals').first()
-        context['live_totals'] = build_tally(event) if public else None
-        if public:
-            context['receipts'] = event.ballots.exclude(receipt__isnull=True).values_list('receipt__code', flat=True).order_by('receipt__code')
+        extra = public_election_results_context(self.object)
+        context.update(extra)
         return context
 
 
@@ -768,9 +764,6 @@ class PublicElectionLiveResultsView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        event = self.object
-        from .services import build_tally, results_are_public
-        public = results_are_public(event)
-        context['results_public'] = public
-        context['live_totals'] = build_tally(event) if public else []
+        extra = public_election_results_context(self.object)
+        context.update(extra)
         return context

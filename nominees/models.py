@@ -1,3 +1,4 @@
+from decimal import Decimal
 import uuid
 
 from django.core.exceptions import ValidationError
@@ -74,6 +75,8 @@ class Nominee(models.Model):
     email = models.EmailField(blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     display_order = models.PositiveIntegerField(default=0)
+    total_votes = models.PositiveIntegerField(default=0, db_index=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

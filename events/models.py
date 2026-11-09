@@ -152,6 +152,8 @@ class Event(models.Model):
         indexes = [
             models.Index(fields=('owner', 'kind', 'status', 'start_at'), name='evt_owner_kind_stat_start'),
             models.Index(fields=('owner', 'kind', '-created_at'), name='evt_owner_kind_created'),
+            models.Index(fields=('kind', 'status', 'is_public', '-published_at'), name='evt_pub_list_idx'),
+            models.Index(fields=('status', 'is_public', 'start_at', 'end_at'), name='evt_active_window_idx'),
         ]
 
     def __str__(self):

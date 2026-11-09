@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 from decimal import Decimal
 
 from asgiref.sync import async_to_sync
 from django.core.cache import cache
-from django.db.models import Count, DecimalField, IntegerField, Q, Sum, Value
+from django.db.models import Case, Count, DecimalField, IntegerField, Min, Q, Sum, Value, When
 from django.db.models.functions import Coalesce, ExtractMonth, ExtractWeekDay
 from django.utils import timezone
 
-from elections.models import BallotSelection
+from elections.models import BallotSelection, ElectionTallySnapshot
 from events.models import Event
-from nominees.models import Nominee
+from nominees.models import CompetitionCategory, Nominee
 from payments.models import PaymentAttempt
-from ticketing.models import TicketPurchase
+from ticketing.models import Ticket, TicketProvisionalEntry, TicketPurchase, TicketType
 from votes.models import VotePurchase
 from wallets.models import LedgerEntry, LedgerTransaction, WithdrawalRequest
 from wallets.services import (
@@ -24,17 +25,22 @@ from wallets.services import (
 
 
 DASHBOARD_CACHE_TTL = 30
-LEADERBOARD_CACHE_TTL = 15
+PUBLIC_CACHE_TTL = 60
+HOME_CACHE_TTL = 30
+LEADERBOARD_CACHE_TTL = 5
 NOTIFICATION_CACHE_TTL = 10
+DASHBOARD_TICKET_CACHE_TTL = 15
 
 
 def broadcast_leaderboard_update(event_id):
     from channels.layers import get_channel_layer
+    cache.delete(f'leaderboard:v3:event:{event_id}')
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f'leaderboard_{event_id}',
-        {'type': 'leaderboard_updated'},
-    )
+    if channel_layer:
+        async_to_sync(channel_layer.group_send)(
+            f'leaderboard_{event_id}',
+            {'type': 'leaderboard_updated'},
+        )
 
 
 def broadcast_election_tally_update(event_id):
@@ -81,6 +87,50 @@ def bump_event_cache(event_id):
 def bump_notification_cache(user_id):
     if user_id:
         bump_cache_version('notifications', user_id)
+
+
+HOME_LISTING_CACHE_PREFIX = 'home-listing:v1'
+
+
+def bump_home_listing_cache():
+    bump_cache_version('home-listing', 'global')
+
+
+def _home_listing_key(status, sort, kind, q):
+    q_hash = hashlib.md5(q.encode()).hexdigest()[:8] if q else ''
+    return f'{HOME_LISTING_CACHE_PREFIX}:status:{status}:sort:{sort}:kind:{kind}:q:{q_hash}'
+
+
+def get_home_listing_version():
+    return get_cache_version('home-listing', 'global')
+
+
+def home_event_ids(status='active', sort='newest', kind='all', q=''):
+    key = _home_listing_key(status, sort, kind, q)
+    version = get_home_listing_version()
+
+    def builder():
+        now = timezone.now()
+        queryset = Event.objects.published()
+        if q:
+            queryset = queryset.filter(Q(title__icontains=q) | Q(description__icontains=q))
+        if status == 'active':
+            queryset = queryset.filter(start_at__lte=now, end_at__gte=now)
+        elif status == 'upcoming':
+            queryset = queryset.filter(start_at__gt=now)
+        elif status == 'ended':
+            queryset = queryset.filter(end_at__lt=now)
+        if kind == 'ticketed_event':
+            queryset = queryset.filter(kind=Event.Kind.TICKETED_EVENT)
+        elif kind == 'paid_competition':
+            queryset = queryset.filter(kind=Event.Kind.PAID_COMPETITION)
+        if sort == 'newest':
+            queryset = queryset.order_by('-published_at')
+        elif sort == 'ending_soon':
+            queryset = queryset.order_by('end_at')
+        return list(queryset.values_list('id', flat=True)[:120])
+
+    return _cache_get_or_set(f'{key}:v{version}', builder, HOME_CACHE_TTL)
 
 
 def _cache_get_or_set(key, builder, ttl):
@@ -201,24 +251,12 @@ def dashboard_events_queryset(user):
 
 
 def build_event_leaderboard(event):
-    event_version = get_cache_version('event', event.pk)
-    key = f'leaderboard:v2:event:{event.pk}:v{event_version}'
+    key = f'leaderboard:v3:event:{event.pk}'
 
     def builder():
         return list(
-            event.nominees.filter(is_active=True).select_related('category')
-            .annotate(
-                total_votes=Coalesce(
-                    Sum('vote_purchases__quantity'),
-                    Value(0),
-                    output_field=IntegerField(),
-                ),
-                total_amount=Coalesce(
-                    Sum('vote_purchases__amount_paid'),
-                    Value(Decimal('0.00')),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                ),
-            )
+            event.nominees.filter(is_active=True)
+            .select_related('category')
             .order_by('-total_votes', '-total_amount', 'name')
         )
 
@@ -323,18 +361,20 @@ def dashboard_home_context(user, *, timeframe='this_month', event_slug=''):
         if event_slug:
             top_nominees_qs = top_nominees_qs.filter(event__slug=event_slug)
         start_date = timeframe_start(timeframe)
-        vote_filter = Q()
         if start_date:
-            vote_filter &= Q(vote_purchases__paid_at__gte=start_date)
-        top_nominees = list(
-            top_nominees_qs.annotate(
-                total_votes=Coalesce(
-                    Sum('vote_purchases__quantity', filter=vote_filter),
-                    Value(0),
-                    output_field=IntegerField(),
-                )
-            ).order_by('-total_votes')[:5]
-        )
+            top_nominees = list(
+                top_nominees_qs.annotate(
+                    filtered_votes=Coalesce(
+                        Sum('vote_purchases__quantity', filter=Q(vote_purchases__paid_at__gte=start_date)),
+                        Value(0),
+                        output_field=IntegerField(),
+                    )
+                ).order_by('-filtered_votes')[:5]
+            )
+            for nominee in top_nominees:
+                nominee.total_votes = nominee.filtered_votes
+        else:
+            top_nominees = list(top_nominees_qs.order_by('-total_votes')[:5])
         nominee_milestones = []
         for nominee in top_nominees:
             votes = nominee.total_votes
@@ -914,3 +954,100 @@ def build_tally_fast(event):
             }
         )
     return totals
+
+
+def public_election_detail_context(event):
+    event_version = get_cache_version('event', event.pk)
+    key = f'election-detail:v1:event:{event.pk}:v{event_version}'
+
+    def builder():
+        from .services import results_are_public
+        positions = list(event.election_positions.filter(is_active=True).prefetch_related('candidates'))
+        results_public = results_are_public(event)
+        latest_tally = event.tally_snapshots.defer('totals').first()
+        return {
+            'positions': positions,
+            'results_public': results_public,
+            'latest_tally': latest_tally,
+        }
+
+    return _cache_get_or_set(key, builder, PUBLIC_CACHE_TTL)
+
+
+def public_election_results_context(event):
+    event_version = get_cache_version('event', event.pk)
+    key = f'election-results:v1:event:{event.pk}:v{event_version}'
+
+    def builder():
+        from elections.services import build_tally, results_are_public
+        public = results_are_public(event)
+        latest_tally = event.tally_snapshots.defer('totals').first()
+        live_totals = build_tally(event) if public else None
+        receipts = list(event.ballots.exclude(receipt__isnull=True).values_list('receipt__code', flat=True).order_by('receipt__code')) if public else []
+        return {
+            'results_public': public,
+            'latest_tally': latest_tally,
+            'live_totals': live_totals,
+            'receipts': receipts,
+        }
+
+    return _cache_get_or_set(key, builder, PUBLIC_CACHE_TTL)
+
+
+def public_event_detail_context(event):
+    event_version = get_cache_version('event', event.pk)
+    key = f'event-detail:v1:event:{event.pk}:v{event_version}'
+
+    def builder():
+        category_sections = []
+        if event.kind == Event.Kind.PAID_COMPETITION:
+            for category in event.competition_categories.all():
+                nominees_list = list(category.nominees.all())
+                category_sections.append({'category': category, 'nominees': nominees_list})
+        nominees_qs = event.nominees.filter(is_active=True).select_related('category') if event.kind == Event.Kind.PAID_COMPETITION else []
+        tokenized_ticket_types = list(event.ticket_types.filter(is_active=True).order_by('price', 'name').annotate_sold_count())
+        for tt in tokenized_ticket_types:
+            tt.public_is_on_sale = tt.is_on_sale()
+        return {
+            'category_sections': category_sections,
+            'nominees': nominees_qs,
+            'ticket_types': tokenized_ticket_types,
+        }
+
+    return _cache_get_or_set(key, builder, PUBLIC_CACHE_TTL)
+
+
+def dashboard_ticketed_events_ids(user):
+    key = f'dashboard-ticketed-ids:v1:user:{user.pk}:ov:{get_cache_version("organizer", user.pk)}'
+
+    def builder():
+        return list(
+            Event.objects.filter(owner=user, kind=Event.Kind.TICKETED_EVENT)
+            .order_by('-created_at')
+            .values_list('id', flat=True)
+        )
+
+    return _cache_get_or_set(key, builder, DASHBOARD_TICKET_CACHE_TTL)
+
+
+def dashboard_attendee_aggregations(event):
+    event_version = get_cache_version('event', event.pk)
+    key = f'attendee-aggs:v1:event:{event.pk}:v{event_version}'
+
+    def builder():
+        totals = event.tickets.filter(purchase__status=TicketPurchase.Status.PAID).aggregate(
+            total=Count('id'),
+            checked_in=Count('id', filter=Q(status=Ticket.Status.USED)),
+            active=Count('id', filter=Q(status=Ticket.Status.ACTIVE)),
+        )
+        provisional_confirmed = event.ticket_provisional_entries.filter(status=TicketProvisionalEntry.Status.CONFIRMED).count()
+        provisional_rejected = event.ticket_provisional_entries.filter(status=TicketProvisionalEntry.Status.REJECTED).count()
+        return {
+            'total_ticket_count': totals['total'] or 0,
+            'checked_in_count': totals['checked_in'] or 0,
+            'active_ticket_count': totals['active'] or 0,
+            'provisional_confirmed_count': provisional_confirmed,
+            'provisional_rejected_count': provisional_rejected,
+        }
+
+    return _cache_get_or_set(key, builder, DASHBOARD_TICKET_CACHE_TTL)

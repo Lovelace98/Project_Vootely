@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
-from django.db.models import Count, DecimalField, IntegerField, Min, Prefetch, Q, Sum, Value
+from django.db.models import Case, Count, DecimalField, IntegerField, Min, Prefetch, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -23,7 +23,7 @@ from nominees.models import CompetitionCategory, NominationSubmission, Nominee
 
 from .forms import ContactInquiryForm, EventForm, VoteBundleForm
 from .models import Event, VoteBundle
-from .performance import build_event_leaderboard, dashboard_home_context
+from .performance import build_event_leaderboard, dashboard_home_context, home_event_ids, public_event_detail_context
 from .blog_data import BLOG_POSTS
 
 
@@ -246,38 +246,23 @@ class HomeView(ListView):
     paginate_by = 6
 
     def get_queryset(self):
-        queryset = Event.objects.published().select_related('owner').prefetch_related('nominees', 'ticket_types').annotate(
-            starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True))
-        )
-        
-        q = self.request.GET.get('q', '').strip()
-        if q:
-            queryset = queryset.filter(
-                Q(title__icontains=q) | Q(description__icontains=q)
-            )
-
         status = self.request.GET.get('status', 'active')
-        now = timezone.now()
-        if status == 'active':
-            queryset = queryset.filter(start_at__lte=now, end_at__gte=now)
-        elif status == 'upcoming':
-            queryset = queryset.filter(start_at__gt=now)
-        elif status == 'ended':
-            queryset = queryset.filter(end_at__lt=now)
-
-        kind = self.request.GET.get('kind', 'all').strip().lower()
-        if kind == 'ticketed_event':
-            queryset = queryset.filter(kind=Event.Kind.TICKETED_EVENT)
-        elif kind == 'paid_competition':
-            queryset = queryset.filter(kind=Event.Kind.PAID_COMPETITION)
-
+        q = self.request.GET.get('q', '').strip()
         sort = self.request.GET.get('sort', 'newest')
-        if sort == 'newest':
-            queryset = queryset.order_by('-published_at')
-        elif sort == 'ending_soon':
-            queryset = queryset.order_by('end_at')
+        kind = self.request.GET.get('kind', 'all').strip().lower()
 
-        return queryset
+        ids = home_event_ids(status, sort, kind, q)
+        if not ids:
+            return Event.objects.none()
+
+        preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+        return (
+            Event.objects.filter(pk__in=ids)
+            .select_related('owner')
+            .prefetch_related('nominees', 'ticket_types')
+            .annotate(starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True)))
+            .order_by(preserved)
+        )
 
     def get_template_names(self):
         if self.request.htmx:
@@ -344,23 +329,14 @@ class EventDetailView(DetailView):
             context['leaderboard'] = None
             context['leaderboard_hidden'] = event.kind == Event.Kind.PAID_COMPETITION
         context['state'] = event.public_state()
-        category_sections = []
-        if event.kind == Event.Kind.PAID_COMPETITION:
-            for category in event.competition_categories.all():
-                nominees = list(category.nominees.all())
-                category_sections.append({'category': category, 'nominees': nominees})
-        context['category_sections'] = category_sections
-        context['nominees'] = event.nominees.filter(is_active=True).select_related('category') if event.kind == Event.Kind.PAID_COMPETITION else []
+        extra = public_event_detail_context(event)
+        context.update(extra)
         context['nominations_open'] = event.accepts_nominations()
         context['nomination_url'] = (
             build_public_url(reverse('events:nominate', args=[event.slug]))
             if event.allow_public_nominations
             else ''
         )
-        ticket_types = list(event.ticket_types.filter(is_active=True).order_by('price', 'name').annotate_sold_count())
-        for ticket_type in ticket_types:
-            ticket_type.public_is_on_sale = ticket_type.is_on_sale()
-        context['ticket_types'] = ticket_types
         context['tickets_open'] = event.accepts_tickets()
         context['ussd_short_code'] = getattr(settings, 'USSD_SHORT_CODE', '*920*24#')
         return context

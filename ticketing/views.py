@@ -7,7 +7,7 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, DecimalField, Min, Q, Sum, Value
+from django.db.models import Case, Count, DecimalField, Min, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -18,6 +18,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 
 from events.forms import TicketedEventForm
 from events.models import Event
+from events.performance import dashboard_attendee_aggregations, dashboard_ticketed_events_ids
 from votecentral.mixins import SafeIntegrityMixin
 from votecentral.rate_limits import is_rate_limited
 
@@ -307,8 +308,12 @@ class DashboardTicketedEventsListView(LoginRequiredMixin, ListView):
     paginate_by = 9
 
     def get_queryset(self):
+        ids = dashboard_ticketed_events_ids(self.request.user)
+        if not ids:
+            return Event.objects.none()
+        preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
         return (
-            Event.objects.filter(owner=self.request.user, kind=Event.Kind.TICKETED_EVENT)
+            Event.objects.filter(pk__in=ids)
             .select_related('owner')
             .prefetch_related('ticket_types', 'nominees')
             .annotate(
@@ -321,7 +326,7 @@ class DashboardTicketedEventsListView(LoginRequiredMixin, ListView):
                 ),
                 starting_price=Min('ticket_types__price', filter=Q(ticket_types__is_active=True)),
             )
-            .order_by('-created_at')
+            .order_by(preserved)
         )
 
 
@@ -550,20 +555,12 @@ class DashboardTicketAttendeesView(OrganizerTicketEventMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.get_event()
-        totals = event.tickets.filter(purchase__status=TicketPurchase.Status.PAID).aggregate(
-            total=Count('id'),
-            checked_in=Count('id', filter=Q(status=Ticket.Status.USED)),
-            active=Count('id', filter=Q(status=Ticket.Status.ACTIVE)),
-        )
+        aggs = dashboard_attendee_aggregations(event)
         context.update(
             {
                 'event': event,
                 'query': (self.request.GET.get('q') or '').strip(),
-                'total_ticket_count': totals['total'] or 0,
-                'checked_in_count': totals['checked_in'] or 0,
-                'active_ticket_count': totals['active'] or 0,
-                'provisional_confirmed_count': event.ticket_provisional_entries.filter(status=TicketProvisionalEntry.Status.CONFIRMED).count(),
-                'provisional_rejected_count': event.ticket_provisional_entries.filter(status=TicketProvisionalEntry.Status.REJECTED).count(),
+                **aggs,
             }
         )
         return context
