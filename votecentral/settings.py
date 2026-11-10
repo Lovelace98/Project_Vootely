@@ -528,5 +528,15 @@ LOGGING = {
             'level': env('DJANGO_LOG_LEVEL', default='INFO'),
             'propagate': False,
         },
+        'django.security.csrf': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'votecentral': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }

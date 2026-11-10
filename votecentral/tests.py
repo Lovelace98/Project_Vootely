@@ -338,18 +338,41 @@ class CustomErrorPageTests(TestCase):
     def test_csrf_failure_view_renders_custom_template(self):
         request = self.factory.post('/dashboard/profile/')
         from votecentral.views import csrf_failure_view
-        response = csrf_failure_view(request, reason='Token missing')
-        self.assertEqual(response.status_code, 403)
-        self.assertContains(response, 'Session expired', status_code=403)
-        self.assertContains(response, 'Refresh &amp; Reopen', status_code=403)
+        with self.assertLogs('votecentral.errors', level='WARNING') as cm:
+            response = csrf_failure_view(request, reason='Token missing')
+            self.assertEqual(response.status_code, 403)
+            self.assertContains(response, 'Session expired', status_code=403)
+            self.assertContains(response, 'Refresh &amp; Reopen', status_code=403)
+        self.assertTrue(any('HTTP 403 CSRF Failure' in msg and 'Token missing' in msg for msg in cm.output))
 
-    def test_500_view_renders_safely(self):
+    def test_500_view_renders_safely_and_logs(self):
         request = self.factory.get('/broken/')
         from votecentral.views import server_error_view
-        response = server_error_view(request)
-        self.assertEqual(response.status_code, 500)
-        self.assertContains(response, 'Something went wrong', status_code=500)
-        self.assertContains(response, '500', status_code=500)
+        with self.assertLogs('votecentral.errors', level='ERROR') as cm:
+            response = server_error_view(request)
+            self.assertEqual(response.status_code, 500)
+            self.assertContains(response, 'Something went wrong', status_code=500)
+            self.assertContains(response, '500', status_code=500)
+        self.assertTrue(any('HTTP 500 Internal Server Error' in msg for msg in cm.output))
+
+    def test_500_view_logs_actual_exception_traceback(self):
+        request = self.factory.get('/broken/')
+        from votecentral.views import server_error_view
+        try:
+            raise ValueError("Test database connection failure")
+        except ValueError:
+            with self.assertLogs('votecentral.errors', level='ERROR') as cm:
+                response = server_error_view(request)
+                self.assertEqual(response.status_code, 500)
+            self.assertTrue(any('Test database connection failure' in msg for msg in cm.output))
+
+    def test_404_view_logs_details(self):
+        request = self.factory.get('/missing/')
+        from votecentral.views import page_not_found_view
+        with self.assertLogs('votecentral.errors', level='WARNING') as cm:
+            response = page_not_found_view(request)
+            self.assertEqual(response.status_code, 404)
+        self.assertTrue(any('HTTP 404 Not Found' in msg for msg in cm.output))
 
     def test_400_view_renders_custom_template(self):
         request = self.factory.get('/bad/')
