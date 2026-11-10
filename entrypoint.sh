@@ -62,6 +62,7 @@ if [ "$ASGI_SERVER" = "daphne" ]; then
     exec daphne -b 0.0.0.0 -p 8000 --proxy-headers --access-log - --verbosity 2 votecentral.asgi:application
 else
     WORKERS=${ASGI_WORKERS:-3}
+    export FORWARDED_ALLOW_IPS="*"
     echo "Starting ASGI application with Gunicorn + Uvicorn workers ($WORKERS workers)..."
     exec gunicorn votecentral.asgi:application \
         --workers "$WORKERS" \

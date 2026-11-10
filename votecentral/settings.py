@@ -57,11 +57,21 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 if PUBLIC_APP_URL and PUBLIC_APP_URL not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(PUBLIC_APP_URL)
 
+# Automatically add active domains to CSRF_TRUSTED_ORIGINS
+for host in ALLOWED_HOSTS:
+    if host not in ('*', 'localhost', '127.0.0.1', 'web', 'votecentral_web'):
+        clean_host = host.lstrip('.')
+        for scheme in ('https://', 'http://'):
+            origin = f"{scheme}{clean_host}"
+            if origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(origin)
+
 if DEBUG:
     for local_origin in ['http://127.0.0.1:8000', 'http://localhost:8000']:
         if local_origin not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(local_origin)
 
+USE_X_FORWARDED_HOST = env.bool('USE_X_FORWARDED_HOST', default=True)
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
 CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
@@ -77,7 +87,7 @@ if USE_X_FORWARDED_PROTO:
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = env.bool('CSRF_COOKIE_HTTPONLY', default=False)
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 INSTALLED_APPS = [
