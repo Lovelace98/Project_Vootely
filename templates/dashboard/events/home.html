@@ -402,7 +402,7 @@
     <div class="space-y-4 vc-animate-in vc-stagger-5 mt-8">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-vc-dark tracking-tight">Your Events</h2>
-            <a href="{% url 'events:home' %}" class="text-sm font-semibold text-vc-blue hover:text-vc-blue-700 transition-colors">View All</a>
+            <a href="{% url 'dashboard:competitions' %}" class="text-sm font-semibold text-vc-blue hover:text-vc-blue-700 transition-colors">View All</a>
         </div>
         {% for event in events %}
             <a href="{{ event.get_dashboard_url }}" class="block p-6 bg-white rounded-3xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-gray-100/50 hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-all">
