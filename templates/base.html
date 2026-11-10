@@ -72,12 +72,17 @@
     <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+        document.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
 
     {% tailwind_css %}
 
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col{% endblock %}">
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="{% block body_class %}min-h-screen bg-vc-surface text-vc-dark antialiased flex flex-col{% endblock %}">
     {% include 'includes/pwa_splash.html' %}
 
     {% block body %}
