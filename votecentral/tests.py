@@ -374,6 +374,29 @@ class CustomErrorPageTests(TestCase):
             self.assertEqual(response.status_code, 404)
         self.assertTrue(any('HTTP 404 Not Found' in msg for msg in cm.output))
 
+    def test_404_view_does_not_log_full_resolver_chain(self):
+        from django.urls import Resolver404
+        from votecentral.views import page_not_found_view
+
+        request = self.factory.get('/wp-admin/install.php')
+        exception = Resolver404({'tried': [{'pattern': 'admin/'}], 'path': '/wp-admin/install.php'})
+        with self.assertLogs('votecentral.errors', level='WARNING') as cm:
+            response = page_not_found_view(request, exception=exception)
+            self.assertEqual(response.status_code, 404)
+        output = '\n'.join(cm.output)
+        self.assertIn('Route does not exist', output)
+        self.assertNotIn("'tried'", output)
+
+    def test_healthz_returns_ok(self):
+        response = self.client.get('/healthz/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'ok')
+
+    @override_settings(SECURE_SSL_REDIRECT=True)
+    def test_healthz_is_exempt_from_ssl_redirect(self):
+        response = self.client.get('/healthz/')
+        self.assertEqual(response.status_code, 200)
+
     def test_400_view_renders_custom_template(self):
         request = self.factory.get('/bad/')
         from votecentral.views import bad_request_view
@@ -396,3 +419,29 @@ class CustomErrorPageTests(TestCase):
                 response = self.client.get(f'/errors/{code}/')
                 self.assertEqual(response.status_code, expected_status)
                 self.assertContains(response, expected_text, status_code=expected_status)
+
+
+class ClientIpResolutionTests(TestCase):
+    def test_forwarded_header_respects_trusted_proxy_depth(self):
+        from votecentral.request_utils import get_client_ip
+
+        request = RequestFactory().get(
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.5, 198.51.100.7',
+            REMOTE_ADDR='10.0.0.1',
+        )
+        with override_settings(TRUSTED_PROXY_COUNT=2):
+            self.assertEqual(get_client_ip(request), '203.0.113.5')
+        with override_settings(TRUSTED_PROXY_COUNT=1):
+            self.assertEqual(get_client_ip(request), '198.51.100.7')
+
+    def test_zero_proxy_depth_uses_remote_addr(self):
+        from votecentral.request_utils import get_client_ip
+
+        request = RequestFactory().get(
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.5',
+            REMOTE_ADDR='192.0.2.10',
+        )
+        with override_settings(TRUSTED_PROXY_COUNT=0):
+            self.assertEqual(get_client_ip(request), '192.0.2.10')

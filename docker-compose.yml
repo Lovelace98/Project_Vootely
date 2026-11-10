@@ -1,20 +1,29 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # PostgreSQL Database
   votecentral_postgres_service:
     image: postgres:16-alpine
     container_name: votecentral_postgres
     restart: always
+    shm_size: 256mb
+    stop_grace_period: 60s
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: votecentral
       POSTGRES_USER: votecentral
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-votecentral}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U votecentral -d votecentral"]
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *default-logging
     networks:
       - votecentral_internal
 
@@ -24,17 +33,41 @@ services:
     image: votecentral-app:latest
     container_name: votecentral_web
     restart: always
+    init: true
+    stop_grace_period: 30s
     volumes:
-      - static_volume:/app/staticfiles
       - media_volume:/app/media
     expose:
       - "8000"
     env_file: .env
+    healthcheck:
+      # Use the public host in the Host header so the check works without
+      # adding 127.0.0.1 to the production ALLOWED_HOSTS.
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os
+          import urllib.request
+          host = os.environ.get("PUBLIC_APP_URL", "http://localhost").split("//")[-1].split("/")[0]
+          request = urllib.request.Request(
+              "http://127.0.0.1:8000/healthz/",
+              headers={"Host": host},
+          )
+          urllib.request.urlopen(request, timeout=5)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     depends_on:
       votecentral_postgres_service:
         condition: service_healthy
       votecentral_redis_service:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
     networks:
       - votecentral_internal
       - dokploy-network
@@ -44,8 +77,10 @@ services:
     build: .
     container_name: votecentral_worker
     restart: always
+    init: true
+    stop_grace_period: 60s
     entrypoint: []
-    command: celery -A votecentral worker --loglevel=info
+    command: celery -A votecentral worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-2} --max-tasks-per-child=100
     volumes:
       - media_volume:/app/media
     env_file: .env
@@ -54,6 +89,9 @@ services:
         condition: service_healthy
       votecentral_redis_service:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
     networks:
       - votecentral_internal
       - dokploy-network
@@ -63,14 +101,19 @@ services:
     build: .
     container_name: votecentral_beat
     restart: always
+    init: true
+    stop_grace_period: 30s
     entrypoint: []
-    command: celery -A votecentral beat --loglevel=info
+    command: celery -A votecentral beat --loglevel=info --pidfile=/tmp/celerybeat.pid --schedule=/tmp/celerybeat-schedule
     env_file: .env
     depends_on:
       votecentral_postgres_service:
         condition: service_healthy
       votecentral_redis_service:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
     networks:
       - votecentral_internal
       - dokploy-network
@@ -80,7 +123,8 @@ services:
     image: redis:7-alpine
     container_name: votecentral_redis
     restart: always
-    command: redis-server --save 60 1 --loglevel warning
+    stop_grace_period: 30s
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -88,6 +132,30 @@ services:
       retries: 5
     volumes:
       - redis_data:/data
+    logging: *default-logging
+    networks:
+      - votecentral_internal
+
+  # Daily Postgres dump. Copy ./backups off the server (S3/R2/B2) separately.
+  db_backup:
+    image: postgres:16-alpine
+    container_name: votecentral_db_backup
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c 'while true; do
+        pg_dump -h votecentral_postgres_service -U votecentral -d votecentral -Fc -f /backups/votecentral-$$(date +%Y%m%d-%H%M).dump;
+        find /backups -type f -name "*.dump" -mtime +14 -delete;
+        sleep 86400;
+      done'
+    depends_on:
+      votecentral_postgres_service:
+        condition: service_healthy
+    logging: *default-logging
     networks:
       - votecentral_internal
 
@@ -99,6 +167,5 @@ networks:
 
 volumes:
   postgres_data:
-  static_volume:
   media_volume:
   redis_data:

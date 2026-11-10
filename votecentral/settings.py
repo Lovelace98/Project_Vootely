@@ -72,7 +72,11 @@ if DEBUG:
             CSRF_TRUSTED_ORIGINS.append(local_origin)
 
 USE_X_FORWARDED_HOST = env.bool('USE_X_FORWARDED_HOST', default=True)
+# Number of trusted reverse proxies in front of Django. 1 = Dokploy/Traefik,
+# 2 = Cloudflare + Traefik, 0 = app exposed directly.
+TRUSTED_PROXY_COUNT = env.int('TRUSTED_PROXY_COUNT', default=1)
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
+SECURE_REDIRECT_EXEMPT = [r'^healthz/?$']
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
 CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
 SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000 if not DEBUG else 0)

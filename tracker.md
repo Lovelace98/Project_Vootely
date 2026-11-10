@@ -24,8 +24,8 @@ Provision Netcup VPS 1000 G12 (x86), migrate from Supabase to self-hosted Postgr
 - OVH ($4.20/mo): viable but less ecosystem than Netcup
 
 **Remaining Supabase components to replace:**
-- [ ] Postgres → Self-hosted via Dokploy
-- [ ] S3 Storage → MinIO self-hosted or Hetzner Object Storage (€4.99/mo)
+- [x] Postgres → Self-hosted via Dokploy
+- [x] S3 Storage → Local `media_volume` for the single-server launch (S3/MinIO remains the scale path)
 
 ### 2026-06-21 — Change: CONN_MAX_AGE=0 for PgBouncer Transaction Mode
 
@@ -48,6 +48,25 @@ Provision Netcup VPS 1000 G12 (x86), migrate from Supabase to self-hosted Postgr
 
 ---
 
+
+### 2026-11-10 — Launch Hardening: Error Logs, Media Config, Compose, Secure Codes
+
+**Files:** `votecentral/views.py`, `votecentral/request_utils.py`, `votecentral/rate_limits.py`, `votecentral/settings.py`, `votecentral/urls.py`, `votecentral/tests.py`, `.env.example`, `docker-compose.yml`, `.dockerignore`, `.gitignore`, `nominees/models.py`, `wallets/views.py`, `payments/services.py`
+
+**Changes:**
+- Custom 404 handler now logs `Resolver404` as `Route does not exist` instead of dumping the full URLconf into production logs on every bot scan.
+- Added `/healthz/` liveness route, exempted from SSL redirect; added a web healthcheck to compose.
+- Media default is now the local `media_volume` (`SERVE_LOCAL_MEDIA=True`); removed the stale MinIO/AWS variables from `.env.example` because the MinIO service no longer exists.
+- Compose hardening: required `POSTGRES_PASSWORD`, Redis AOF persistence, JSON log rotation, stop grace periods, `init`, lower Celery concurrency with task recycling, and a daily `pg_dump` backup sidecar writing to `./backups`.
+- Replaced `random` with `secrets` for withdrawal OTPs and nominee vote codes.
+- `TRUSTED_PROXY_COUNT` now controls how `X-Forwarded-For` is resolved for rate limits and error logs; default 1 (Traefik), set 2 behind Cloudflare.
+- `.dockerignore` excludes local media, staticfiles, scratch scripts, backups, and test artifacts.
+- Added regression tests for the concise 404 log, `/healthz/`, and proxy-depth IP resolution.
+
+**Verification:** full suite passes across all 10 apps (244 tests); `manage.py check` and `docker compose config` pass.
+
+---
+
 ## Completed Features (pre-sprint)
 - N+1 query fixes across 27 files (commit `8ed88f5`)
 - Election live results frontend removed
@@ -63,3 +82,4 @@ Provision Netcup VPS 1000 G12 (x86), migrate from Supabase to self-hosted Postgr
 | 2026-06-21 | Self-host Postgres in Dokploy over Supabase Pro | Save $25/mo; no 7-day pause risk |
 | 2026-06-21 | CONN_MAX_AGE=0 for PgBouncer | Required for transaction pooling with self-hosted Postgres |
 | 2026-06-21 | MinIO over Hetzner Object Storage for S3 | $0 vs €4.99/mo; full S3 API compatibility |
+| 2026-11-10 | Local media volume for single-server launch | MinIO service removed; local media works through `SERVE_LOCAL_MEDIA`; S3/MinIO remains the scale path |

@@ -1,6 +1,7 @@
 import html
 import json
 import logging
+import secrets
 from decimal import Decimal
 
 from django.conf import settings
@@ -156,11 +157,10 @@ class RequestOTPView(LoginRequiredMixin, View):
                 status=429,
             )
 
-        import random
         from django.core.cache import cache
         from django.core.mail import send_mail
-        
-        otp = str(random.randint(100000, 999999))
+
+        otp = f'{secrets.randbelow(1_000_000):06d}'
         cache.set(f'withdrawal_otp_{request.user.pk}', otp, 600)  # 10 minutes
         
         try:

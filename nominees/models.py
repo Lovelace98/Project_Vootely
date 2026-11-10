@@ -1,5 +1,6 @@
-from decimal import Decimal
+import secrets
 import uuid
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,11 +11,9 @@ from django.utils import timezone
 
 
 def generate_vote_code():
-    import random
-    import string
     # 5-character code excluding confusing characters (0, O, 1, I, L)
     chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    return ''.join(random.choices(chars, k=5))
+    return ''.join(secrets.choice(chars) for _ in range(5))
 
 
 

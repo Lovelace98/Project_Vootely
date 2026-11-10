@@ -490,7 +490,7 @@ def handle_paystack_webhook(payload):
     queue_payment_confirmed(attempt)
 
     from events.performance import broadcast_leaderboard_update
-    broadcast_leaderboard_update(attempt.event_id)
+    transaction.on_commit(lambda: broadcast_leaderboard_update(attempt.event_id))
 
     return attempt
 

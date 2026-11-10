@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.contrib.staticfiles import finders
@@ -16,7 +15,7 @@ from events.sitemaps import (
     NomineeSitemap,
     BlogSitemap,
 )
-from votecentral.views import error_preview_view
+from votecentral.views import error_preview_view, healthz
 
 
 def service_worker_js(request):
@@ -46,6 +45,7 @@ sitemaps = {
 }
 
 urlpatterns = [
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('robots.txt', lambda r: lightweight_template_view(r, 'robots.txt', 'text/plain'), name='robots_txt'),

@@ -16,3 +16,10 @@ bin/tailwindcss
 .vscode/
 .idea/
 console.log
+scratch/
+media/
+staticfiles/
+test-results/
+.playwright-mcp/
+backups/
+db.sqlite3-*

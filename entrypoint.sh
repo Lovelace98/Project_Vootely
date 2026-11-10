@@ -52,10 +52,7 @@ END
 echo "Running database migrations..."
 python manage.py migrate --noinput
 
-# Collect static files (needed because of persistent static volume mounting)
-echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear --ignore=src.css
-
+# Static files are collected at image build time and served by WhiteNoise.
 # Start application
 if [ "$ASGI_SERVER" = "daphne" ]; then
     echo "Starting daphne server..."

@@ -2,14 +2,23 @@ import logging
 import sys
 from django.conf import settings
 from django.http import (
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotFound,
     HttpResponseServerError,
 )
 from django.shortcuts import render
+from django.urls import Resolver404
+
+from .request_utils import get_client_ip
 
 logger = logging.getLogger('votecentral.errors')
+
+
+def healthz(request):
+    """Lightweight liveness endpoint for Docker/Dokploy health checks."""
+    return HttpResponse('ok', content_type='text/plain')
 
 
 def _get_request_metadata(request):
@@ -17,13 +26,7 @@ def _get_request_metadata(request):
     Safely extract request diagnostics for error logging without triggering 
     accidental exceptions or unhandled attribute lookups.
     """
-    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '') if hasattr(request, 'META') else ''
-    if forwarded_for:
-        client_ip = forwarded_for.split(',')[0].strip()
-    elif hasattr(request, 'META'):
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-    else:
-        client_ip = 'unknown'
+    client_ip = get_client_ip(request)
 
     user = getattr(request, 'user', None)
     if user and getattr(user, 'is_authenticated', False):
@@ -47,7 +50,12 @@ def _get_request_metadata(request):
 def page_not_found_view(request, exception=None):
     """Custom 404 handler returning minimalist branded page and logging error details."""
     meta = _get_request_metadata(request)
-    reason = str(exception) if exception else "Route does not exist"
+    if isinstance(exception, Resolver404):
+        # Resolver404's string form contains the entire URLconf, which makes
+        # every bot scan produce a multi-kilobyte log line.
+        reason = "Route does not exist"
+    else:
+        reason = str(exception) if exception else "Route does not exist"
     logger.warning(
         "HTTP 404 Not Found: %s [%s] from %s (user: %s) | referer: %s | error: %s",
         meta['path'],
