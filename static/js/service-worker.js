@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vootely-cache-v1';
+const CACHE_NAME = 'vootely-cache-v2';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
@@ -20,8 +20,14 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch event listener: Required to satisfy PWA criteria.
-// Uses a network-only/pass-through strategy to avoid caching dynamic Django
-// template responses, login sessions, or checkout screens.
+// IMPORTANT: Only handle GET requests!
+// Bypassing non-GET requests (POST, PUT, DELETE, PATCH) is critical to prevent
+// a known Safari/WebKit bug where event.respondWith(fetch(event.request))
+// drops the POST request body / multipart formData stream, causing Django
+// to receive an empty body and fail with "CSRF token missing."
 self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') {
+        return;
+    }
     event.respondWith(fetch(event.request));
 });
