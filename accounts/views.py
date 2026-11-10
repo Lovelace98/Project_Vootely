@@ -163,13 +163,13 @@ class MarkNotificationReadView(LoginRequiredMixin, View):
                 </span>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-vc-dark dark:text-white truncate">
+                <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">
                     {notification.title}
                 </p>
-                <p class="text-[11px] text-vc-dark-400 dark:text-slate-400 mt-0.5 line-clamp-2">
+                <p class="text-[11px] text-neutral-600 dark:text-neutral-300 mt-0.5 line-clamp-2 leading-relaxed">
                     {notification.message}
                 </p>
-                <p class="text-[9px] text-vc-dark-300 dark:text-slate-500 mt-1 font-medium">
+                <p class="text-[9px] text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
                     Just now (read)
                 </p>
             </div>

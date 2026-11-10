@@ -71,6 +71,18 @@
             height: 1.75rem;
             width: auto;
         }
+        .logo-dark {
+            display: none;
+        }
+        .logo-light {
+            display: inline-block;
+        }
+        .dark .logo-light {
+            display: none;
+        }
+        .dark .logo-dark {
+            display: inline-block;
+        }
         .status-pill {
             display: inline-flex;
             align-items: center;
@@ -202,7 +214,8 @@
 <body>
     <div class="container">
         <a href="/" class="logo-wrap" aria-label="Vootely Home">
-            <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="logo">
+            <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="logo logo-light">
+            <img src="{% static 'images/vootely_logo_dark.png' %}" alt="Vootely" class="logo logo-dark">
         </a>
 
         <div>

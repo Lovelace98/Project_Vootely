@@ -681,7 +681,7 @@ html:not(.sidebar-is-collapsed) .vc-sidebar-theme-collapsed {
     -webkit-line-clamp: 2;
   }
 
-  .vc-dashboard-topbar p {
+  .vc-dashboard-title > p {
     display: none;
   }
 
