@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error · Vootely</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: rgba(226, 232, 240, 0.8);
+            --text-heading: #0f172a;
+            --text-body: #64748b;
+            --btn-bg: #0f172a;
+            --btn-text: #ffffff;
+            --btn-hover: #000000;
+            --btn-sec-border: #e2e8f0;
+            --btn-sec-text: #334155;
+            --btn-sec-hover: #f1f5f9;
+        }
+        .dark {
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-heading: #f8fafc;
+            --text-body: #94a3b8;
+            --btn-bg: #ffffff;
+            --btn-text: #0f172a;
+            --btn-hover: #f1f5f9;
+            --btn-sec-border: rgba(255, 255, 255, 0.12);
+            --btn-sec-text: #cbd5e1;
+            --btn-sec-hover: rgba(255, 255, 255, 0.06);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-heading);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            width: 100%;
+            max-width: 32rem;
+            text-align: center;
+        }
+        .logo-wrap {
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+        .logo {
+            height: 1.75rem;
+            width: auto;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-body);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .pill-dot {
+            color: var(--text-body);
+            opacity: 0.4;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: var(--text-heading);
+            line-height: 1.25;
+            margin-bottom: 0.75rem;
+        }
+        p.subtitle {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-body);
+            margin-bottom: 2rem;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: left;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-body);
+            opacity: 0.8;
+            margin-bottom: 0.75rem;
+        }
+        .steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            font-size: 0.875rem;
+            color: var(--text-heading);
+            opacity: 0.9;
+        }
+        .steps li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            line-height: 1.5;
+        }
+        .steps li span.num {
+            color: var(--text-body);
+            font-size: 0.8rem;
+            min-width: 1rem;
+        }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            justify-content: center;
+            align-items: center;
+        }
+        @media (min-width: 640px) {
+            .actions {
+                flex-direction: row;
+            }
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        @media (min-width: 640px) {
+            .btn {
+                width: auto;
+            }
+        }
+        .btn-primary {
+            background-color: var(--btn-bg);
+            color: var(--btn-text);
+            border: 1px solid transparent;
+        }
+        .btn-primary:hover {
+            background-color: var(--btn-hover);
+        }
+        .btn-secondary {
+            background-color: var(--card-bg);
+            color: var(--btn-sec-text);
+            border: 1px solid var(--btn-sec-border);
+        }
+        .btn-secondary:hover {
+            background-color: var(--btn-sec-hover);
+        }
+        .footer-note {
+            margin-top: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-body);
+            opacity: 0.8;
+        }
+        .footer-note a {
+            color: inherit;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="logo-wrap" aria-label="Vootely Home">
+            <img src="{% static 'images/vootely_logo_light.png' %}" alt="Vootely" class="logo">
+        </a>
+
+        <div>
+            <div class="status-pill">
+                <span>500</span>
+                <span class="pill-dot">·</span>
+                <span>Server Issue</span>
+            </div>
+        </div>
+
+        <h1>Something went wrong</h1>
+        
+        <p class="subtitle">
+            An unexpected server issue occurred on our end. All active votes, payments, and event records are stored in secure transactional ledgers and remain safe.
+        </p>
+
+        <div class="card">
+            <div class="card-title">What you can do</div>
+            <ul class="steps">
+                <li>
+                    <span class="num">1.</span>
+                    <span>Wait a moment and refresh this page.</span>
+                </li>
+                <li>
+                    <span class="num">2.</span>
+                    <span>If you were submitting a payment, do not submit twice. Check your email for confirmation.</span>
+                </li>
+                <li>
+                    <span class="num">3.</span>
+                    <span>If this issue persists, our technical team has already been alerted.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <button type="button" onclick="window.location.reload();" class="btn btn-primary">
+                Try Again
+            </button>
+            <a href="/" class="btn btn-secondary">
+                Return Home
+            </a>
+        </div>
+
+        <p class="footer-note">
+            Need urgent assistance? <a href="mailto:support@vootely.com">Contact Vootely Support</a>
+        </p>
+    </div>
+</body>
+</html>
+

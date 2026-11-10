@@ -313,3 +313,63 @@ class PublicUrlTests(TestCase):
         checks = run_checks(include_deployment_checks=True)
 
         self.assertTrue(any(check.id == 'votecentral.E001' for check in checks))
+
+
+class CustomErrorPageTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_404_view_renders_custom_template(self):
+        request = self.factory.get('/nonexistent-route/')
+        from votecentral.views import page_not_found_view
+        response = page_not_found_view(request)
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Page not found', status_code=404)
+        self.assertContains(response, '404', status_code=404)
+
+    def test_403_view_renders_custom_template(self):
+        request = self.factory.get('/dashboard/restricted/')
+        from votecentral.views import permission_denied_view
+        response = permission_denied_view(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, 'Access restricted', status_code=403)
+        self.assertContains(response, '403', status_code=403)
+
+    def test_csrf_failure_view_renders_custom_template(self):
+        request = self.factory.post('/dashboard/profile/')
+        from votecentral.views import csrf_failure_view
+        response = csrf_failure_view(request, reason='Token missing')
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, 'Session expired', status_code=403)
+        self.assertContains(response, 'Refresh &amp; Reopen', status_code=403)
+
+    def test_500_view_renders_safely(self):
+        request = self.factory.get('/broken/')
+        from votecentral.views import server_error_view
+        response = server_error_view(request)
+        self.assertEqual(response.status_code, 500)
+        self.assertContains(response, 'Something went wrong', status_code=500)
+        self.assertContains(response, '500', status_code=500)
+
+    def test_400_view_renders_custom_template(self):
+        request = self.factory.get('/bad/')
+        from votecentral.views import bad_request_view
+        response = bad_request_view(request)
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, 'Invalid request', status_code=400)
+        self.assertContains(response, '400', status_code=400)
+
+    def test_error_preview_routes(self):
+        codes_and_expectations = [
+            ('404', 404, 'Page not found'),
+            ('403', 403, 'Access restricted'),
+            ('csrf', 403, 'Session expired'),
+            ('500', 500, 'Something went wrong'),
+            ('400', 400, 'Invalid request'),
+            ('429', 429, 'Too many requests'),
+        ]
+        for code, expected_status, expected_text in codes_and_expectations:
+            with self.subTest(code=code):
+                response = self.client.get(f'/errors/{code}/')
+                self.assertEqual(response.status_code, expected_status)
+                self.assertContains(response, expected_text, status_code=expected_status)

@@ -89,6 +89,7 @@ SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
 CSRF_COOKIE_HTTPONLY = env.bool('CSRF_COOKIE_HTTPONLY', default=False)
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_FAILURE_VIEW = 'votecentral.views.csrf_failure_view'
 
 INSTALLED_APPS = [
     'daphne',

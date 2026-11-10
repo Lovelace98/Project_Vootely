@@ -23,9 +23,10 @@ def support_contact(request):
 def dashboard_greeting(request):
     from django.utils import timezone
     try:
-        if not request.user.is_authenticated:
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
             return {}
-    except OperationalError:
+    except (OperationalError, Exception):
         return {}
     now = timezone.localtime(timezone.now())
     hour = now.hour

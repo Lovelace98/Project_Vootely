@@ -16,6 +16,7 @@ from events.sitemaps import (
     NomineeSitemap,
     BlogSitemap,
 )
+from votecentral.views import error_preview_view
 
 
 def service_worker_js(request):
@@ -56,10 +57,16 @@ urlpatterns = [
     path('payments/', include('payments.urls')),
     path('tickets/', include('ticketing.urls')),
     path('dashboard/', include('events.dashboard_urls')),
+    path('errors/<str:code>/', error_preview_view, name='error_preview'),
     path('', include('elections.urls')),
     path('', include('events.urls')),
     path('', include('votes.urls')),
 ]
+
+handler400 = 'votecentral.views.bad_request_view'
+handler403 = 'votecentral.views.permission_denied_view'
+handler404 = 'votecentral.views.page_not_found_view'
+handler500 = 'votecentral.views.server_error_view'
 
 if settings.DEBUG or getattr(settings, 'SERVE_LOCAL_MEDIA', False):
     from django.urls import re_path
