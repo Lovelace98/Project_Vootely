@@ -199,10 +199,20 @@ class NominationWorkflowTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_dashboard_nomination_submissions_with_empty_queue(self):
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+        # Event has 0 nominations submitted yet
+        response = self.client.get(reverse('dashboard:nomination_queue', args=[self.event.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nomination queue')
+        # Verify counts are 0 and no KeyError was raised
+        for tab in response.context['status_tabs']:
+            self.assertEqual(tab['count'], 0)
+
     def test_public_nomination_submission_is_rate_limited(self):
         cache.clear()
         url = reverse('events:nominate', args=[self.event.slug])
-        for index in range(10):
+        for index in range(20):
             response = self.client.post(
                 url,
                 data={

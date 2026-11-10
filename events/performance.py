@@ -111,7 +111,7 @@ def home_event_ids(status='active', sort='newest', kind='all', q=''):
 
     def builder():
         now = timezone.now()
-        queryset = Event.objects.published()
+        queryset = Event.objects.published().filter(is_public=True)
         if q:
             queryset = queryset.filter(Q(title__icontains=q) | Q(description__icontains=q))
         if status == 'active':
@@ -961,7 +961,7 @@ def public_election_detail_context(event):
     key = f'election-detail:v1:event:{event.pk}:v{event_version}'
 
     def builder():
-        from .services import results_are_public
+        from elections.services import results_are_public
         positions = list(event.election_positions.filter(is_active=True).prefetch_related('candidates'))
         results_public = results_are_public(event)
         latest_tally = event.tally_snapshots.defer('totals').first()

@@ -6,6 +6,16 @@
 
 {% block content %}
 <section class="space-y-8 vc-animate-in">
+    {% if is_draft_preview %}
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200 shadow-sm">
+            <div class="flex items-center gap-2.5">
+                <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <span><strong>Organizer Preview Mode:</strong> This event is in Draft status. Only you and administrators can view this page.</span>
+            </div>
+            <a href="{{ event.get_dashboard_url }}" class="underline font-semibold hover:text-amber-700 dark:hover:text-amber-100 whitespace-nowrap">Organizer Dashboard &rarr;</a>
+        </div>
+    {% endif %}
+
     <!-- Event Hero -->
     <div class="vc-card overflow-hidden">
         <div class="h-56 bg-gradient-to-r from-vc-blue/20 via-vc-blue/8 to-transparent">

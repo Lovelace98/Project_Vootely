@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import ProtectedError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
@@ -612,12 +612,50 @@ class PublicElectionDetailView(DetailView):
     template_name = 'elections/detail.html'
     context_object_name = 'event'
 
-    def get_queryset(self):
-        return Event.objects.filter(
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        base_qs = Event.objects.filter(
             kind=Event.Kind.SECURE_ELECTION,
-            is_public=True,
-            status__in=[Event.Status.OPEN, Event.Status.CLOSED, Event.Status.TALLIED, Event.Status.CERTIFIED],
-        ).prefetch_related('election_positions__candidates')
+        ).select_related('owner').prefetch_related('election_positions__candidates')
+        event = get_object_or_404(base_qs, slug=slug)
+        is_owner_or_staff = (
+            self.request.user.is_authenticated
+            and (self.request.user == event.owner or self.request.user.is_staff)
+        )
+        if not is_owner_or_staff and event.status not in [
+            Event.Status.OPEN,
+            Event.Status.CLOSED,
+            Event.Status.TALLIED,
+            Event.Status.CERTIFIED,
+        ]:
+            raise Http404("Election is not open or public yet.")
+        return event
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except Http404:
+            slug = self.kwargs.get('slug')
+            event_exists = Event.objects.filter(slug=slug).first()
+            active_events = Event.objects.active_public()[:6]
+            return render(
+                request,
+                'events/event_unavailable.html',
+                {
+                    'event_exists': event_exists,
+                    'active_events': active_events,
+                },
+                status=404,
+            )
+        context = self.get_context_data(object=self.object)
+        if self.object.status not in [
+            Event.Status.OPEN,
+            Event.Status.CLOSED,
+            Event.Status.TALLIED,
+            Event.Status.CERTIFIED,
+        ]:
+            context['is_draft_preview'] = True
+        return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -631,7 +669,7 @@ class PublicElectionVoteView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.event = get_object_or_404(
-            Event.objects.filter(kind=Event.Kind.SECURE_ELECTION, is_public=True),
+            Event.objects.filter(kind=Event.Kind.SECURE_ELECTION),
             slug=kwargs['slug'],
         )
         return super().dispatch(request, *args, **kwargs)
@@ -701,7 +739,7 @@ class PublicElectionResultsView(DetailView):
     context_object_name = 'event'
 
     def get_queryset(self):
-        return Event.objects.filter(kind=Event.Kind.SECURE_ELECTION, is_public=True)
+        return Event.objects.filter(kind=Event.Kind.SECURE_ELECTION)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -713,7 +751,7 @@ class PublicElectionResultsView(DetailView):
 class PublicElectionVerifyReceiptView(View):
     def get(self, request, *args, **kwargs):
         event = get_object_or_404(
-            Event.objects.filter(kind=Event.Kind.SECURE_ELECTION, is_public=True),
+            Event.objects.filter(kind=Event.Kind.SECURE_ELECTION),
             slug=kwargs['slug'],
         )
         if not results_are_public(event):
@@ -759,7 +797,6 @@ class PublicElectionLiveResultsView(DetailView):
     def get_queryset(self):
         return Event.objects.filter(
             kind=Event.Kind.SECURE_ELECTION,
-            is_public=True,
         ).prefetch_related('election_positions__candidates')
 
     def get_context_data(self, **kwargs):

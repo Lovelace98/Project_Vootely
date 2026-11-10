@@ -34,6 +34,10 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{% url 'dashboard:election_edit' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Edit</a>
+            <a href="{% url 'elections:detail' event.slug %}" target="_blank" class="vc-btn vc-btn-outline-blue vc-btn-sm flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                {% if event.status == 'open' or event.status == 'closed' or event.status == 'tallied' or event.status == 'certified' %}Public page{% else %}Preview page{% endif %}
+            </a>
             <a href="{% url 'dashboard:election_positions' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Positions</a>
             <a href="{% url 'dashboard:election_roster' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Roster</a>
             <a href="{% url 'dashboard:election_invoice' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Invoice</a>
@@ -158,9 +162,9 @@
                     <button type="button" class="vc-btn vc-btn-outline vc-btn-sm"
                             @click="openConfirm('Certify Election', 'Are you sure you want to certify the election? This marks the results as official and finalized. This action is irreversible.', '{% url 'dashboard:election_action' event.slug 'certify' %}', 'Certify', 'vc-btn-outline')">Certify</button>
                 {% endif %}
-                {% if event.status == 'open' %}
-                    <a href="{% url 'elections:detail' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Public page</a>
-                {% endif %}
+                <a href="{% url 'elections:detail' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">
+                    {% if event.status == 'open' or event.status == 'closed' or event.status == 'tallied' or event.status == 'certified' %}Public page{% else %}Preview page{% endif %}
+                </a>
                 {% if latest_tally %}
                     <a href="{% url 'elections:results' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Results page</a>
                 {% endif %}

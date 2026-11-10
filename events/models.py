@@ -18,12 +18,11 @@ class EventQuerySet(models.QuerySet):
                 Event.Kind.TICKETED_EVENT,
             ],
             status=Event.Status.PUBLISHED,
-            is_public=True,
         )
 
     def active_public(self):
         now = timezone.now()
-        return self.published().filter(start_at__lte=now, end_at__gte=now)
+        return self.published().filter(is_public=True, start_at__lte=now, end_at__gte=now)
 
 
 class Event(models.Model):
@@ -272,7 +271,7 @@ class Event(models.Model):
 
     def accepts_tickets(self, now=None):
         now = now or timezone.now()
-        if self.status != self.Status.PUBLISHED or not self.is_public:
+        if self.status != self.Status.PUBLISHED:
             return False
         return self.ticket_types.filter(
             is_active=True,
@@ -292,7 +291,6 @@ class Event(models.Model):
         now = now or timezone.now()
         return (
             self.kind == self.Kind.PAID_COMPETITION
-            and self.is_public
             and self.has_valid_nomination_window()
             and self.status not in {
                 self.Status.CLOSED,
@@ -306,7 +304,7 @@ class Event(models.Model):
         now = now or timezone.now()
         if self.status == self.Status.CLOSED:
             return 'closed'
-        if self.status != self.Status.PUBLISHED or not self.is_public:
+        if self.status != self.Status.PUBLISHED:
             return 'hidden'
         if now < self.start_at:
             return 'upcoming'
@@ -361,11 +359,15 @@ class Event(models.Model):
         self.save(update_fields=['status', 'updated_at'])
 
     def get_absolute_url(self):
+        if self.kind == self.Kind.SECURE_ELECTION:
+            return reverse('elections:detail', args=[self.slug])
         return reverse('events:public_detail', args=[self.slug])
 
     def get_dashboard_url(self):
         if self.kind == self.Kind.TICKETED_EVENT:
             return reverse('dashboard:ticketed_event_detail', args=[self.slug])
+        if self.kind == self.Kind.SECURE_ELECTION:
+            return reverse('dashboard:election_detail', args=[self.slug])
         return reverse('dashboard:event_detail', args=[self.slug])
 
     @property

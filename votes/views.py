@@ -68,7 +68,6 @@ def resolve_ticket_event_by_ussd_code(ussd_code):
         ussd_code=ussd_code,
         kind=Event.Kind.TICKETED_EVENT,
         status=Event.Status.PUBLISHED,
-        is_public=True,
     ).first()
     if event and ticket_types_available_for_ussd(event):
         return event
@@ -83,28 +82,24 @@ def resolve_ticket_event_from_user_input(event_code):
         slug__iexact=event_code,
         kind=Event.Kind.TICKETED_EVENT,
         status=Event.Status.PUBLISHED,
-        is_public=True,
     ).first()
     if event is None:
         event = Event.objects.filter(
             public_code__iexact=event_code,
             kind=Event.Kind.TICKETED_EVENT,
             status=Event.Status.PUBLISHED,
-            is_public=True,
         ).first()
     if event is None and event_code.isdigit():
         event = Event.objects.filter(
             ussd_code=int(event_code),
             kind=Event.Kind.TICKETED_EVENT,
             status=Event.Status.PUBLISHED,
-            is_public=True,
         ).first()
     if event is None and event_code.isdigit():
         event = Event.objects.filter(
             pk=int(event_code),
             kind=Event.Kind.TICKETED_EVENT,
             status=Event.Status.PUBLISHED,
-            is_public=True,
         ).first()
     return event
 

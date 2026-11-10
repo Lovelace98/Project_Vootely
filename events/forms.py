@@ -247,7 +247,19 @@ class VoteBundleForm(StyledModelForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event', None)
         super().__init__(*args, **kwargs)
+        if self.event:
+            self.instance.event = self.event
         self._apply_styles()
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if quantity and self.event:
+            existing = VoteBundle.objects.filter(event=self.event, quantity=quantity)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise forms.ValidationError(f"A vote bundle with {quantity} votes already exists for this event.")
+        return quantity
 
     def clean(self):
         cleaned_data = super().clean()
@@ -257,7 +269,8 @@ class VoteBundleForm(StyledModelForm):
             base_price = self.event.vote_price or 1.00
             unit_price = price / qty
             if unit_price > base_price:
-                raise forms.ValidationError(
+                self.add_error(
+                    'price',
                     f"Bundle unit price ({unit_price:.2f}) cannot exceed the event's base vote price ({base_price:.2f})."
                 )
         return cleaned_data

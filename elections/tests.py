@@ -5,6 +5,7 @@ from decimal import Decimal
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -41,6 +42,7 @@ from .services import (
 
 class SecureElectionTests(TestCase):
     def setUp(self):
+        cache.clear()
         user_model = get_user_model()
         self.organizer = user_model.objects.create_user(
             email='organizer@example.com',
@@ -190,15 +192,17 @@ class SecureElectionTests(TestCase):
         self.assertFalse(ElectionCredential.objects.filter(token_hash=first_token).exists())
         self.assertTrue(ElectionCredential.objects.filter(token_hash=token_hash(first_token)).exists())
 
-        second_export = issue_credentials(self.event, actor=self.organizer, email=False)
-        self.assertEqual(second_export.row_count, 0)
+        with self.assertRaises(ValidationError) as ctx:
+            issue_credentials(self.event, actor=self.organizer, email=False)
+        self.assertIn('All eligible voters already have active credentials', str(ctx.exception))
         self.assertFalse(ElectionCredential.objects.filter(status=ElectionCredential.Status.REISSUED).exists())
 
         credential = ElectionCredential.objects.get(status=ElectionCredential.Status.ISSUED)
         credential.status = ElectionCredential.Status.USED
         credential.save(update_fields=['status'])
-        third_export = issue_credentials(self.event, actor=self.organizer, email=False)
-        self.assertEqual(third_export.row_count, 0)
+        with self.assertRaises(ValidationError) as ctx:
+            issue_credentials(self.event, actor=self.organizer, email=False)
+        self.assertIn('All eligible voters already have active credentials', str(ctx.exception))
 
     @override_settings(PUBLIC_APP_URL='https://vote.vootely.com')
     def test_issued_credential_export_uses_public_app_url(self):
@@ -405,10 +409,10 @@ class SecureElectionTests(TestCase):
         self.event.save(update_fields=['status'])
 
         first_export = issue_credentials(self.event, actor=self.organizer, email=False)
-        second_export = issue_credentials(self.event, actor=self.organizer, email=False)
-
         self.assertEqual(first_export.row_count, 2)
-        self.assertEqual(second_export.row_count, 0)
+        with self.assertRaises(ValidationError) as ctx:
+            issue_credentials(self.event, actor=self.organizer, email=False)
+        self.assertIn('All eligible voters already have active credentials', str(ctx.exception))
         self.assertEqual(
             ElectionCredential.objects.filter(status=ElectionCredential.Status.ISSUED).count(),
             2,
@@ -796,3 +800,25 @@ class SecureElectionTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'A candidate with this name and contact details already exists')
+
+    def test_draft_election_preview_and_redirect_from_events_slug(self):
+        # 1. get_absolute_url points to elections namespace
+        self.assertEqual(self.event.get_absolute_url(), f'/elections/{self.event.slug}/')
+
+        # 2. Visiting /events/<slug>/ redirects to /elections/<slug>/
+        res_redirect = self.client.get(f'/events/{self.event.slug}/')
+        self.assertRedirects(res_redirect, f'/elections/{self.event.slug}/', target_status_code=404)
+
+        # 3. In draft status, anonymous visitor gets friendly 404
+        self.event.status = Event.Status.DRAFT
+        self.event.save(update_fields=['status'])
+        self.client.logout()
+        res_anon = self.client.get(reverse('elections:detail', args=[self.event.slug]))
+        self.assertEqual(res_anon.status_code, 404)
+        self.assertContains(res_anon, 'Event is Not Publicly Active', status_code=404)
+
+        # 4. Logged-in organizer can preview the draft election
+        self.client.login(email='organizer@example.com', password='strong-pass-123')
+        res_preview = self.client.get(reverse('elections:detail', args=[self.event.slug]))
+        self.assertEqual(res_preview.status_code, 200)
+        self.assertContains(res_preview, 'Organizer Preview Mode')

@@ -22,6 +22,7 @@ from wallets.services import post_payment_ledger_transaction
 
 class EventFlowTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user_model = get_user_model()
         self.organizer = self.user_model.objects.create_user(
             email='owner@example.com',
@@ -703,6 +704,32 @@ class EventFlowTests(TestCase):
         self.assertRedirects(response_delete, event.get_dashboard_url())
         self.assertEqual(event.vote_bundles.count(), 0)
 
+    def test_dashboard_vote_bundle_duplicate_quantity_rejected(self):
+        event = self.create_event(kind=Event.Kind.PAID_COMPETITION)
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+        url_create = reverse('dashboard:vote_bundle_create', args=[event.slug])
+
+        # Create first bundle with 20 votes
+        response_first = self.client.post(url_create, {
+            'quantity': 20,
+            'price': '15.00',
+            'label': 'Starter',
+            'is_active': True,
+        })
+        self.assertRedirects(response_first, event.get_dashboard_url())
+        self.assertEqual(event.vote_bundles.count(), 1)
+
+        # Attempt to create duplicate bundle with 20 votes
+        response_dup = self.client.post(url_create, {
+            'quantity': 20,
+            'price': '14.00',
+            'label': 'Another Starter',
+            'is_active': True,
+        })
+        self.assertEqual(response_dup.status_code, 200)
+        self.assertContains(response_dup, 'already exists')
+        self.assertEqual(event.vote_bundles.count(), 1)
+
     def test_dashboard_vote_bundle_permissions(self):
         event_other = self.create_event(owner=self.other_user, kind=Event.Kind.PAID_COMPETITION)
         self.client.login(email=self.organizer.email, password='strong-pass-123')
@@ -711,4 +738,38 @@ class EventFlowTests(TestCase):
         url_create = reverse('dashboard:vote_bundle_create', args=[event_other.slug])
         response = self.client.get(url_create)
         self.assertEqual(response.status_code, 404)
+
+    def test_draft_event_links_accessible_by_owner_preview(self):
+        now = timezone.now()
+        event = self.create_event(
+            owner=self.organizer,
+            status=Event.Status.DRAFT,
+            is_public=False,
+            allow_public_nominations=True,
+            nomination_start_at=now - timedelta(days=1),
+            nomination_end_at=now + timedelta(days=5),
+        )
+        self.create_nominee(event, name='Preview Nominee')
+
+        # Anonymous user cannot view draft event or live board
+        self.client.logout()
+        res_anon_detail = self.client.get(reverse('events:public_detail', args=[event.slug]))
+        self.assertEqual(res_anon_detail.status_code, 404)
+        self.assertContains(res_anon_detail, 'Event is Not Publicly Active', status_code=404)
+
+        res_anon_live = self.client.get(reverse('events:leaderboard_live', args=[event.slug]))
+        self.assertEqual(res_anon_live.status_code, 404)
+
+        # But nomination link works for public if enabled and in window even when unlisted/draft!
+        res_nominate = self.client.get(reverse('events:nominate', args=[event.slug]))
+        self.assertEqual(res_nominate.status_code, 200)
+
+        # Logged-in owner can preview draft event and live board
+        self.client.login(email=self.organizer.email, password='strong-pass-123')
+        res_owner_detail = self.client.get(reverse('events:public_detail', args=[event.slug]))
+        self.assertEqual(res_owner_detail.status_code, 200)
+        self.assertContains(res_owner_detail, 'Organizer Preview Mode')
+
+        res_owner_live = self.client.get(reverse('events:leaderboard_live', args=[event.slug]))
+        self.assertEqual(res_owner_live.status_code, 200)
 

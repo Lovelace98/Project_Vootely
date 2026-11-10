@@ -177,7 +177,7 @@ def payment_reference_not_found(message):
 
 
 def event_has_public_payment_context(event):
-    return event.is_public and event.status in {
+    return event.status in {
         Event.Status.PUBLISHED,
         Event.Status.CLOSED,
     }

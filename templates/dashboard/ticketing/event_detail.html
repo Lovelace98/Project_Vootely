@@ -31,6 +31,10 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{% url 'dashboard:ticketed_event_edit' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Edit</a>
+            <a href="{{ event.get_absolute_url }}" target="_blank" class="vc-btn vc-btn-outline-blue vc-btn-sm flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                {% if event.status == 'published' %}View public page{% else %}Preview page{% endif %}
+            </a>
             <a href="{% url 'dashboard:ticket_type_create' event.slug %}" class="vc-btn vc-btn-outline-blue vc-btn-sm">Add ticket type</a>
             <a href="{% url 'dashboard:ticket_sales' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Sales</a>
             <a href="{% url 'dashboard:ticket_attendees' event.slug %}" class="vc-btn vc-btn-outline vc-btn-sm">Attendees</a>

@@ -64,13 +64,16 @@ class PublicNomineeDetailView(DetailView):
         from events.models import Event
 
         event = get_object_or_404(
-            Event.objects.filter(
-                kind=Event.Kind.PAID_COMPETITION,
-                is_public=True,
-                status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
-            ),
+            Event.objects.filter(kind=Event.Kind.PAID_COMPETITION),
             slug=self.kwargs['event_slug'],
         )
+        is_owner_or_staff = (
+            self.request.user.is_authenticated
+            and (self.request.user == event.owner or self.request.user.is_staff)
+        )
+        if not is_owner_or_staff and event.status not in [Event.Status.PUBLISHED, Event.Status.CLOSED]:
+            raise Http404("Event is not published")
+
         try:
             nominee = Nominee.resolve_for_event(event, self.kwargs['nominee_ref'])
         except Nominee.DoesNotExist as exc:
@@ -143,13 +146,12 @@ class PublicNominationCreateView(CreateView):
         from events.models import Event
 
         self.event = get_object_or_404(
-            Event.objects.filter(
-                kind=Event.Kind.PAID_COMPETITION,
-                is_public=True,
-            ),
+            Event.objects.filter(kind=Event.Kind.PAID_COMPETITION),
             slug=self.kwargs['event_slug'],
         )
         if self.event.status in {Event.Status.ARCHIVED, Event.Status.CANCELLED}:
+            raise Http404
+        if not self.event.allow_public_nominations:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 
@@ -213,7 +215,6 @@ class PublicNomineePaymentStatusView(TemplateView):
         event = get_object_or_404(
             Event.objects.filter(
                 kind=Event.Kind.PAID_COMPETITION,
-                is_public=True,
                 status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
             ),
             slug=self.kwargs['event_slug'],
@@ -416,7 +417,7 @@ class DashboardNominationSubmissionListView(NomineeEventMixin, ListView):
         )
         context['status_counts'] = status_counts
         context['status_tabs'] = [
-            {'value': status, 'label': label, 'count': status_counts[status]}
+            {'value': status, 'label': label, 'count': status_counts.get(status, 0)}
             for status, label in NominationSubmission.Status.choices
         ]
         return context

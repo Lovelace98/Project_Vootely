@@ -283,27 +283,37 @@ class EventDetailView(DetailView):
     template_name = 'events/event_detail.html'
     context_object_name = 'event'
 
-    def get_queryset(self):
-        return Event.objects.filter(
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        base_qs = Event.objects.filter(
             kind__in=[Event.Kind.PAID_COMPETITION, Event.Kind.TICKETED_EVENT],
-            is_public=True,
-            status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
         ).select_related('owner').prefetch_related(
             Prefetch(
                 'competition_categories',
                 queryset=CompetitionCategory.objects.filter(is_active=True).prefetch_related(
                     Prefetch('nominees', queryset=Nominee.objects.filter(is_active=True).order_by('display_order', 'name'))
                 ).order_by('display_order', 'name'),
-            )
-            ,
+            ),
             'ticket_types',
         )
+        event = get_object_or_404(base_qs, slug=slug)
+        is_owner_or_staff = (
+            self.request.user.is_authenticated
+            and (self.request.user == event.owner or self.request.user.is_staff)
+        )
+        if not is_owner_or_staff and event.status not in [Event.Status.PUBLISHED, Event.Status.CLOSED]:
+            raise Http404("Event is not published")
+        return event
 
     def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+        election = Event.objects.filter(kind=Event.Kind.SECURE_ELECTION, slug=slug).first()
+        if election:
+            return HttpResponseRedirect(reverse('elections:detail', args=[slug]))
+
         try:
             self.object = self.get_object()
         except Http404:
-            slug = self.kwargs.get('slug')
             event_exists = Event.objects.filter(slug=slug).first()
             active_events = Event.objects.active_public()[:6]
             from django.shortcuts import render
@@ -318,6 +328,8 @@ class EventDetailView(DetailView):
             )
         
         context = self.get_context_data(object=self.object)
+        if self.object.status == Event.Status.DRAFT:
+            context['is_draft_preview'] = True
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
@@ -347,12 +359,19 @@ class EventLeaderboardPartialView(DetailView):
     template_name = 'events/_leaderboard.html'
     context_object_name = 'event'
 
-    def get_queryset(self):
-        return Event.objects.filter(
-            kind=Event.Kind.PAID_COMPETITION,
-            is_public=True,
-            status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        event = get_object_or_404(
+            Event.objects.filter(kind=Event.Kind.PAID_COMPETITION),
+            slug=slug,
         )
+        is_owner_or_staff = (
+            self.request.user.is_authenticated
+            and (self.request.user == event.owner or self.request.user.is_staff)
+        )
+        if not is_owner_or_staff and event.status not in [Event.Status.PUBLISHED, Event.Status.CLOSED]:
+            raise Http404
+        return event
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -694,10 +713,12 @@ class OrganizerAgreementView(TemplateView):
     template_name = 'legal/merchant_agreement.html'
 
 
-class DashboardVoteBundleCreateView(OrganizerEventMixin, CreateView):
+class DashboardVoteBundleCreateView(SafeIntegrityMixin, OrganizerEventMixin, CreateView):
     model = VoteBundle
     form_class = VoteBundleForm
     template_name = 'dashboard/events/bundle_form.html'
+    integrity_error_message = 'A vote bundle with this vote quantity already exists for this event.'
+    success_message = 'Vote bundle added successfully.'
 
     def get_event(self):
         if not hasattr(self, '_event'):
@@ -716,9 +737,7 @@ class DashboardVoteBundleCreateView(OrganizerEventMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.event = self.get_event()
-        response = super().form_valid(form)
-        messages.success(self.request, 'Vote bundle added successfully.')
-        return response
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.get_event().get_dashboard_url()
@@ -753,12 +772,19 @@ class EventLiveLeaderboardView(DetailView):
     template_name = 'events/live_leaderboard.html'
     context_object_name = 'event'
 
-    def get_queryset(self):
-        return Event.objects.filter(
-            kind=Event.Kind.PAID_COMPETITION,
-            is_public=True,
-            status__in=[Event.Status.PUBLISHED, Event.Status.CLOSED],
-        ).select_related('owner')
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        event = get_object_or_404(
+            Event.objects.filter(kind=Event.Kind.PAID_COMPETITION).select_related('owner'),
+            slug=slug,
+        )
+        is_owner_or_staff = (
+            self.request.user.is_authenticated
+            and (self.request.user == event.owner or self.request.user.is_staff)
+        )
+        if not is_owner_or_staff and event.status not in [Event.Status.PUBLISHED, Event.Status.CLOSED]:
+            raise Http404("This event's live leaderboard is not active.")
+        return event
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
