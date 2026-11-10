@@ -2123,3 +2123,91 @@ html {
 #tally-container {
   transition: opacity 0.3s ease-out;
 }
+
+/* Notification Popover Text Protection */
+#tour-notifications-bell p,
+#tour-notifications-bell div,
+[id^="dropdown-notif-"] p,
+[id^="dropdown-notif-"] div {
+  display: block;
+}
+
+/* ─── Minimalist Error Page Buttons ─────────────────── */
+.vc-error-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  background-color: #0f172a;
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.vc-error-btn-primary:hover {
+  background-color: #000000;
+  color: #ffffff !important;
+}
+.dark .vc-error-btn-primary {
+  background-color: #ffffff !important;
+  color: #09080d !important;
+}
+.dark .vc-error-btn-primary:hover {
+  background-color: #f1f5f9 !important;
+  color: #09080d !important;
+}
+
+.vc-error-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.vc-error-btn-secondary:hover {
+  background-color: #f8fafc;
+  color: #0f172a !important;
+}
+.dark .vc-error-btn-secondary {
+  background-color: #1e1e2d !important;
+  color: #f8fafc !important;
+  border-color: #3f3f5a !important;
+}
+.dark .vc-error-btn-secondary:hover {
+  background-color: #2a2a3d !important;
+  color: #ffffff !important;
+}
+
+.vc-error-btn-tertiary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  background-color: transparent;
+  color: #64748b !important;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.vc-error-btn-tertiary:hover {
+  color: #0f172a !important;
+}
+.dark .vc-error-btn-tertiary {
+  color: #94a3b8 !important;
+}
+.dark .vc-error-btn-tertiary:hover {
+  color: #ffffff !important;
+}

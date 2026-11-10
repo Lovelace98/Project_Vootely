@@ -3,6 +3,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -175,6 +176,10 @@ class DashboardElectionPositionsView(OrganizerElectionMixin, FormView):
             for message in exc.messages:
                 messages.error(self.request, message)
             return self.form_invalid(form)
+        except IntegrityError:
+            messages.error(self.request, 'A position with this title already exists for this election.')
+            form.add_error('title', 'A position with this title already exists for this election.')
+            return self.form_invalid(form)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -239,6 +244,10 @@ class DashboardElectionCandidatesView(OrganizerElectionMixin, FormView):
             for message in exc.messages:
                 messages.error(self.request, message)
             return self.form_invalid(form)
+        except IntegrityError:
+            messages.error(self.request, 'A candidate with this name and details already exists for this position.')
+            form.add_error('name', 'A candidate with this name and details already exists for this position.')
+            return self.form_invalid(form)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -254,6 +263,7 @@ class DashboardElectionCandidatesView(OrganizerElectionMixin, FormView):
 class DashboardElectionPositionUpdateView(SafeIntegrityMixin, OrganizerElectionMixin, UpdateView):
     model = ElectionPosition
     form_class = ElectionPositionForm
+    integrity_error_message = 'A position with this title already exists for this election.'
 
     def get_queryset(self):
         return ElectionPosition.objects.filter(event=self.get_event())
@@ -272,6 +282,10 @@ class DashboardElectionPositionUpdateView(SafeIntegrityMixin, OrganizerElectionM
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(self.request, message)
+            return redirect('dashboard:election_positions', slug=self.get_event().slug)
+        except IntegrityError:
+            messages.error(self.request, self.integrity_error_message)
+            form.add_error('title', self.integrity_error_message)
             return redirect('dashboard:election_positions', slug=self.get_event().slug)
         return HttpResponseRedirect(self.get_success_url())
 
@@ -306,6 +320,7 @@ class DashboardElectionPositionDeleteView(OrganizerElectionMixin, View):
 class DashboardElectionCandidateUpdateView(SafeIntegrityMixin, OrganizerElectionMixin, UpdateView):
     model = ElectionCandidate
     form_class = ElectionCandidateForm
+    integrity_error_message = 'A candidate with this name and details already exists for this position.'
 
     def get_queryset(self):
         return ElectionCandidate.objects.filter(event=self.get_event())
@@ -324,6 +339,10 @@ class DashboardElectionCandidateUpdateView(SafeIntegrityMixin, OrganizerElection
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(self.request, message)
+            return redirect('dashboard:election_candidates', slug=self.get_event().slug)
+        except IntegrityError:
+            messages.error(self.request, self.integrity_error_message)
+            form.add_error('name', self.integrity_error_message)
             return redirect('dashboard:election_candidates', slug=self.get_event().slug)
         return HttpResponseRedirect(self.get_success_url())
 
@@ -388,6 +407,10 @@ class DashboardElectionRosterView(OrganizerElectionMixin, FormView):
         except ValidationError as exc:
             for message in exc.messages:
                 messages.error(self.request, message)
+            return self.form_invalid(form)
+        except IntegrityError:
+            messages.error(self.request, 'Roster import failed due to duplicate voter ID records.')
+            form.add_error(None, 'Roster import failed due to duplicate voter ID records.')
             return self.form_invalid(form)
         messages.success(self.request, f'Imported {len(voters)} eligible voters.')
         return HttpResponseRedirect(self.get_success_url())

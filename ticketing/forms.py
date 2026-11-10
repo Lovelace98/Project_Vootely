@@ -26,6 +26,8 @@ class TicketTypeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event', None)
         super().__init__(*args, **kwargs)
+        if self.event is not None:
+            self.instance.event = self.event
         self.fields['sale_start_at'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['sale_end_at'].input_formats = ['%Y-%m-%dT%H:%M']
 
@@ -41,11 +43,13 @@ class TicketTypeForm(forms.ModelForm):
         name = (self.cleaned_data.get('name') or '').strip()
         if not name:
             return name
-        queryset = TicketType.objects.filter(event=self.event, name__iexact=name)
-        if self.instance.pk:
-            queryset = queryset.exclude(pk=self.instance.pk)
-        if self.event is not None and queryset.exists():
-            raise forms.ValidationError('A ticket type with this name already exists for this event.')
+        event = self.event or getattr(self.instance, 'event', None)
+        if event is not None:
+            queryset = TicketType.objects.filter(event=event, name__iexact=name)
+            if self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise forms.ValidationError('A ticket type with this name already exists for this event.')
         return name
 
 

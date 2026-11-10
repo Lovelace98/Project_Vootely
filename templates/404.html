@@ -46,13 +46,13 @@
 
         <!-- Action Buttons -->
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="{% url 'events:home' %}" class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 shadow-sm">
+            <a href="{% url 'events:home' %}" class="vc-error-btn-primary w-full sm:w-auto">
                 Return Home
             </a>
-            <a href="{% url 'dashboard:home' %}" class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700 shadow-sm">
+            <a href="{% url 'dashboard:home' %}" class="vc-error-btn-secondary w-full sm:w-auto">
                 Organizer Dashboard
             </a>
-            <button type="button" onclick="window.history.back()" class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors">
+            <button type="button" onclick="window.history.back()" class="vc-error-btn-tertiary w-full sm:w-auto">
                 Go Back
             </button>
         </div>

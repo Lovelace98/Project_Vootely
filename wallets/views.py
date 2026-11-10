@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import TemplateView
@@ -69,7 +70,16 @@ class DashboardWithdrawalsView(LoginRequiredMixin, TemplateView):
             bank_map = {b['code']: b['name'] for b in banks}
             withdrawal.bank_name = bank_map.get(withdrawal.bank_code, 'Unknown Provider')
             
-            withdrawal.save()
+            try:
+                withdrawal.save()
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'This withdrawal request could not be processed due to a database conflict. Please try again.',
+                )
+                form.add_error(None, 'This withdrawal request could not be processed due to a database conflict. Please try again.')
+                return self.render_to_response(self.get_context_data(form=form))
+
             from notifications.services import queue_withdrawal_requested_notifications
 
             queue_withdrawal_requested_notifications(withdrawal)

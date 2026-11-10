@@ -26,7 +26,7 @@ COPY . /app/
 
 # Build Tailwind CSS
 # Deleting the macOS tailwindcss binary forces django-tailwind-cli to download the Linux version.
-RUN rm -f bin/tailwindcss && python manage.py tailwind build
+RUN rm -f bin/tailwindcss && python manage.py tailwind build --force
 
 # Collect static files for WhiteNoise
 RUN python manage.py collectstatic --noinput --ignore=src.css

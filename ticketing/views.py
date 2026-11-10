@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db import transaction
-from django.db.models import Case, Count, DecimalField, Min, Q, Sum, Value, When
+from django.db import IntegrityError, transaction
+from django.db.models import Case, Count, DecimalField, Min, ProtectedError, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -498,8 +498,13 @@ class DashboardTicketTypeDeleteView(OrganizerTicketEventMixin, View):
             ticket_type.save(update_fields=['is_active', 'updated_at'])
             messages.warning(request, 'Ticket type has sales, so it was deactivated instead of deleted.')
         else:
-            ticket_type.delete()
-            messages.success(request, 'Ticket type deleted.')
+            try:
+                ticket_type.delete()
+                messages.success(request, 'Ticket type deleted.')
+            except ProtectedError:
+                ticket_type.is_active = False
+                ticket_type.save(update_fields=['is_active', 'updated_at'])
+                messages.warning(request, 'Ticket type has existing references, so it was deactivated instead of deleted.')
         return HttpResponseRedirect(event.get_dashboard_url())
 
 
@@ -710,11 +715,15 @@ class DashboardTicketScannerPassListView(OrganizerTicketEventMixin, TemplateView
         event = self.get_event()
         form = TicketScannerPassForm(request.POST, event=event, created_by=request.user)
         if form.is_valid():
-            pin = form.cleaned_data['pin']
-            scanner_pass = form.save()
-            stash_scanner_share_payload(request, scanner_pass, pin)
-            messages.success(request, f'Scanner pass created for {scanner_pass.gate_name}.')
-            return redirect('dashboard:ticket_scanner_passes', event.slug)
+            try:
+                pin = form.cleaned_data['pin']
+                scanner_pass = form.save()
+                stash_scanner_share_payload(request, scanner_pass, pin)
+                messages.success(request, f'Scanner pass created for {scanner_pass.gate_name}.')
+                return redirect('dashboard:ticket_scanner_passes', event.slug)
+            except IntegrityError:
+                messages.error(request, 'Unable to create scanner pass due to a database conflict. Please try again.')
+                form.add_error(None, 'Unable to create scanner pass due to a database conflict. Please try again.')
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)

@@ -226,7 +226,7 @@
                              style="display: none;">
                             
                             <!-- Header -->
-                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-vc-dark-600">
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-white/10">
                                 <h3 class="text-sm font-bold text-vc-dark dark:text-white">Recent Notifications</h3>
                                 <span id="dropdown-header-badge">
                                     {% if unread_notifications_count > 0 %}
@@ -238,39 +238,39 @@
                             </div>
 
                             <!-- List -->
-                            <div class="divide-y divide-gray-100 dark:divide-vc-dark-600 max-h-72 overflow-y-auto">
+                            <div class="divide-y divide-gray-100 dark:divide-white/10 max-h-72 overflow-y-auto">
                                 {% if recent_notifications %}
                                     {% for notif in recent_notifications %}
-                                        <div id="dropdown-notif-{{ notif.id }}" class="py-3 flex gap-3 text-left {% if not notif.is_read %}bg-blue-50/50 dark:bg-white/[0.06] -mx-4 px-4{% else %}hover:bg-gray-50/50 dark:hover:bg-white/[0.02] -mx-4 px-4{% endif %} relative group transition-all duration-300">
+                                        <div id="dropdown-notif-{{ notif.id }}" class="py-3 flex gap-3 text-left {% if not notif.is_read %}bg-blue-50/60 dark:bg-white/[0.08] -mx-4 px-4{% else %}hover:bg-gray-50/60 dark:hover:bg-white/[0.04] -mx-4 px-4{% endif %} relative group transition-all duration-300">
                                             <div class="flex-shrink-0 mt-0.5">
                                                 {% if notif.level == 'success' %}
-                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-green-500 dark:bg-green-950/40 dark:text-green-400">
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400">
                                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                     </span>
                                                 {% elif notif.level == 'warning' %}
-                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400">
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
                                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                                     </span>
                                                 {% elif notif.level == 'danger' %}
-                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500 dark:bg-red-950/40 dark:text-red-400">
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400">
                                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                     </span>
                                                 {% else %}
-                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                                                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
                                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                     </span>
                                                 {% endif %}
                                             </div>
                                             <div class="flex-1 min-w-0 pr-6">
-                                                <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                                                <div class="text-xs font-bold text-neutral-900 dark:text-white truncate">
                                                     {{ notif.title }}
-                                                </p>
-                                                <p class="text-[11px] text-neutral-600 dark:text-neutral-300 mt-0.5 line-clamp-2 leading-relaxed">
+                                                </div>
+                                                <div class="text-[11px] text-neutral-700 dark:text-neutral-200 mt-0.5 line-clamp-2 leading-relaxed">
                                                     {{ notif.message }}
-                                                </p>
-                                                <p class="text-[9px] text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
+                                                </div>
+                                                <div class="text-[9px] text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
                                                     {{ notif.created_at|timesince }} ago
-                                                </p>
+                                                </div>
                                             </div>
                                             {% if not notif.is_read %}
                                                 <button hx-post="{% url 'dashboard:mark_read' notif.id %}" 
@@ -293,13 +293,13 @@
                                         <svg class="h-8 w-8 text-gray-300 mx-auto dark:text-slate-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.961 8.961 0 002.3-5.541V9.75M9.143 17.082c.15.908.282 1.822.393 2.74M12.987 17.23c-.11.918-.243 1.832-.393 2.74M12.987 17.23a24.237 24.237 0 003.843-.148m-3.843.148a23.856 23.856 0 005.455-1.31 8.962 8.962 0 00-2.3-5.541V9.75M8.22 8.284a4.5 4.5 0 018.015 0m-8.015 0L4.86 5.81M16.235 8.284l3.125-2.473M16.235 8.284a9.008 9.008 0 013.124 5.88M8.219 8.284a9.008 9.008 0 00-3.122 5.88M2.25 12h1.5m16.5 0h1.5m-3.857 5.082a24.184 24.184 0 00-1.843-1.657m-9.598 1.657a24.184 24.184 0 011.843-1.657m1.843-1.657a24.22 24.22 0 00-1.843-1.657m9.598 1.657a24.22 24.22 0 01-1.843-1.657" />
                                         </svg>
-                                        <p class="text-xs text-neutral-500 dark:text-neutral-400">No notifications yet</p>
+                                        <div class="text-xs text-neutral-500 dark:text-neutral-400">No notifications yet</div>
                                     </div>
                                 {% endif %}
                             </div>
 
                             <!-- Footer -->
-                            <div class="pt-3 border-t border-gray-100 dark:border-vc-dark-600 mt-2">
+                            <div class="pt-3 border-t border-gray-100 dark:border-white/10 mt-2">
                                 <a href="{% url 'dashboard:notifications' %}" class="block text-center text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors py-2 rounded-xl bg-blue-50/80 hover:bg-blue-100/80 dark:bg-blue-950/30 dark:hover:bg-blue-900/40">
                                     See All Notifications
                                 </a>

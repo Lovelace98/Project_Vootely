@@ -137,10 +137,11 @@ class PublicNomineeDetailView(DetailView):
         return context
 
 
-class PublicNominationCreateView(CreateView):
+class PublicNominationCreateView(SafeIntegrityMixin, CreateView):
     model = NominationSubmission
     form_class = NominationSubmissionForm
     template_name = 'events/nominate.html'
+    integrity_error_message = 'A nomination with these details already exists for this event.'
 
     def dispatch(self, request, *args, **kwargs):
         from events.models import Event
@@ -179,6 +180,13 @@ class PublicNominationCreateView(CreateView):
             else:
                 form.add_error(None, exc.messages[0] if exc.messages else 'Unable to submit nomination.')
             return self.form_invalid(form)
+        except IntegrityError:
+            messages.error(self.request, self.integrity_error_message)
+            form.add_error(None, self.integrity_error_message)
+            return self.form_invalid(form)
+
+        if not getattr(self, 'object', None) or not getattr(self.object, 'pk', None):
+            return response
 
         from notifications.services import create_in_app_notification, queue_nomination_submitted
 
@@ -246,6 +254,7 @@ class DashboardNomineeCreateView(SafeIntegrityMixin, NomineeEventMixin, CreateVi
     model = Nominee
     form_class = NomineeForm
     template_name = 'dashboard/nominees/form.html'
+    integrity_error_message = 'A nominee with this name and contact details already exists in the selected category.'
     success_message = 'Nominee added.'
 
     def dispatch(self, request, *args, **kwargs):
@@ -255,16 +264,17 @@ class DashboardNomineeCreateView(SafeIntegrityMixin, NomineeEventMixin, CreateVi
     def form_valid(self, form):
         form.instance.event = self.event
         response = super().form_valid(form)
-        from notifications.services import create_in_app_notification
-        create_in_app_notification(
-            user=self.event.owner,
-            title="Nominee Registered Successfully",
-            message=f"Nominee '{form.instance.name}' has been added to your event '{self.event.title}'.",
-            link=self.event.get_dashboard_url(),
-            level='success',
-            event=self.event,
-            nominee=form.instance,
-        )
+        if getattr(self, 'object', None) and getattr(self.object, 'pk', None):
+            from notifications.services import create_in_app_notification
+            create_in_app_notification(
+                user=self.event.owner,
+                title="Nominee Registered Successfully",
+                message=f"Nominee '{form.instance.name}' has been added to your event '{self.event.title}'.",
+                link=self.event.get_dashboard_url(),
+                level='success',
+                event=self.event,
+                nominee=form.instance,
+            )
         return response
 
     def get_form_kwargs(self):
@@ -285,6 +295,7 @@ class DashboardNomineeUpdateView(SafeIntegrityMixin, NomineeEventMixin, UpdateVi
     model = Nominee
     form_class = NomineeForm
     template_name = 'dashboard/nominees/form.html'
+    integrity_error_message = 'A nominee with this name and contact details already exists in the selected category.'
     success_message = 'Nominee updated.'
 
     def dispatch(self, request, *args, **kwargs):
@@ -324,6 +335,7 @@ class DashboardCategoryCreateView(SafeIntegrityMixin, NomineeEventMixin, CreateV
     model = CompetitionCategory
     form_class = CompetitionCategoryForm
     template_name = 'dashboard/nominees/category_form.html'
+    integrity_error_message = 'A category with this name already exists for this event.'
     success_message = 'Category added.'
 
     def dispatch(self, request, *args, **kwargs):
@@ -352,6 +364,7 @@ class DashboardCategoryUpdateView(SafeIntegrityMixin, NomineeEventMixin, UpdateV
     model = CompetitionCategory
     form_class = CompetitionCategoryForm
     template_name = 'dashboard/nominees/category_form.html'
+    integrity_error_message = 'A category with this name already exists for this event.'
     success_message = 'Category updated.'
 
     def dispatch(self, request, *args, **kwargs):
@@ -448,59 +461,64 @@ class DashboardNominationReviewView(SafeIntegrityMixin, NomineeEventMixin, Updat
             form.add_error(None, 'Unknown review action.')
             return self.form_invalid(form)
 
-        with transaction.atomic():
-            submission = form.save(commit=False)
-            if action == 'approve':
-                nominee = submission.approved_nominee or Nominee(event=self.event)
-                nominee.category = form.cleaned_data['category']
-                nominee.name = form.cleaned_data['name']
-                nominee.bio = form.cleaned_data['bio']
-                photo_file = form.cleaned_data['photo']
-                if photo_file:
-                    from django.db.models.fields.files import FieldFile
-                    from django.core.files.base import ContentFile
-                    import os
+        try:
+            with transaction.atomic():
+                submission = form.save(commit=False)
+                if action == 'approve':
+                    nominee = submission.approved_nominee or Nominee(event=self.event)
+                    nominee.category = form.cleaned_data['category']
+                    nominee.name = form.cleaned_data['name']
+                    nominee.bio = form.cleaned_data['bio']
+                    photo_file = form.cleaned_data['photo']
+                    if photo_file:
+                        from django.db.models.fields.files import FieldFile
+                        from django.core.files.base import ContentFile
+                        import os
 
-                    if isinstance(photo_file, FieldFile) and photo_file.name.startswith('nomination-submissions/'):
-                        if not nominee.photo or nominee.photo.name.startswith('nomination-submissions/'):
-                            try:
-                                photo_file.open('rb')
-                                file_content = photo_file.read()
-                                filename = os.path.basename(photo_file.name)
-                                nominee.photo.save(filename, ContentFile(file_content), save=False)
-                            finally:
-                                photo_file.close()
+                        if isinstance(photo_file, FieldFile) and photo_file.name.startswith('nomination-submissions/'):
+                            if not nominee.photo or nominee.photo.name.startswith('nomination-submissions/'):
+                                try:
+                                    photo_file.open('rb')
+                                    file_content = photo_file.read()
+                                    filename = os.path.basename(photo_file.name)
+                                    nominee.photo.save(filename, ContentFile(file_content), save=False)
+                                finally:
+                                    photo_file.close()
+                        else:
+                            nominee.photo = photo_file
                     else:
-                        nominee.photo = photo_file
+                        nominee.photo = None
+                    nominee.email = form.cleaned_data['email']
+                    nominee.phone_number = form.cleaned_data['phone_number']
+                    nominee.display_order = form.cleaned_data['display_order']
+                    nominee.is_active = form.cleaned_data['is_active']
+                    nominee.event = self.event
+                    nominee.save()
+
+                    submission.status = NominationSubmission.Status.APPROVED
+                    submission.approved_nominee = nominee
+                    submission.save()
+
+                    from notifications.services import queue_nomination_approved
+
+                    queue_nomination_approved(submission)
+                    messages.success(self.request, 'Nomination approved and nominee created.')
                 else:
-                    nominee.photo = None
-                nominee.email = form.cleaned_data['email']
-                nominee.phone_number = form.cleaned_data['phone_number']
-                nominee.display_order = form.cleaned_data['display_order']
-                nominee.is_active = form.cleaned_data['is_active']
-                nominee.event = self.event
-                nominee.save()
+                    if submission.approved_nominee_id:
+                        form.add_error(None, 'Approved submissions cannot be rejected here. Edit the nominee directly instead.')
+                        return self.form_invalid(form)
+                    submission.status = NominationSubmission.Status.REJECTED
+                    submission.approved_nominee = None
+                    submission.save()
 
-                submission.status = NominationSubmission.Status.APPROVED
-                submission.approved_nominee = nominee
-                submission.save()
+                    from notifications.services import queue_nomination_rejected
 
-                from notifications.services import queue_nomination_approved
-
-                queue_nomination_approved(submission)
-                messages.success(self.request, 'Nomination approved and nominee created.')
-            else:
-                if submission.approved_nominee_id:
-                    form.add_error(None, 'Approved submissions cannot be rejected here. Edit the nominee directly instead.')
-                    return self.form_invalid(form)
-                submission.status = NominationSubmission.Status.REJECTED
-                submission.approved_nominee = None
-                submission.save()
-
-                from notifications.services import queue_nomination_rejected
-
-                queue_nomination_rejected(submission)
-                messages.success(self.request, 'Nomination rejected.')
+                    queue_nomination_rejected(submission)
+                    messages.success(self.request, 'Nomination rejected.')
+        except IntegrityError:
+            messages.error(self.request, 'This nomination could not be reviewed due to a database conflict with an existing record.')
+            form.add_error(None, 'This nomination could not be reviewed due to a database conflict with an existing record.')
+            return self.form_invalid(form)
 
         return HttpResponseRedirect(self.get_success_url())
 

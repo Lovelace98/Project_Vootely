@@ -68,6 +68,8 @@ class ElectionPositionForm(StyledModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
+        if self.event is not None:
+            self.instance.event = self.event
         self._apply_styles()
 
     def clean_title(self):
@@ -98,6 +100,7 @@ class ElectionCandidateForm(StyledModelForm):
         super().__init__(*args, **kwargs)
         self.event = event
         if event is not None:
+            self.instance.event = event
             self.fields['position'].queryset = event.election_positions.filter(is_active=True)
         self._apply_styles()
 

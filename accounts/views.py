@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse_lazy
@@ -41,9 +42,12 @@ class DashboardProfileView(LoginRequiredMixin, View):
         if action == 'profile':
             profile_form = UserProfileForm(request.POST, request.FILES, instance=request.user)
             if profile_form.is_valid():
-                profile_form.save()
-                messages.success(request, 'Your profile has been updated successfully.')
-                return redirect('dashboard:profile')
+                try:
+                    profile_form.save()
+                    messages.success(request, 'Your profile has been updated successfully.')
+                    return redirect('dashboard:profile')
+                except IntegrityError:
+                    messages.error(request, 'Unable to update profile due to a conflict with existing data.')
             active_tab = 'profile'
             
         elif action == 'password':
@@ -58,9 +62,12 @@ class DashboardProfileView(LoginRequiredMixin, View):
         elif action == 'notifications':
             notification_form = NotificationSettingsForm(request.POST, instance=request.user)
             if notification_form.is_valid():
-                notification_form.save()
-                messages.success(request, 'Your notification settings have been updated.')
-                return redirect('dashboard:profile')
+                try:
+                    notification_form.save()
+                    messages.success(request, 'Your notification settings have been updated.')
+                    return redirect('dashboard:profile')
+                except IntegrityError:
+                    messages.error(request, 'Unable to update notification settings due to a conflict with existing data.')
             active_tab = 'notifications'
             
         context = {
@@ -162,16 +169,16 @@ class MarkNotificationReadView(LoginRequiredMixin, View):
                     {icon_svg}
                 </span>
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">
+            <div class="flex-1 min-w-0 pr-6">
+                <div class="text-xs font-bold text-neutral-900 dark:text-white truncate">
                     {notification.title}
-                </p>
-                <p class="text-[11px] text-neutral-600 dark:text-neutral-300 mt-0.5 line-clamp-2 leading-relaxed">
+                </div>
+                <div class="text-[11px] text-neutral-700 dark:text-neutral-200 mt-0.5 line-clamp-2 leading-relaxed">
                     {notification.message}
-                </p>
-                <p class="text-[9px] text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
+                </div>
+                <div class="text-[9px] text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
                     Just now (read)
-                </p>
+                </div>
             </div>
         </div>
         

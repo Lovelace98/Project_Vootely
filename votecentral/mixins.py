@@ -14,10 +14,11 @@ class SafeIntegrityMixin:
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
-            if self.success_message:
+            if self.success_message and getattr(self, 'object', None) and getattr(self.object, 'pk', None):
                 messages.success(self.request, self.success_message)
             return response
         except IntegrityError:
+            self.object = None
             messages.error(self.request, self.integrity_error_message)
             form.add_error(None, self.integrity_error_message)
             return self.form_invalid(form)

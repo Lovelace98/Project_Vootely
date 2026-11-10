@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
-from django.db.models import Case, Count, DecimalField, IntegerField, Min, Prefetch, Q, Sum, Value, When
+from django.db.models import Case, Count, DecimalField, IntegerField, Min, Prefetch, ProtectedError, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -407,7 +407,7 @@ class DashboardEventCreateView(SafeIntegrityMixin, LoginRequiredMixin, CreateVie
     def form_valid(self, form):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
-        if self.object.kind == Event.Kind.PAID_COMPETITION:
+        if getattr(self, 'object', None) and getattr(self.object, 'pk', None) and self.object.kind == Event.Kind.PAID_COMPETITION:
             from notifications.services import queue_event_commission_setup_required
 
             queue_event_commission_setup_required(self.object)
@@ -762,8 +762,11 @@ class DashboardVoteBundleDeleteView(OrganizerEventMixin, View):
     def post(self, request, *args, **kwargs):
         event = self.get_event()
         bundle = get_object_or_404(VoteBundle, event=event, pk=self.kwargs['pk'])
-        bundle.delete()
-        messages.success(request, 'Vote bundle deleted.')
+        try:
+            bundle.delete()
+            messages.success(request, 'Vote bundle deleted.')
+        except ProtectedError:
+            messages.error(request, 'This vote bundle cannot be deleted because it is currently in use.')
         return HttpResponseRedirect(event.get_dashboard_url())
 
 

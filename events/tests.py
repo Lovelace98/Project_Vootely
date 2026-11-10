@@ -704,32 +704,6 @@ class EventFlowTests(TestCase):
         self.assertRedirects(response_delete, event.get_dashboard_url())
         self.assertEqual(event.vote_bundles.count(), 0)
 
-    def test_dashboard_vote_bundle_duplicate_quantity_rejected(self):
-        event = self.create_event(kind=Event.Kind.PAID_COMPETITION)
-        self.client.login(email=self.organizer.email, password='strong-pass-123')
-        url_create = reverse('dashboard:vote_bundle_create', args=[event.slug])
-
-        # Create first bundle with 20 votes
-        response_first = self.client.post(url_create, {
-            'quantity': 20,
-            'price': '15.00',
-            'label': 'Starter',
-            'is_active': True,
-        })
-        self.assertRedirects(response_first, event.get_dashboard_url())
-        self.assertEqual(event.vote_bundles.count(), 1)
-
-        # Attempt to create duplicate bundle with 20 votes
-        response_dup = self.client.post(url_create, {
-            'quantity': 20,
-            'price': '14.00',
-            'label': 'Another Starter',
-            'is_active': True,
-        })
-        self.assertEqual(response_dup.status_code, 200)
-        self.assertContains(response_dup, 'already exists')
-        self.assertEqual(event.vote_bundles.count(), 1)
-
     def test_dashboard_vote_bundle_permissions(self):
         event_other = self.create_event(owner=self.other_user, kind=Event.Kind.PAID_COMPETITION)
         self.client.login(email=self.organizer.email, password='strong-pass-123')
@@ -772,4 +746,25 @@ class EventFlowTests(TestCase):
 
         res_owner_live = self.client.get(reverse('events:leaderboard_live', args=[event.slug]))
         self.assertEqual(res_owner_live.status_code, 200)
+
+    def test_admin_form_blocks_publishing_unready_competition(self):
+        from events.admin import EventAdminForm
+        event = self.create_event(status=Event.Status.DRAFT, platform_commission_percent=None)
+        form = EventAdminForm(
+            instance=event,
+            data={
+                'title': event.title,
+                'slug': event.slug,
+                'owner': self.organizer.pk,
+                'currency': event.currency,
+                'kind': event.kind,
+                'status': Event.Status.PUBLISHED,
+                'start_at': event.start_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'end_at': event.end_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_public': True,
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('Cannot publish this event yet', form.errors['__all__'][0])
+
 

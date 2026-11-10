@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.utils import timezone
 from unfold.admin import ModelAdmin
@@ -15,6 +16,28 @@ from votecentral.admin_utils import ExportCsvMixin, run_guarded_action, status_b
 from .models import ContactInquiry, Event, VoteBundle
 
 
+class EventAdminForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_status = cleaned_data.get('status')
+        if new_status == Event.Status.PUBLISHED and self.instance.pk:
+            previous_status = Event.objects.filter(pk=self.instance.pk).values_list('status', flat=True).first()
+            if previous_status != Event.Status.PUBLISHED:
+                for field, val in cleaned_data.items():
+                    if hasattr(self.instance, field):
+                        setattr(self.instance, field, val)
+                allowed, errors = self.instance.can_publish()
+                if not allowed:
+                    raise forms.ValidationError(
+                        f"Cannot publish this event yet: {'; '.join(errors)}"
+                    )
+        return cleaned_data
+
+
 @admin.register(VoteBundle)
 class VoteBundleAdmin(ModelAdmin):
     list_display = ('event', 'quantity', 'price', 'label', 'is_active')
@@ -25,6 +48,7 @@ class VoteBundleAdmin(ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(ExportCsvMixin, ModelAdmin):
+    form = EventAdminForm
     list_display = (
         'title',
         'owner',
@@ -110,8 +134,42 @@ class EventAdmin(ExportCsvMixin, ModelAdmin):
             readonly_fields.append('ticket_commission_percent')
         return readonly_fields
 
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == 'status':
+            object_id = request.resolver_match.kwargs.get('object_id') if request.resolver_match else None
+            if object_id:
+                event = Event.objects.filter(pk=object_id).first()
+                if event:
+                    if event.kind in [Event.Kind.PAID_COMPETITION, Event.Kind.TICKETED_EVENT]:
+                        kwargs['choices'] = [
+                            (Event.Status.DRAFT, 'Draft'),
+                            (Event.Status.PUBLISHED, 'Published'),
+                            (Event.Status.CLOSED, 'Closed'),
+                        ]
+                    elif event.kind == Event.Kind.SECURE_ELECTION:
+                        kwargs['choices'] = [
+                            (Event.Status.DRAFT, 'Draft'),
+                            (Event.Status.CONFIGURED, 'Configured'),
+                            (Event.Status.ROSTER_UPLOADED, 'Roster uploaded'),
+                            (Event.Status.PRICED, 'Priced'),
+                            (Event.Status.PAYMENT_PENDING, 'Payment pending'),
+                            (Event.Status.PAID, 'Paid'),
+                            (Event.Status.ROSTER_LOCKED, 'Roster locked'),
+                            (Event.Status.CREDENTIALS_ISSUED, 'Credentials issued'),
+                            (Event.Status.READY, 'Ready'),
+                            (Event.Status.OPEN, 'Open'),
+                            (Event.Status.CLOSED, 'Closed'),
+                            (Event.Status.TALLIED, 'Tallied'),
+                            (Event.Status.CERTIFIED, 'Certified'),
+                            (Event.Status.ARCHIVED, 'Archived'),
+                            (Event.Status.CANCELLED, 'Cancelled'),
+                        ]
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
+
     def save_model(self, request, obj, form, change):
         previous = Event.objects.filter(pk=obj.pk).first() if change else None
+        if obj.status == Event.Status.PUBLISHED and not obj.published_at:
+            obj.published_at = timezone.now()
         if obj.kind == Event.Kind.PAID_COMPETITION:
             previous_percent = previous.platform_commission_percent if previous else None
             if obj.platform_commission_percent != previous_percent:
