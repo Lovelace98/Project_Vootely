@@ -364,7 +364,14 @@ if REDIS_URL:
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {'hosts': [REDIS_URL]},
+            'CONFIG': {
+                'hosts': [{
+                    'address': REDIS_URL,
+                    'socket_timeout': None,
+                    'socket_connect_timeout': 5,
+                    'health_check_interval': 30,
+                }],
+            },
         },
     }
     CELERY_BROKER_URL = REDIS_URL

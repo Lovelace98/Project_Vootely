@@ -243,9 +243,8 @@ class Event(models.Model):
         now = now or timezone.now()
         return (
             self.status == self.Status.PUBLISHED
-            and self.is_public
             and self.has_platform_commission()
-            and self.start_at <= now <= self.end_at
+            and bool(self.start_at and self.end_at and self.start_at <= now <= self.end_at)
         )
 
     def has_platform_commission(self):

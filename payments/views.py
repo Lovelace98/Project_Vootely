@@ -1,4 +1,5 @@
 import json
+import logging
 from decimal import Decimal
 
 from django.contrib import messages
@@ -26,6 +27,10 @@ from .services import (
     resolve_payment_status_by_reference,
     verify_paystack_signature,
 )
+
+logger = logging.getLogger(__name__)
+
+
 class PaystackInitiateView(View):
     def post(self, request, *args, **kwargs):
         if is_rate_limited(request, 'paystack-init', 10, 60):
@@ -33,10 +38,16 @@ class PaystackInitiateView(View):
 
         form = PaymentInitiationForm(request.POST)
         if not form.is_valid():
+            logger.warning(
+                "Paystack initiate rejected: form invalid. Errors: %s | Data: %s",
+                form.errors.as_json(),
+                dict(request.POST),
+            )
             if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Please provide valid payment details.'
+                    'message': 'Please provide valid payment details.',
+                    'errors': form.errors.get_json_data()
                 }, status=400)
             messages.error(request, 'Please provide valid payment details.')
             return redirect('events:home')
@@ -45,6 +56,11 @@ class PaystackInitiateView(View):
         try:
             nominee = Nominee.resolve_for_event(event, form.cleaned_data['nominee_ref'])
         except Nominee.DoesNotExist:
+            logger.warning(
+                "Paystack initiate rejected: Nominee '%s' not found for event '%s'.",
+                form.cleaned_data.get('nominee_ref'),
+                event.slug,
+            )
             if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
@@ -54,19 +70,33 @@ class PaystackInitiateView(View):
             return redirect(event.get_absolute_url())
 
         if not event.has_platform_commission():
+            logger.warning(
+                "Paystack initiate rejected: Event '%s' does not have platform commission configured. Commission percent is %s.",
+                event.slug,
+                event.platform_commission_percent,
+            )
             if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'This event is not ready to accept votes yet.'
+                    'message': 'This event is not ready to accept votes yet.',
                 }, status=400)
             messages.error(request, 'This event is not ready to accept votes yet.')
             return redirect(event.get_absolute_url())
 
         if not nominee.is_active or not event.accepts_votes():
+            logger.warning(
+                "Paystack initiate rejected: Event '%s' accepts_votes=%s (status=%s, start=%s, end=%s), nominee.is_active=%s",
+                event.slug,
+                event.accepts_votes(),
+                event.status,
+                event.start_at,
+                event.end_at,
+                nominee.is_active,
+            )
             if 'application/json' in request.headers.get('Accept', '') or request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('inline') == 'true':
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Voting is not available for this event right now.'
+                    'message': 'Voting is not available for this event right now.',
                 }, status=400)
             messages.error(request, 'Voting is not available for this event right now.')
             return redirect(event.get_absolute_url())
