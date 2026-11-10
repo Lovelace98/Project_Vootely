@@ -5,7 +5,7 @@
 
 {% block dashboard_content %}
 <section class="mx-auto max-w-3xl vc-animate-in">
-    <div class="vc-card p-8">
+    <div class="vc-card p-4 sm:p-6 md:p-8">
         <p class="vc-section-label">{{ event.title }}</p>
         <h1 class="mt-1 vc-section-title">{% if object %}Edit nominee{% else %}Add nominee{% endif %}</h1>
 
@@ -18,7 +18,7 @@
                 </div>
             {% endif %}
             {% for field in form %}
-                <div>
+                <div class="w-full min-w-0">
                     <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
                     {% if field.help_text %}

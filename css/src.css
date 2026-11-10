@@ -1002,6 +1002,8 @@ input:not([type="checkbox"]):not([type="hidden"]):not([type="submit"]):not([type
 textarea,
 select {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box !important;
   border-radius: 0.75rem;
   border: 1px solid var(--color-vc-dark-200);
   background: var(--color-vc-surface-raised);
@@ -1035,9 +1037,23 @@ label {
 input[type="date"],
 input[type="datetime-local"],
 input[type="time"] {
-  min-width: 0;
-  display: block;
-  width: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0.75rem 0.75rem !important;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.25em;
+  padding: 0;
+  margin: 0;
 }
 
 .vc-pill-control {

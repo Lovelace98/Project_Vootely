@@ -4,13 +4,31 @@ from .models import ContactInquiry, Event, VoteBundle
 
 
 class StyledModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._apply_styles()
+
     def _apply_styles(self):
+        base_input_classes = (
+            'w-full max-w-full min-w-0 box-border rounded-xl border '
+            'border-vc-dark-200 bg-vc-surface-raised px-3.5 py-2.5 text-sm '
+            'font-normal text-vc-dark transition-colors focus:border-vc-blue '
+            'focus:outline-none focus:ring-2 focus:ring-vc-blue/10 dark:text-white'
+        )
         for field in self.fields.values():
+            existing = field.widget.attrs.get('class', '')
             if isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs['class'] = 'h-5 w-5 rounded border-slate-300 bg-white text-vc-blue focus:ring-vc-blue'
+                field.widget.attrs['class'] = (
+                    f'h-5 w-5 rounded border-slate-300 bg-white text-vc-blue focus:ring-vc-blue {existing}'
+                ).strip()
+            elif isinstance(field.widget, forms.DateTimeInput):
+                field.widget.attrs['class'] = (
+                    f'{base_input_classes} px-3 text-sm {existing}'
+                ).strip()
             else:
-                # Use global styles from src.css for other inputs
-                pass
+                field.widget.attrs['class'] = (
+                    f'{base_input_classes} {existing}'
+                ).strip()
 
 
 class EventForm(StyledModelForm):

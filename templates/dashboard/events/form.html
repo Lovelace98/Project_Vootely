@@ -5,7 +5,7 @@
 
 {% block dashboard_content %}
 <section class="mx-auto max-w-3xl vc-animate-in">
-    <div class="vc-card p-8">
+    <div class="vc-card p-4 sm:p-6 md:p-8">
         <p class="vc-section-label">Organizer</p>
         <h1 class="mt-1 vc-section-title">{% if object %}Edit event{% else %}Create a paid competition{% endif %}</h1>
 
@@ -23,7 +23,7 @@
                         <div class="pt-0.5">
                             {{ field }}
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <label class="block text-sm font-semibold text-vc-dark" for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {% if field.help_text %}
                                 <p class="mt-0.5 text-xs text-vc-dark-300">{{ field.help_text }}</p>
@@ -34,7 +34,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <div>
+                    <div class="w-full min-w-0">
                         <label class="mb-2 block text-sm font-medium text-vc-dark-500" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.help_text %}

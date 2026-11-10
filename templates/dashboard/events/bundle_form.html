@@ -5,7 +5,7 @@
 
 {% block dashboard_content %}
 <section class="mx-auto max-w-2xl vc-animate-in">
-    <div class="vc-card p-8">
+    <div class="vc-card p-4 sm:p-6 md:p-8">
         <p class="vc-section-label">Competition Pricing</p>
         <h1 class="mt-1 vc-section-title">Add Vote Package</h1>
         <p class="text-sm text-vc-dark-400 mt-2">Configure custom package pricing for <strong>{{ event.title }}</strong>.</p>
@@ -24,7 +24,7 @@
                         <div class="pt-0.5">
                             {{ field }}
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <label class="block text-sm font-semibold text-vc-dark dark:text-white" for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {% if field.help_text %}
                                 <p class="mt-0.5 text-xs text-vc-dark-300 dark:text-slate-400">{{ field.help_text }}</p>
@@ -35,7 +35,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <div>
+                    <div class="w-full min-w-0">
                         <label class="mb-2 block text-sm font-medium text-vc-dark-500 dark:text-slate-300" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.help_text %}
